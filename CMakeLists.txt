@@ -6,6 +6,11 @@ message(STATUS "Building ...")
 # and the C++ standard to use for the whole project
 file(READ ".release" ver)
 string(REGEX MATCH "release=([0-9]+.[0-9]+.[0-9]+)" _ ${ver})
+
+set(PACKAGE_NAME SkaPstStat)
+set(VERSION ${CMAKE_MATCH_1})
+set(DESCRIPTION "STAT Software for the SKA Pulsar Timing Product")
+
 project(${PACKAGE_NAME} VERSION ${VERSION} DESCRIPTION ${DESCRIPTION} LANGUAGES CXX )
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -33,11 +38,11 @@ configure_package_config_file(
   INSTALL_DESTINATION
     share/helloworld/cmake
 )
-# write_basic_package_version_file(
-#   "${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/HelloWorldVersion.cmake"
-#   COMPATIBILITY
-#     AnyNewerVersion
-# )
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/HelloWorldVersion.cmake"
+  COMPATIBILITY
+    AnyNewerVersion
+)
 install(FILES
   ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/HelloWorldConfig.cmake
   ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/HelloWorldVersion.cmake
