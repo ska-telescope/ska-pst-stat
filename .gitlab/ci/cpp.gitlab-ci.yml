@@ -133,12 +133,12 @@ pages:
     - lint_clang_tidy
     - lint_iwyu
     - lint_cppcheck
-    - test
+    - test_debug_build
   dependencies:
     - lint_clang_tidy
     - lint_iwyu
     - lint_cppcheck
-    - test
+    - test_debug_build
   script:
     - apt remove -y gcovr
     - pip install gcovr
