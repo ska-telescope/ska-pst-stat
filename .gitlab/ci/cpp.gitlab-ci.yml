@@ -1,0 +1,181 @@
+.src_dir_ref_storage: &src_dir_ref_storage
+  - mkdir build || true
+  - pwd > build/original_source_directory
+
+.src_dir_ref_replacement: &src_dir_ref_replacement
+  - old_sdir=`cat build/original_source_directory`
+  - this_sdir=`pwd`
+  - find build
+    -type f -a
+    \! \(
+      -perm /111 -o
+      \(
+        -name '*.o' -o -name '*.a' -o -name '*.so'
+      \)
+    \)
+    -exec sed -i "s|$old_sdir|$this_sdir|g" {} +
+
+.common:
+  image: $GITLAB_OCI_SMRB_REGISTRY/$PST_SMRB_OCI_BUILDER:$PST_SMRB_OCI_COMMON_TAG
+  tags: [k8srunner]
+
+.common.artifact-builder:
+  extends: .common
+  before_script:
+    - *src_dir_ref_storage
+  artifacts:
+    paths:
+      - build
+
+.common.artifact-retriever:
+  extends: .common
+  before_script:
+    - *src_dir_ref_replacement
+
+.common.lint:
+  extends: .common.artifact-retriever
+
+
+build_debug:
+  extends: .common.artifact-builder
+  stage: build
+  # instead of calling g++ directly you can also use some build toolkit like make
+  # install the necessary build tools when needed
+  script:
+    - make local-cpp-build-debug
+
+build_release:
+  extends: .common.artifact-builder
+  stage: build
+  script:
+    - make local-cpp-build-release
+
+build_export_compile_commands:
+ extends: .common.artifact-builder
+ stage: build
+ script:
+    - make local-cpp-build-export-compile-commands
+
+lint_clang_tidy:
+  extends: .common.lint
+  stage: lint
+  needs: ["build_export_compile_commands"]
+  script:
+    - make local-cpp-lint-clang
+  artifacts:
+    paths:
+      - ./build
+
+lint_iwyu:
+  extends: .common.lint
+  stage: lint
+  needs: ["build_export_compile_commands"]
+  script:
+    - make local-cpp-lint-iwyu
+  artifacts:
+    paths:
+      - ./build
+
+lint_cppcheck:
+  extends: .common.lint
+  stage: lint
+  needs: ["build_export_compile_commands"]
+  script:
+    - make local-cpp-lint-cppcheck
+  artifacts:
+    paths:
+      - ./build
+    expire_in: 1 week
+    when: always
+
+test_debug_build:
+  extends: .common.artifact-retriever
+  stage: test
+  needs: ["build_debug"]
+  before_script:
+    - make local-cpp-test-ctest
+  script:
+    - *src_dir_ref_storage
+    - cd build
+    - mkdir -p reports
+    - ctest2junit > reports/unit-tests.xml
+  # Capture the error logs
+  # allow_failure: true
+  artifacts:
+    paths:
+      - build/
+    reports:
+      junit: build/reports/unit-tests.xml
+
+test_installation:
+  extends: .common.artifact-retriever
+  stage: test
+  needs: ["build_release"]
+  script:
+    - make local-cpp-test-installation
+
+test_memcheck:
+  extends: .common.artifact-retriever
+  stage: test
+  needs: ["build_debug"]
+  script:
+    - make local-cpp-test-ctest-memcheck
+  artifacts:
+    paths:
+      - build/
+  only:
+    - schedules
+
+pages:
+  extends: .common.lint
+  stage: pages
+  needs:
+    - lint_clang_tidy
+    - lint_iwyu
+    - lint_cppcheck
+    - test
+  dependencies:
+    - lint_clang_tidy
+    - lint_iwyu
+    - lint_cppcheck
+    - test
+  script:
+    - apt remove -y gcovr
+    - pip install gcovr
+    - pip list
+    - mkdir -p public/build/reports build/reports
+    - ls -laR .
+    - python3 -m gcovr -r ./ -e 'src/apps/.*' -e 'resources/.*' -e '.*/CompilerIdCXX/.*' -e '.*/tests/.*' --exclude-unreachable-branches --exclude-throw-branches --html --html-details -o build/reports/code-coverage.html
+    - python3 -m gcovr -r ./ -e 'src/apps/.*' -e 'resources/.*' -e '.*/CompilerIdCXX/.*' -e '.*/tests/.*' --exclude-unreachable-branches --exclude-throw-branches --xml -o build/reports/code-coverage.xml
+    - cp build/reports/unit-tests.xml public/build/reports/unit-tests.xml
+    - cp build/reports/code-coverage.xml public/build/reports/code-coverage.xml
+  after_script:
+    # Combine lint XML
+    - cp build/cppcheck-junit.xml build/reports/cppcheck-junit.xml
+    - cp build/clang-tidy-junit.xml build/reports/clang-tidy-junit.xml
+    - cp build/iwyu-junit.xml build/reports/iwyu-junit.xml
+    - pip3 install yq
+    - 'xq -s "{testsuites: { testsuite: [ .[0].testsuite, .[1].testsuite, .[2].testsuite ] } }"
+      build/reports/clang-tidy-junit.xml
+      build/reports/cppcheck-junit.xml
+      build/reports/iwyu-junit.xml
+      --xml-output | sponge build/reports/linting.xml'
+    # recalculate lint totals
+    - 'xq ".testsuites |= {\"@tests\": .testsuite | map(.\"@tests\" | tonumber) | add }+ ." build/reports/linting.xml --xml-output | sponge build/reports/linting.xml'
+    - 'xq ".testsuites |= {\"@errors\": .testsuite | map(.\"@errors\" | tonumber) | add }+ ." build/reports/linting.xml --xml-output | sponge build/reports/linting.xml'
+    - 'xq ".testsuites |= {\"@failures\": .testsuite | map(.\"@failures\" | tonumber) | add }+ ." build/reports/linting.xml --xml-output | sponge build/reports/linting.xml'
+  artifacts:
+    paths:
+      - public
+      - build
+
+dynamic_vars:
+  stage: build
+  before_script:
+    - printenv | grep BRANCH
+  script:
+    - echo "PST_STAT_OCI_TAG=$(grep -m 1 -o '[0-9].*' .release)-dev.c${CI_COMMIT_SHORT_SHA}" > build.env
+    - echo "PST_STAT_OCI_RELEASE=$(grep -m 1 -o '[0-9].*' .release)" > build.env
+  artifacts:
+    reports:
+      dotenv: build.env

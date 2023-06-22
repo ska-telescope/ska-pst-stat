@@ -1,0 +1,48 @@
+variables:
+  # Needed if you want automatic submodule checkout
+  # For details see https://docs.gitlab.com/ee/ci/yaml/README.html#git-submodule-strategy
+  GIT_SUBMODULE_STRATEGY: recursive
+  SKA_CPP_DOCKER_BUILDER_IMAGE: artefact.skao.int/ska-cicd-k8s-tools-build-deploy:0.8.3
+  K8S_TEST_CLUSTER_TAG: k8srunner
+  # OCI variables that overrides values in Makefile
+  # CI Variables enable upstream/downstream CI integration
+  OCI_IMAGE_BUILD_CONTEXT: $(PWD)
+  SKA_RELEASE_REGISTRY: artefact.skao.int
+  GITLAB_OCI_COMMON_REGISTRY: registry.gitlab.com/ska-telescope/pst/ska-pst-common
+  GITLAB_OCI_SMRB_REGISTRY: registry.gitlab.com/ska-telescope/pst/ska-pst-smrb
+  PST_SMRB_OCI_REGISTRY: ""
+  PST_SMRB_OCI_BUILDER: ska-pst-smrb-builder
+  PST_SMRB_OCI_RUNTIME: ska-pst-smrb
+  PST_SMRB_OCI_COMMON_TAG: "0.8.7"
+  STAT_RUNTIME_IMAGE: library/ubuntu:22.04
+
+stages:
+  - build
+  - lint
+  - test
+  - publish
+  - scan
+  - pages
+
+include:
+  # OCI
+  - project: 'ska-telescope/templates-repository'
+    file: 'gitlab-ci/includes/oci-image.gitlab-ci.yml'
+
+  # Docs pages
+  - project: 'ska-telescope/templates-repository'
+    file: 'gitlab-ci/includes/docs.gitlab-ci.yml'
+
+  # Create Gitlab CI badges from CI metrics
+  - project: 'ska-telescope/templates-repository'
+    file: 'gitlab-ci/includes/finaliser.gitlab-ci.yml'
+
+  # Umbrella include for all Raw life cycle stages
+  - project: 'ska-telescope/templates-repository'
+    file: gitlab-ci/includes/release.gitlab-ci.yml
+
+  # Common CPP jobs
+  - local: '.gitlab/ci/cpp.gitlab-ci.yml'
+
+  # Jobs overriden from upstream templates
+  - local: '.gitlab/ci/overrides.gitlab-ci.yml'
