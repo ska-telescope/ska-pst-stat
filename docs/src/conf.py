@@ -39,7 +39,7 @@ def configureDoxyfile(input_dir: str, output_dir: str):
 # -- Project information -----------------------------------------------------
 
 project = 'SKA PST STAT'
-copyright = '2022 Square Kilometre Array Observatory'
+copyright = '2023 Square Kilometre Array Observatory'
 author = 'PST Team'
 
 # The full version, including alpha/beta/rc tags
@@ -123,7 +123,7 @@ exhale_args = {
     "rootFileName":          "library_root.rst",
     "rootFileTitle":         "Application Programming Interface",
     "afterTitleDescription": textwrap.dedent('''
-    The ska-pst-stat library provides and API that is used by the applications. This API is described below.
+    The ska-pst-stat library provides an API that is used by the applications. This API is described below.
     '''),
     "doxygenStripFromPath":  "../", #"/home/calgray/Code/icrar/leap-accelerate/src", # use src dir
     # Suggested optional arguments
