@@ -1,92 +1,64 @@
 # ska-pst-stat
 
+This project provides the C++ library and applications for the STAT component of the Pulsar Timing instrument for SKA Mid and SKA Low.
 
+## Documentation
 
-## Getting started
+[![Documentation Status](https://readthedocs.org/projects/ska-telescope-ska-pst-stat/badge/?version=latest)](https://developer.skao.int/projects/ska-pst-stat/en/latest/)
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+The documentation for this project, including the package description, Architecture description and the API modules can be found at SKA developer portal:  [https://developer.skao.int/projects/ska-pst-stat/en/latest/](https://developer.skao.int/projects/ska-pst-stat/en/latest/)
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## Build Instructions
 
-## Add your files
+Firstly clone this repo and submodules to your local file system
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+    git clone --recursive git@gitlab.com:ska-telescope/pst/ska-pst-stat.git
 
-```
-cd existing_repo
-git remote add origin https://gitlab.com/ska-telescope/pst/ska-pst-stat.git
-git branch -M main
-git push -uf origin main
-```
+then change to the newly cloned directory and create the build/ sub-directory
 
-## Integrate with your tools
+    cd ska-pst-stat
+    mkdir build
 
-- [ ] [Set up project integrations](https://gitlab.com/ska-telescope/pst/ska-pst-stat/-/settings/integrations)
+To simulate the build that will be performed in the Gitlab CI, a C++ builder image that has been extended from the ska-cicd-cpp-build-base [C++ building image](https://github.com/ska-telescope/cpp_build_base) is used. This image includes the required OS package and other custom software dependencies. The current version of this image is defined in .gitlab-ci.yml; e.g.
 
-## Collaborate with your team
+    grep SKA_CPP_DOCKER_BUILDER_IMAGE .gitlab-ci.yml
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+After verifying the current builder image version, pull it with a command like the following
 
-## Test and Deploy
+    docker pull registry.gitlab.com/ska-telescope/pst/ska-pst-smrb/ska-pst-smrb-builder:0.8.7
 
-Use the built-in continuous integration in GitLab.
+Now launch this builder image as a container. Note the current working directory will be mounted into the container as /mnt/ska-pst-stat.
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+    make local-dev-env
 
-***
+The library and applications can be built using the standardise makefile templates provided by CICD infrastructure.
 
-# Editing this README
+### Debug Build
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+The debug build will use the Cmake build arguments `-DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-coverage" -DCMAKE_EXE_LINKER_FLAGS="-coverage"`. For debug purposes, the `#define DEBUG` will be defined for the software to enable any debug features.
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+    make local-cpp-build-debug
 
-## Name
-Choose a self-explaining name for your project.
+### Release Build
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+The release build will use the Cmake build arguments `-DCMAKE_BUILD_TYPE=Release` which ensures `#define DEBUG` is not defined. This build should be used for all deployments.
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+    make local-cpp-build-release
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+### Linting Build
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+This build target compiles the library and applications with the flags required for linting and static analysis.
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+    make local-cpp-ci-simulation-lint
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+During the compilation, the build generates `compile_commands.json` file which is used in the linting and static analysis tools: clang-tidy, cppcheck and IWYU.
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+### Documentation Build
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+API documentation for the library is genereated with Doxygen, which is then converted into ReadTheDocs format by Sphinx, Breathe and Exhale. The documentation is built via 
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+    make docs-build html
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+## Building Docker Image
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+To build an OCI Docker image for testing the applications:
