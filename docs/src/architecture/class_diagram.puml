@@ -12,12 +12,13 @@ package ska::pst::smrb {
 class StatApplicationManager {
   + StatApplicationManager()
   + ~StatApplicationManager()
-  + configure_beam(config: AsciiHeader)
-  + configure_scan(config: AsciiHeader)
-  + start_scan()
-  + end_scan()
-  + deconfigure_scan()
-  + deconfigure_beam()
+  + perform_configure_beam(config: AsciiHeader)
+  + perform_configure_scan(config: AsciiHeader)
+  + perform_start_scan()
+  + perform_scan()
+  + perform_end_scan()
+  + perform_deconfigure_scan()
+  + perform_deconfigure_beam()
   - processor: StatProcessor
   - data_rb_view: DataBlockView
   - weights_rb_view: DataBlockView
@@ -59,22 +60,24 @@ class StatStorage {
   + StatStorage(config: AsciiHeader)
   + resize(config: AsciiHeader)
   + reset()
-  + mean_frequency_avg: std::vector<std::vector<std::vector<float32>>>
-  + mean_frequency_avg_masked: std::vector<std::vector<std::vector<float32>>>
-  + variance_frequency_avg: std::vector<std::vector<std::vector<float32>>>
-  + variance_frequency_avg_masked: std::vector<std::vector<std::vector<float32>>>
-  + mean_spectrum: std::vector<std::vector<std::vector<float32>>>
-  + variance_spectrum: std::vector<std::vector<std::vector<float32>>>
-  + bandpass: std::vector<std::vector<std::vector<float32>>>
-  + histogram_1d_freq_avg: std::vector<std::vector<std::vector<uint32>>>
-  + histogram_1d_freq_avg_masked: std::vector<std::vector<std::vector<uint32>>>
-  + rebinned_histogram_2d_freq_avg: std::vector<std::vector<std::vector<uint32>>>
-  + rebinned_histogram_1d_freq_avg_masked: std::vector<std::vector<std::vector<uint32>>>
-  + num_clipped_samples_spectrum: std::vector<std::vector<std::vector<uint32>>>
-  + num_clipped_samples: std::vector<std::vector<uint32>>
-  + spectrogram: std::vector<std::vector<std::vector<float32>>>
-  + timeseries: std::vector<std::vector<std::vector<float32>>>
-  + timeseries_masked: std::vector<std::vector<std::vector<float32>>>
+  + mean_frequency_avg: std::vector<std::vector<float>>
+  + mean_frequency_avg_masked: std::vector<std::vector<float>>
+  + variance_frequency_avg: std::vector<std::vector<float>>
+  + variance_frequency_avg_masked: std::vector<std::vector<float>>
+  + mean_spectrum: std::vector<std::vector<std::vector<float>>>
+  + variance_spectrum: std::vector<std::vector<std::vector<float>>>
+  + bandpass: std::vector<std::vector<float>>
+  + histogram_1d_freq_avg: std::vector<std::vector<std::vector<uint32_t>>>
+  + histogram_1d_freq_avg_masked: std::vector<std::vector<std::vector<uint32_t>>>
+  + rebinned_histogram_2d_freq_avg: std::vector<std::vector<std::vector<uint32_t>>>
+  + rebinned_histogram_2d_freq_avg_masked: std::vector<std::vector<std::vector<uint32_t>>>
+  + rebinned_histogram_1d_freq_avg: std::vector<std::vector<std::vector<uint32_t>>>
+  + rebinned_histogram_1d_freq_avg_masked: std::vector<std::vector<std::vector<uint32_t>>>
+  + num_clipped_samples_spectrum: std::vector<std::vector<std::vector<uint32_t>>>
+  + num_clipped_samples: std::vector<std::vector<uint32_t>>
+  + spectrogram: std::vector<std::vector<std::vector<float>>>
+  + timeseries: std::vector<std::vector<std::vector<float>>>
+  + timeseries_masked: std::vector<std::vector<std::vector<float>>>
 }
 
 class StatPublisher <<abstract>> {
