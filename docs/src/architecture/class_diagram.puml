@@ -1,0 +1,112 @@
+@startuml PST Stat Class Diagram
+allow_mixing
+
+package ska::pst::common {
+  class ApplicationManager <<abstract>>
+
+} 
+package ska::pst::smrb {
+  class DataBlockView
+} 
+
+class StatApplicationManager {
+  + StatApplicationManager()
+  + ~StatApplicationManager()
+  + configure_beam(config: AsciiHeader)
+  + configure_scan(config: AsciiHeader)
+  + start_scan()
+  + end_scan()
+  + deconfigure_scan()
+  + deconfigure_beam()
+  - processor: StatProcessor
+  - data_rb_view: DataBlockView
+  - weights_rb_view: DataBlockView
+}
+
+class FileProcessor {
+  + FileProcessor(config: AsciiHeader)
+  + ~FileProcessor()
+  + process()
+  - reader: FileReader
+  - processor: StatProcessor
+}
+
+class FileReader {
+  + FileReader(data_file, weights_file)
+  + ~FileReader()
+  + next_block(): (block_ptr: char*, weights_ptr: char*)
+}
+
+class StatProcessor {
+  + StatProcessor(config: AsciiHeader)
+  + ~StatProcessor()
+  + process(block_ptr: char*, block_length: usize_t, weights_ptr: char*, weights_length: usize_t)
+  - storage: std::shared_ptr<StatStorage> 
+  - computer: std::unique_ptr<StatComputer>
+  - writer: std::unique_ptr<StatPublisher>
+  - config: AsciiHeader
+}
+
+class StatComputer {
+  + StatComputer(config: AsciiHeader, std::shared_ptr<StatStorage> storage)
+  + ~StatComputer()
+  + compute(block_ptr: char*, block_length: usize_t, weights_ptr: char*, weights_length: usize_t)
+  - storage: std::shared_ptr<StatStorage> 
+  - config: AsciiHeader
+}
+
+class StatStorage {
+  + StatStorage(config: AsciiHeader)
+  + resize(config: AsciiHeader)
+  + reset()
+  + mean_frequency_avg: std::vector<std::vector<std::vector<float32>>>
+  + mean_frequency_avg_masked: std::vector<std::vector<std::vector<float32>>>
+  + variance_frequency_avg: std::vector<std::vector<std::vector<float32>>>
+  + variance_frequency_avg_masked: std::vector<std::vector<std::vector<float32>>>
+  + mean_spectrum: std::vector<std::vector<std::vector<float32>>>
+  + variance_spectrum: std::vector<std::vector<std::vector<float32>>>
+  + bandpass: std::vector<std::vector<std::vector<float32>>>
+  + histogram_1d_freq_avg: std::vector<std::vector<std::vector<uint32>>>
+  + histogram_1d_freq_avg_masked: std::vector<std::vector<std::vector<uint32>>>
+  + rebinned_histogram_2d_freq_avg: std::vector<std::vector<std::vector<uint32>>>
+  + rebinned_histogram_1d_freq_avg_masked: std::vector<std::vector<std::vector<uint32>>>
+  + num_clipped_samples_spectrum: std::vector<std::vector<std::vector<uint32>>>
+  + num_clipped_samples: std::vector<std::vector<uint32>>
+  + spectrogram: std::vector<std::vector<std::vector<float32>>>
+  + timeseries: std::vector<std::vector<std::vector<float32>>>
+  + timeseries_masked: std::vector<std::vector<std::vector<float32>>>
+}
+
+class StatPublisher <<abstract>> {
+  # storage: std::shared_ptr<StatStorage>
+  # config: AsciiHeader
+  + StatPublisher(config: AsciiHeader, storage: std::shared_ptr<StatStorage>)
+  + ~StatPublisher()
+  {abstract} + publish()
+}
+
+class StatHdf5FileWriter implements StatPublisher {
+  + StatHdf5FileWriter(config: AsciiHeader, storage: std::shared_ptr<StatStorage>)
+  + ~StatHdf5FileWriter()
+  + publish()
+}
+
+StatProcessor *-- StatComputer
+StatProcessor *-- StatPublisher
+StatProcessor o-- StatStorage 
+StatComputer o-- StatStorage
+StatPublisher o-- StatStorage
+
+ApplicationManager <|-- StatApplicationManager
+StatApplicationManager o-- DataBlockView
+StatApplicationManager *-- StatProcessor
+
+FileProcessor *-- FileReader
+FileProcessor *-- StatProcessor
+
+component ska_pst_stat_core
+ska_pst_stat_core -- "uses" StatApplicationManager
+component ska_pst_stat_file_processor
+ska_pst_stat_file_processor -- "uses" FileProcessor
+
+@enduml
