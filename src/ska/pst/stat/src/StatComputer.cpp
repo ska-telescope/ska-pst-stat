@@ -28,16 +28,5 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <string>
-
-#ifndef SKA_PST_STAT_version_h
-#define SKA_PST_STAT_version_h
-
-namespace ska::pst::stat
-{
-  //! return the version string of the library in form major:minor:patch
-  std::string get_version_string();
-
-} // namespace ska::pst::stat
-
-#endif // SKA_PST_STAT_version_h
+#include "ska/pst/stat/StatComputer.h"
+#include "ska/pst/stat/StatStorage.h"
