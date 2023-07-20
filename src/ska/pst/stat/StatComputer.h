@@ -62,6 +62,10 @@ namespace ska::pst::stat {
       /**
        * @brief compute the statistics for block of data.
        *
+       * @param data_block a pointer to the start of the data block to compute statistics for.
+       * @param block_length the size, in bytes, of the data block to process.
+       * @param weights a pointer to the start of the weights block to use in computing statistics.
+       * @param weights_length the size, in bytes, of the weights to process.
        */
       void compute(char * data_block, size_t block_length, char * weights, size_t weights_length);
 

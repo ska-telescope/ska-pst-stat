@@ -63,6 +63,11 @@ namespace ska::pst::stat {
        * @brief process the current block of data and weights.
        *
        * This method will ensure that the statistics are computed and then published.
+       *
+       * @param data_block a pointer to the start of the data block to compute statistics for.
+       * @param block_length the size, in bytes, of the data block to process.
+       * @param weights a pointer to the start of the weights block to use in computing statistics.
+       * @param weights_length the size, in bytes, of the weights to process.
        */
       void process(char * data_block, size_t block_length, char * weights, size_t weights_length);
 
