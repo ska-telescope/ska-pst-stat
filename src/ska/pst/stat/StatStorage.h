@@ -62,7 +62,7 @@ namespace ska::pst::stat {
        *
        * @param config new configuration to apply to determine size of storage.
        */
-      void resize(ska::pst::common::AsciiHeader config);
+      void resize(const ska::pst::common::AsciiHeader& config);
 
       /**
        * @brief reset the the storage back to zeros.
@@ -78,7 +78,7 @@ namespace ska::pst::stat {
       /**
        * @brief the mean of the data for each polarisation and dimension, averaged over all channels.
        *
-       * First dimension is polarisation (2 dimenions)
+       * First dimension is polarisation (2 dimensions)
        * Second dimension is the real and imaginary components (I and Q).
        */
       std::vector<std::vector<float>> mean_frequency_avg;
@@ -87,7 +87,7 @@ namespace ska::pst::stat {
        * @brief the mean of the data for each polarisation and dimension, averaged over all channels,
        * expect those flagged for RFI.
        *
-       * First dimension is polarisation (2 dimenions)
+       * First dimension is polarisation (2 dimensions)
        * Second dimension is the real and imaginary components (I and Q).
        */
       std::vector<std::vector<float>> mean_frequency_avg_masked;
@@ -95,7 +95,7 @@ namespace ska::pst::stat {
       /**
        * @brief the variance of the data for each polarisation and dimension, averaged over all channel.
        *
-       * First dimension is polarisation (2 dimenions)
+       * First dimension is polarisation (2 dimensions)
        * Second dimension is the real and imaginary components (I and Q).
        */
       std::vector<std::vector<float>> variance_frequency_avg;
@@ -104,7 +104,7 @@ namespace ska::pst::stat {
        * @brief the variance of the data for each polarisation and dimension, averaged over all channels,
        * expect those flagged for RFI.
        *
-       * First dimension is polarisation (2 dimenions)
+       * First dimension is polarisation (2 dimensions)
        * Second dimension is the real and imaginary components (I and Q).
        */
       std::vector<std::vector<float>> variance_frequency_avg_masked;
@@ -112,7 +112,7 @@ namespace ska::pst::stat {
       /**
        * @brief the mean of the data for each polarisation, dimension and channel.
        *
-       * First dimension is polarisation (2 dimenions)
+       * First dimension is polarisation (2 dimensions)
        * Second dimension is the real and imaginary components (I and Q).
        * Third dimension is the value for each channel.
        */
@@ -121,7 +121,7 @@ namespace ska::pst::stat {
       /**
        * @brief the variance of the data for each polarisation, dimension and channel.
        *
-       * First dimension is polarisation (2 dimenions)
+       * First dimension is polarisation (2 dimensions)
        * Second dimension is the real and imaginary components (I and Q).
        * Third dimension is the value for each channel.
        */
@@ -132,7 +132,7 @@ namespace ska::pst::stat {
        *
        * This is real valued and computed as I^2 + Q^2.
        *
-       * First dimension is polarisation (2 dimenions)
+       * First dimension is polarisation (2 dimensions)
        * Second dimension is the value for the channel.
        */
       std::vector<std::vector<float>> mean_spectral_power;
@@ -140,7 +140,7 @@ namespace ska::pst::stat {
       /**
        * @brief maximum power spectra of the data for each polarisation and channel.
        *
-       * First dimension is polarisation (2 dimenions)
+       * First dimension is polarisation (2 dimensions)
        * Second dimension is the value for the channel.
        */
       std::vector<std::vector<float>> max_spectral_power;
@@ -149,7 +149,7 @@ namespace ska::pst::stat {
        * @brief histogram of the input data integer states for each polarisation and dimension,
        * averaged over all channels.
        *
-       * First dimension is polarisation (2 dimenions)
+       * First dimension is polarisation (2 dimensions)
        * Second dimension is the real and imaginary components (I and Q).
        * Third dimension is the binning data (i.e. the number in the bin)
        */
@@ -159,7 +159,7 @@ namespace ska::pst::stat {
        * @brief histogram of the input data integer states for each polarisation and dimension,
        * averaged over all channels, expect those flagged for RFI.
        *
-       * First dimension is polarisation (2 dimenions)
+       * First dimension is polarisation (2 dimensions)
        * Second dimension is the real and imaginary components (I and Q).
        * Third dimension is the binning data (i.e. the number in the bin)
        */
@@ -174,7 +174,7 @@ namespace ska::pst::stat {
       /**
        * @brief number of clipped input samples (maximum level) for each polarisation, dimension and channel.
        *
-       * First dimension is polarisation (2 dimenions)
+       * First dimension is polarisation (2 dimensions)
        * Second dimension is the real and imaginary components (I and Q).
        * Third dimension is the channel number.
        */
@@ -183,7 +183,7 @@ namespace ska::pst::stat {
       /**
        * @brief number of clipped input samples (maximum level) for each polarisation, dimension.
        *
-       * First dimension is polarisation (2 dimenions)
+       * First dimension is polarisation (2 dimensions)
        * Second dimension is the real and imaginary components (I and Q).
        */
       std::vector<std::vector<uint32_t>> num_clipped_samples;
@@ -206,7 +206,7 @@ namespace ska::pst::stat {
        * @brief spectrogram of the data for each polarisation, averaged a
        * configurable number of temporal and spectral bins (default ~1000).
        *
-       * First dimension is polarisation (2 dimenions)
+       * First dimension is polarisation (2 dimensions)
        * Second dimension is the frequency bins, this is expected to be ~1000.
        * Third dimension is the time dimension binned.
        */
@@ -216,7 +216,7 @@ namespace ska::pst::stat {
        * @brief time series of the data for each polarisation, rebinned in time
        * to ntime_bins, averaged over all frequency channels.
        *
-       * First dimension is polarisation (2 dimenions).
+       * First dimension is polarisation (2 dimensions).
        * Second dimension is the time dimension binned.
        * Third dimension has 3 values: the max, min and mean.
        */
@@ -226,7 +226,7 @@ namespace ska::pst::stat {
        * @brief time series of the data for each polarisation, re-binned in time
        * to ntime_bins, averaged over all frequency channels, expect those flagged by RFI.
        *
-       * First dimension is polarisation (2 dimenions).
+       * First dimension is polarisation (2 dimensions).
        * Second dimension is the time dimension binned.
        * Third dimension has 3 values: the max, min and mean.
        */
