@@ -50,6 +50,8 @@ namespace ska::pst:stat {
        * @brief Create instance of a File Processor object.
        *
        * @param config the configuration for the file processing job.
+       * @param data_file_path path to the data file to process.
+       * @param weights_file_path the path to the weights file for the data file.
        */
       FileProcessor(
         const ska::pst::common::AsciiHeader& config,
