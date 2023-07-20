@@ -28,15 +28,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "ska/pst/common/utils/AsciiHeader.h"
 #include <memory>
+
+#include "ska/pst/common/utils/AsciiHeader.h"
+#include "ska/pst/stat/StatStorage.h"
 
 #ifndef __SKA_PST_STAT_StatPublisher_h
 #define __SKA_PST_STAT_StatPublisher_h
 
-namespace ska {
-namespace pst {
-namespace stat {
+namespace ska::pst::stat {
 
   /**
    * @brief An abstract class providing an API to publish computed statistics.
@@ -51,7 +51,7 @@ namespace stat {
        * @param config the configuration current voltage data stream.
        * @param storage a shared pointer to the in memory storage of the computed statistics.
        */
-      StatPublisher(ska::pst::common::AsciiHeader config, std::shared_ptr<StatStorage> storage);
+      StatPublisher(const ska::pst::common::AsciiHeader& config, std::shared_ptr<StatStorage> storage);
 
       /**
        * @brief Destroy the Stat Publisher object.
@@ -73,7 +73,6 @@ namespace stat {
 
   }
 
-} // stat
-} // pst
-} // ska
+} // ska::pst::stat
+
 #endif __SKA_PST_STAT_StatPublisher_h

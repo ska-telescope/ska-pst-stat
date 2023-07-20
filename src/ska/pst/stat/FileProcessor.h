@@ -29,6 +29,7 @@
  */
 
 #include <memory>
+#include <string>
 
 #include "ska/pst/common/utils/AsciiHeader.h"
 #include "ska/pst/stat/StatProcessor.h"
@@ -36,9 +37,7 @@
 #ifndef __SKA_PST_STAT_FileProcessor_h
 #define __SKA_PST_STAT_FileProcessor_h
 
-namespace ska {
-namespace pst {
-namespace stat {
+namespace ska::pst:stat {
 
   /**
    * @brief Class used for processing input voltage data files to
@@ -52,7 +51,11 @@ namespace stat {
        *
        * @param config the configuration for the file processing job.
        */
-      FileProcessor(ska::pst::common::AsciiHeader config);
+      FileProcessor(
+        const ska::pst::common::AsciiHeader& config,
+        const std::string& data_file_path,
+        const std::string& weights_file_path
+      );
 
       /**
        * @brief Destroy the File Processor object.
@@ -76,7 +79,6 @@ namespace stat {
       FileReader reader;
   }
 
-} // stat
-} // pst
-} // ska
+} // ska::pst::stat
+
 #endif __SKA_PST_STAT_FileProcessor_h

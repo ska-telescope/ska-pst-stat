@@ -66,7 +66,8 @@ class StatStorage {
   + variance_frequency_avg_masked: std::vector<std::vector<float>>
   + mean_spectrum: std::vector<std::vector<std::vector<float>>>
   + variance_spectrum: std::vector<std::vector<std::vector<float>>>
-  + bandpass: std::vector<std::vector<float>>
+  + mean_spectral_power: std::vector<std::vector<float>>
+  + maximum_spectral_power: std::vector<std::vector<float>>
   + histogram_1d_freq_avg: std::vector<std::vector<std::vector<uint32_t>>>
   + histogram_1d_freq_avg_masked: std::vector<std::vector<std::vector<uint32_t>>>
   + rebinned_histogram_2d_freq_avg: std::vector<std::vector<std::vector<uint32_t>>>

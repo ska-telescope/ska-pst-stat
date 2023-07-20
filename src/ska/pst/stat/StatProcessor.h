@@ -28,15 +28,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "ska/pst/common/utils/AsciiHeader.h"
 #include <memory>
+
+#include "ska/pst/common/utils/AsciiHeader.h"
+#include "ska/pst/stat/StatStorage.h"
+#include "ska/pst/stat/StatComputer.h"
 
 #ifndef __SKA_PST_STAT_StatProcessor_h
 #define __SKA_PST_STAT_StatProcessor_h
 
-namespace ska {
-namespace pst {
-namespace stat {
+namespace ska::pst::stat {
 
   /**
    * @brief A class that does the core computation of statistics per block of data.
@@ -49,9 +50,8 @@ namespace stat {
        * @brief Create instance of a Stat Processor object.
        *
        * @param config the configuration current voltage data stream.
-       * @param storage a shared pointer to the in memory storage of the computed statistics.
        */
-      StatProcessor(ska::pst::common::AsciiHeader config, std::shared_ptr<StatStorage> storage);
+      StatProcessor(const ska::pst::common::AsciiHeader& config);
 
       /**
        * @brief Destroy the Stat Processor object.
@@ -60,9 +60,11 @@ namespace stat {
       virtual ~StatProcessor();
 
       /**
-       * @brief publish the current statistics to configured endpoint/location.
+       * @brief process the current block of data and weights.
+       *
+       * This method will ensure that the statistics are computed and then published.
        */
-      virtual void publish() = 0;
+      void process(char * data_block, size_t block_length, char * weights, size_t weights_length);
 
     protected:
       //! shared pointer a statistics storage, shared also with the computer and publisher
@@ -79,7 +81,6 @@ namespace stat {
 
   }
 
-} // stat
-} // pst
-} // ska
+} // ska::pst::stat
+
 #endif __SKA_PST_STAT_StatProcessor_h

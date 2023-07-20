@@ -28,16 +28,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <memory>
+#include <string>
+
 #include "ska/pst/common/utils/AsciiHeader.h"
 #include "ska/pst/stat/StatPublisher.h"
-#include <memory>
 
 #ifndef __SKA_PST_STAT_StatHdf5FileWriter_h
 #define __SKA_PST_STAT_StatHdf5FileWriter_h
 
-namespace ska {
-namespace pst {
-namespace stat {
+namespace ska::pst::stat {
 
   /**
    * @brief An implementation of the StatPublisher that dumps the data to a HDF5 file.
@@ -51,8 +51,13 @@ namespace stat {
        *
        * @param config the configuration current voltage data stream.
        * @param storage a shared pointer to the in memory storage of the computed statistics.
+       * @param file_path path of where to write data out to.
        */
-      StatHdf5FileWriter(ska::pst::common::AsciiHeader config, std::shared_ptr<StatStorage> storage);
+      StatHdf5FileWriter(
+        const ska::pst::common::AsciiHeader& config,
+        std::shared_ptr<StatStorage> storage,
+        const std::string& file_path
+      );
 
       /**
        * @brief Destroy the Stat HDF5 File Writer object.
@@ -67,7 +72,6 @@ namespace stat {
 
   }
 
-} // stat
-} // pst
-} // ska
+} // ska::pst::stat
+
 #endif __SKA_PST_STAT_StatHdf5FileWriter_h

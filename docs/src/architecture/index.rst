@@ -5,7 +5,7 @@ Classes
 -------
 
 The following diagram below shows the classes involved in the core software
-architecture of the SKA PST STATS.
+architecture of the SKA PST STAT component.
 
 .. uml:: class_diagram.puml
   :caption: Class diagram showing main classes involved
@@ -13,13 +13,13 @@ architecture of the SKA PST STATS.
 StatProcessor
 ^^^^^^^^^^^^^^
 
-This is the core class to handled the processing of voltage data. It has
+This is the core class to handle the processing of voltage data. It has
 been designed to work on data that is either coming from shared memory
 ring buffers during a scan or via memory mapped (mmap) files.
 
 Applications, such as *ska_pst_stat_core* or *ska_pst_stat_file_processor*,
-that want to perform statisical calculations should use this class directly
-rather than performing its own orchestration.
+that perform statistical calculations will use this class directly
+rather than performing their own orchestration.
 
 During instantiation, this class will create a StatStorage instance with
 the correct sizes based on configuration. It creates instances of
@@ -30,7 +30,7 @@ This is not threadsafe, calls to the *process* method should ensure that
 the calls to it are threadsafe.
 
 StatComputer
-^^^^^^^^^^^^^
+^^^^^^^^^^^^
 
 This class is the main class for performing the statisical computations.
 
@@ -42,9 +42,9 @@ TODO - document the stats computed
 StatHdf5FileWriter
 ^^^^^^^^^^^^^^^^^^
 
-A utility class used for writing out the computed statisitics to a file
-system. Instances of this that a shared *StatStorage* and the output
-path of where to write statisitics to.  Every call to *write* will
+A utility class used for writing out the computed statistics to a file
+system. Instances of this class are passed a shared *StatsStorage* and the output
+path of where to write statistics to.  Every call to *write* will
 serialise the *StatStorage* to a new HDF5 file.
 
 HDF5 was chosen given it is an open standard, rather than creating new
@@ -69,7 +69,7 @@ configuring the system and performing a scan.
 
 When the application is in a ScanConfigured state this class will have
 created an instance of the StatProcessor class which will be used during
-a scan to perform the actual calculation of the statisitics and writing
+a scan to perform the actual calculation of the statistics and writing
 the outputs to a file.
 
 
@@ -90,17 +90,17 @@ Processing of a block of data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. uml:: stats_processor_seq.puml
-  :caption: Sequence diagram for processing statisitics with the StatProcessor class, common to both StatApplicationManager and FileProcessor sequences
+  :caption: Sequence diagram for processing statistics with the StatProcessor class, common to both StatApplicationManager and FileProcessor sequences
 
 Processing data during a scan
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. uml:: application_manager_seq.puml
-  :caption: Sequence diagram for processing statisitics during a scan with the StatApplicationManager class
+  :caption: Sequence diagram for processing statistics during a scan with the StatApplicationManager class
 
 Processing files after a scan
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. uml:: file_proc_seq.puml
-  :caption: Sequence diagram for processing statisitics from a file using the FileProcessor class
+  :caption: Sequence diagram for processing statistics from a file using the FileProcessor class
 

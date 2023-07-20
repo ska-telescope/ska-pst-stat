@@ -36,9 +36,7 @@
 #ifndef __SKA_PST_STAT_StatApplicationManager_h
 #define __SKA_PST_STAT_StatApplicationManager_h
 
-namespace ska {
-namespace pst {
-namespace stat {
+namespace ska::pst::stat {
 
   /**
    * @brief Manager for running SKA PST STAT within a pipeline.
@@ -133,7 +131,6 @@ namespace stat {
       std::shared_ptr<DataBlockStats> weights_rb_view;
   }
 
-} // stat
-} // pst
-} // ska
+} // ska::pst::stat
+
 #endif __SKA_PST_STAT_StatApplicationManager_h

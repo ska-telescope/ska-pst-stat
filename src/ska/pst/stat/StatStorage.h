@@ -28,15 +28,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "ska/pst/common/utils/AsciiHeader.h"
 #include <vector>
+
+#include "ska/pst/common/utils/AsciiHeader.h"
 
 #ifndef __SKA_PST_STAT_StatStorage_h
 #define __SKA_PST_STAT_StatStorage_h
 
-namespace ska {
-namespace pst {
-namespace stat {
+namespace ska::pst::stat {
 
   /**
    * @brief A struct that has public field for the computer update and publisher to read from.
@@ -50,7 +49,7 @@ namespace stat {
        *
        * @param config the configuration current voltage data stream.
        */
-      StatStorage(ska::pst::common::AsciiHeader config);
+      StatStorage(const ska::pst::common::AsciiHeader& config);
 
       /**
        * @brief Destroy the Stat Storage object.
@@ -72,7 +71,12 @@ namespace stat {
       void reset();
 
       /**
-       * @brief the average mean frequency of the data across all channels.
+       * @brief the centre frequencies of each channel.
+       */
+      std::vector<float> channel_centre_frequencies;
+
+      /**
+       * @brief the mean of the data for each polarisation and dimension, averaged over all channels.
        *
        * First dimension is polarisation (2 dimenions)
        * Second dimension is the real and imaginary components (I and Q).
@@ -80,7 +84,8 @@ namespace stat {
       std::vector<std::vector<float>> mean_frequency_avg;
 
       /**
-       * @brief the average mean frequency of the data across all channels with RFI masking applied.
+       * @brief the mean of the data for each polarisation and dimension, averaged over all channels,
+       * expect those flagged for RFI.
        *
        * First dimension is polarisation (2 dimenions)
        * Second dimension is the real and imaginary components (I and Q).
@@ -88,7 +93,7 @@ namespace stat {
       std::vector<std::vector<float>> mean_frequency_avg_masked;
 
       /**
-       * @brief the average variance of the frequency of the data across all channels.
+       * @brief the variance of the data for each polarisation and dimension, averaged over all channel.
        *
        * First dimension is polarisation (2 dimenions)
        * Second dimension is the real and imaginary components (I and Q).
@@ -96,7 +101,8 @@ namespace stat {
       std::vector<std::vector<float>> variance_frequency_avg;
 
       /**
-       * @brief the average variance of the frequency of the data across all channels with RFI masking applied.
+       * @brief the variance of the data for each polarisation and dimension, averaged over all channels,
+       * expect those flagged for RFI.
        *
        * First dimension is polarisation (2 dimenions)
        * Second dimension is the real and imaginary components (I and Q).
@@ -104,7 +110,7 @@ namespace stat {
       std::vector<std::vector<float>> variance_frequency_avg_masked;
 
       /**
-       * @brief a spectrum of mean frequency of the data.
+       * @brief the mean of the data for each polarisation, dimension and channel.
        *
        * First dimension is polarisation (2 dimenions)
        * Second dimension is the real and imaginary components (I and Q).
@@ -113,7 +119,7 @@ namespace stat {
       std::vector<std::vector<std::vector<float>>> mean_spectrum;
 
       /**
-       * @brief a spectrum of variancy frequency of the data.
+       * @brief the variance of the data for each polarisation, dimension and channel.
        *
        * First dimension is polarisation (2 dimenions)
        * Second dimension is the real and imaginary components (I and Q).
@@ -122,17 +128,26 @@ namespace stat {
       std::vector<std::vector<std::vector<float>>> variance_spectrum;
 
       /**
-       * @brief the bandpass of the data.
+       * @brief mean power spectra of the data for each polarisation and channel.
        *
-       * This is real valued as is a power spectrum
+       * This is real valued and computed as I^2 + Q^2.
        *
        * First dimension is polarisation (2 dimenions)
        * Second dimension is the value for the channel.
        */
-      std::vector<std::vector<float>> bandpass;
+      std::vector<std::vector<float>> mean_spectral_power;
 
       /**
-       * @brief a 1D histrogram of frequency.
+       * @brief maximum power spectra of the data for each polarisation and channel.
+       *
+       * First dimension is polarisation (2 dimenions)
+       * Second dimension is the value for the channel.
+       */
+      std::vector<std::vector<float>> max_spectral_power;
+
+      /**
+       * @brief histogram of the input data integer states for each polarisation and dimension,
+       * averaged over all channels.
        *
        * First dimension is polarisation (2 dimenions)
        * Second dimension is the real and imaginary components (I and Q).
@@ -141,7 +156,8 @@ namespace stat {
       std::vector<std::vector<std::vector<uint32_t>>> histogram_1d_freq_avg;
 
       /**
-       * @brief a 1D histrogram of frequency with RFI masking applied.
+       * @brief histogram of the input data integer states for each polarisation and dimension,
+       * averaged over all channels, expect those flagged for RFI.
        *
        * First dimension is polarisation (2 dimenions)
        * Second dimension is the real and imaginary components (I and Q).
@@ -156,7 +172,7 @@ namespace stat {
       std::vector<std::vector<std::vector<uint32_t>>> rebinned_histogram_1d_freq_avg_masked;
 
       /**
-       * @brief the number of clipped samples per polarisation and dimension, per channel.
+       * @brief number of clipped input samples (maximum level) for each polarisation, dimension and channel.
        *
        * First dimension is polarisation (2 dimenions)
        * Second dimension is the real and imaginary components (I and Q).
@@ -165,7 +181,7 @@ namespace stat {
       std::vector<std::vector<std::vector<uint32_t>>> num_clipped_samples_spectrum;
 
       /**
-       * @brief the number of clipped samples per polarisation and dimension.
+       * @brief number of clipped input samples (maximum level) for each polarisation, dimension.
        *
        * First dimension is polarisation (2 dimenions)
        * Second dimension is the real and imaginary components (I and Q).
@@ -173,29 +189,46 @@ namespace stat {
       std::vector<std::vector<uint32_t>> num_clipped_samples;
 
       /**
-       * @brief a spectrogram of the data.
+       * @brief the timestamp offsets for each temporal bin.
+       *
+       * Each temporal bin used in timeseries, timeseries_masked and
+       * spectrogram reuse this vector.
+       */
+      std::vector<float> timeseries_bins;
+
+      /**
+       * @brief the frequncy bins used for the spectrogram attribute.
+       *
+       */
+      std::vector<float> frequnecy_bins;
+
+      /**
+       * @brief spectrogram of the data for each polarisation, averaged a
+       * configurable number of temporal and spectral bins (default ~1000).
        *
        * First dimension is polarisation (2 dimenions)
-       * Second dimension is the frequency bins, this is expecte to be ~1000.
+       * Second dimension is the frequency bins, this is expected to be ~1000.
        * Third dimension is the time dimension binned.
        */
       std::vector<std::vector<std::vector<float>>> spectrogram;
 
       /**
-       * @brief this is a time series of the data.
+       * @brief time series of the data for each polarisation, rebinned in time
+       * to ntime_bins, averaged over all frequency channels.
        *
        * First dimension is polarisation (2 dimenions).
        * Second dimension is the time dimension binned.
-       * Third dimension has 3 values: the max, min, and mean.
+       * Third dimension has 3 values: the max, min and mean.
        */
       std::vector<std::vector<std::vector<float>>> timeseries;
 
       /**
-       * @brief this is a time series of the data with RFI masking applied.
+       * @brief time series of the data for each polarisation, re-binned in time
+       * to ntime_bins, averaged over all frequency channels, expect those flagged by RFI.
        *
        * First dimension is polarisation (2 dimenions).
        * Second dimension is the time dimension binned.
-       * Third dimension has 3 values: the max, min, and mean.
+       * Third dimension has 3 values: the max, min and mean.
        */
       std::vector<std::vector<std::vector<float>>> timeseries_masked;
 
@@ -203,9 +236,16 @@ namespace stat {
       //! the configuration for the current stream of voltage data.
       ska::pst::common::AsciiHeader config;
 
+      //! lookup table of RFI masks for each channel, true value indicates channel is masked for RFI
+      std::vector<bool> rfi_mask_lut;
+
+      //! number of temporal bins in the timeseries, timeseries_masked and spectrogram attributes
+      uint32_t ntime_bins{0}; 
+
+      //! number of spectral bins in the spectrogram
+      uint32_t nfreq_bins{0}; 
   }
 
-} // stat
-} // pst
-} // ska
+} // ska::pst::stat
+
 #endif __SKA_PST_STAT_StatStorage_h

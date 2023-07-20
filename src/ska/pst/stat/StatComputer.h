@@ -28,15 +28,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "ska/pst/common/utils/AsciiHeader.h"
 #include <memory>
+
+#include "ska/pst/common/utils/AsciiHeader.h"
+#include "ska/pst/stat/StatStorage.h"
 
 #ifndef __SKA_PST_STAT_StatComputer_h
 #define __SKA_PST_STAT_StatComputer_h
 
-namespace ska {
-namespace pst {
-namespace stat {
+namespace ska::pst::stat {
 
   /**
    * @brief Class used for processing a stream of voltage data, including weights.
@@ -51,7 +51,7 @@ namespace stat {
        * @param config the configuration current voltage data stream.
        * @param storage a shared pointer to the in memory storage of the computed statistics.
        */
-      StatComputer(ska::pst::common::AsciiHeader config, std::shared_ptr<StatStorage> storage);
+      StatComputer(const ska::pst::common::AsciiHeader& config, std::shared_ptr<StatStorage> storage);
 
       /**
        * @brief Destroy the Stat Computer object.
@@ -59,6 +59,11 @@ namespace stat {
        */
       virtual ~StatComputer();
 
+      /**
+       * @brief compute the statistics for block of data.
+       *
+       */
+      void compute(char * data_block, size_t block_length, char * weights, size_t weights_length);
 
     private:
       //! shared pointer a statistics storage, shared between the processor and publisher
@@ -69,7 +74,6 @@ namespace stat {
 
   }
 
-} // stat
-} // pst
-} // ska
+} // ska::pst::stat
+
 #endif __SKA_PST_STAT_StatComputer_h
