@@ -78,7 +78,8 @@ doxygen_xml = '../' + output_dir + '/xml'
 extensions = [
     'breathe',
     'exhale',
-    'recommonmark'
+    'recommonmark',
+    'sphinxcontrib.plantuml',
 ]
 
 source_suffix = [".rst", '.md']
@@ -173,9 +174,10 @@ html_context = {
     'favicon': 'img/favicon.ico',
     'logo': 'img/logo.png',
     'theme_logo_only' : True,
-    'display_github': True, # Integrate GitHub
+    'display_gitlab': True, # Integrate GitLab
     'github_repo': 'ska-pst-stat', #Repository name
-    'github_version': 'master',  #Version
+    'gitlab_user': 'ska-telescope', #Repository name
+    'gitlab_version': 'main',  #Version
     'conf_py_path': '/docs/src/', # Path in the checkout to the docs root
 }
 
@@ -183,3 +185,12 @@ html_context = {
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+html_css_files = [
+    'css/custom.css',
+]
+
+## sphinxcontrib.plantuml
+plantuml_syntax_error_image = True
+
+plantuml = '/usr/bin/plantuml -Djava.awt.headless=true '

@@ -1,0 +1,28 @@
+@startuml PST STAT Processor
+actor Client
+Client -> StatProcessor: StatProcessor(config)
+activate StatProcessor
+activate StatComputer
+activate StatPublisher
+activate StatStorage
+StatProcessor -> StatStorage: create
+StatProcessor -> StatComputer: StatComputer(config, *storage)
+StatProcessor -> StatPublisher: StatPublisher(config, *storage)
+Client <-- StatProcessor
+loop while has data
+  Client -> StatProcessor: process(block_ptr, block_length, weights_ptr, weights_length)
+  StatProcessor -> StatStorage: reset()
+  StatProcessor -> StatComputer: process(block_ptr, block_length, weights_ptr, weights_length)
+  StatComputer --> StatStorage: updates
+  StatProcessor <-- StatComputer
+  StatProcessor -> StatPublisher: publish()
+  StatPublisher --> StatStorage: reads from
+  StatProcessor <-- StatPublisher
+  Client <-- StatProcessor
+end
+Client --> StatProcessor: drop
+deactivate StatProcessor
+deactivate StatComputer
+deactivate StatPublisher
+deactivate StatStorage
+@enduml
