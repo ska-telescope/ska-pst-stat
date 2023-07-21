@@ -13,6 +13,8 @@ ENV LD_LIBRARY_PATH=/usr/local/lib/
 COPY . /mnt/
 WORKDIR /mnt/
 
+RUN apt install -y libhdf5-dev
+
 RUN make local-cpp-clean-buildpath \
     && make local-cpp-build-release \
     && cd build && make install
