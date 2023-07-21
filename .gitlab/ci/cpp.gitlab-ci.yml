@@ -23,6 +23,7 @@
   extends: .common
   before_script:
     - *src_dir_ref_storage
+    - make local-apt-install-dependencies
   artifacts:
     paths:
       - build

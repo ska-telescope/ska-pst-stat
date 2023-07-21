@@ -33,39 +33,44 @@
 #include "ska/pst/common/utils/AsciiHeader.h"
 #include "ska/pst/stat/StatStorage.h"
 
-#ifndef __SKA_PST_STAT_StatPublisher_h
-#define __SKA_PST_STAT_StatPublisher_h
+#ifndef __SKA_PST_STAT_StatComputer_h
+#define __SKA_PST_STAT_StatComputer_h
 
 namespace ska::pst::stat {
 
   /**
-   * @brief An abstract class providing an API to publish computed statistics.
+   * @brief Class used for processing a stream of voltage data, including weights.
    *
    */
-  class StatPublisher
+  class StatComputer
   {
     public:
       /**
-       * @brief Create instance of a Stat Publisher object.
+       * @brief Create instance of a Stat Computer object.
        *
        * @param config the configuration current voltage data stream.
        * @param storage a shared pointer to the in memory storage of the computed statistics.
        */
-      StatPublisher(const ska::pst::common::AsciiHeader& config, std::shared_ptr<StatStorage> storage);
+      StatComputer(const ska::pst::common::AsciiHeader& config, std::shared_ptr<StatStorage> storage);
 
       /**
-       * @brief Destroy the Stat Publisher object.
+       * @brief Destroy the Stat Computer object.
        *
        */
-      virtual ~StatPublisher();
+      virtual ~StatComputer();
 
       /**
-       * @brief publish the current statistics to configured endpoint/location.
+       * @brief compute the statistics for block of data.
+       *
+       * @param data_block a pointer to the start of the data block to compute statistics for.
+       * @param block_length the size, in bytes, of the data block to process.
+       * @param weights a pointer to the start of the weights block to use in computing statistics.
+       * @param weights_length the size, in bytes, of the weights to process.
        */
-      virtual void publish() = 0;
+      void compute(char * data_block, size_t block_length, char * weights, size_t weights_length);
 
-    protected:
-      //! shared pointer a statistics storage, shared also with the stat process or computer
+    private:
+      //! shared pointer a statistics storage, shared between the processor and publisher
       std::shared_ptr<StatStorage> storage;
 
       //! the configuration for the current stream of voltage data.
@@ -75,4 +80,4 @@ namespace ska::pst::stat {
 
 } // ska::pst::stat
 
-#endif __SKA_PST_STAT_StatPublisher_h
+#endif __SKA_PST_STAT_StatComputer_h

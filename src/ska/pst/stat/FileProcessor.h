@@ -29,50 +29,58 @@
  */
 
 #include <memory>
+#include <string>
 
 #include "ska/pst/common/utils/AsciiHeader.h"
-#include "ska/pst/stat/StatStorage.h"
+#include "ska/pst/stat/StatProcessor.h"
 
-#ifndef __SKA_PST_STAT_StatPublisher_h
-#define __SKA_PST_STAT_StatPublisher_h
+#ifndef __SKA_PST_STAT_FileProcessor_h
+#define __SKA_PST_STAT_FileProcessor_h
 
-namespace ska::pst::stat {
+namespace ska::pst:stat {
 
   /**
-   * @brief An abstract class providing an API to publish computed statistics.
-   *
+   * @brief Class used for processing input voltage data files to
+   * calculate the output statistics.
    */
-  class StatPublisher
+  class FileProcessor
   {
     public:
       /**
-       * @brief Create instance of a Stat Publisher object.
+       * @brief Create instance of a File Processor object.
        *
-       * @param config the configuration current voltage data stream.
-       * @param storage a shared pointer to the in memory storage of the computed statistics.
+       * @param config the configuration for the file processing job.
+       * @param data_file_path path to the data file to process.
+       * @param weights_file_path the path to the weights file for the data file.
        */
-      StatPublisher(const ska::pst::common::AsciiHeader& config, std::shared_ptr<StatStorage> storage);
+      FileProcessor(
+        const ska::pst::common::AsciiHeader& config,
+        const std::string& data_file_path,
+        const std::string& weights_file_path
+      );
 
       /**
-       * @brief Destroy the Stat Publisher object.
+       * @brief Destroy the File Processor object.
        *
        */
-      virtual ~StatPublisher();
+      virtual ~FileProcessor();
 
       /**
-       * @brief publish the current statistics to configured endpoint/location.
+       * @brief Process the file based on the configuration passed in the constructor.
        */
-      virtual void publish() = 0;
+      void process();
 
-    protected:
-      //! shared pointer a statistics storage, shared also with the stat process or computer
-      std::shared_ptr<StatStorage> storage;
+    private:
+      //! shared pointer a statistics processor
+      std::shared_ptr<StatProcessor> processor;
 
-      //! the configuration for the current stream of voltage data.
+      //! the configuration for the current file processing
       ska::pst::common::AsciiHeader config;
 
+      //! the file reader that us used to mmap the data and weights files
+      FileReader reader;
   }
 
 } // ska::pst::stat
 
-#endif __SKA_PST_STAT_StatPublisher_h
+#endif __SKA_PST_STAT_FileProcessor_h

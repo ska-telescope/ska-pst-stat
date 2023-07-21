@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Square Kilometre Array Observatory
+ * Copyright 2023 Square Kilometre Array Observatory
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -28,65 +28,50 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <cstddef>
-#include <filesystem>
-#include <mutex>
-#include <inttypes.h>
+#include <memory>
+#include <string>
 
 #include "ska/pst/common/utils/AsciiHeader.h"
-#include "ska/pst/common/utils/ValidationContext.h"
 #include "ska/pst/stat/StatPublisher.h"
 
-
-#ifndef SKA_PST_STAT_StatHdf5FileWriter_h
-#define SKA_PST_STAT_StatHdf5FileWriter_h
+#ifndef __SKA_PST_STAT_StatHdf5FileWriter_h
+#define __SKA_PST_STAT_StatHdf5FileWriter_h
 
 namespace ska::pst::stat {
 
   /**
-   * @brief The Stream Writer class adheres to the StateModel and provides the functionality
-   * to write a data stream from a Shared Memory Ring Buffer to a series of files that are
-   * stored on disk. It makes use of a DiskMonitor instance to record the data writing performance.
+   * @brief An implementation of the StatPublisher that dumps the data to a HDF5 file.
    *
    */
-  class StatHdf5FileWriter : public ska::pst::stat::StatPublisher {
-
+  class StatHdf5FileWriter : public StatPublisher
+  {
     public:
+      /**
+       * @brief Create instance of a Stat HDF5 File Writer object.
+       *
+       * @param config the configuration current voltage data stream.
+       * @param storage a shared pointer to the in memory storage of the computed statistics.
+       * @param file_path path of where to write data out to.
+       */
+      StatHdf5FileWriter(
+        const ska::pst::common::AsciiHeader& config,
+        std::shared_ptr<StatStorage> storage,
+        const std::string& file_path
+      );
 
       /**
-       * @brief Construct a new StatHdf5FileWriter object
+       * @brief Destroy the Stat HDF5 File Writer object.
        *
        */
-      StatHdf5FileWriter();
+      virtual ~StatHdf5FileWriter();
 
       /**
-       * @brief Destroy the StatHdf5FileWriter object
-       *
-       */
-      ~StatHdf5FileWriter();
-
-      /**
-       * @brief 
-       * 
+       * @brief publish the computed statistics as a HDF5 file.
        */
       void publish() override;
 
-      /**
-       * @brief Set the path object
-       * 
-       * @param new_path 
-       */
-      void set_path(std::string new_path) { stat_path = std::filesystem::path(new_path); };
+  }
 
-    private:
-      /**
-       * @brief path object that indecates the location of the HDF5 file
-       * 
-       */
-      std::filesystem::path stat_path = std::filesystem::path("/tmp");
+} // ska::pst::stat
 
-  };
-
-} // namespace ska::pst::stat
-
-#endif // SKA_PST_STAT_StatHdf5FileWriter_h
+#endif __SKA_PST_STAT_StatHdf5FileWriter_h

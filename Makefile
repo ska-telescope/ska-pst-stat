@@ -42,3 +42,7 @@ docs-pre-build:
 	pip3 install -r docs/requirements.txt
 
 _VENV=.venv
+
+local-apt-install-dependencies:
+	apt-get update -y
+	apt-get install -y $(cat dependencies/apt.txt)

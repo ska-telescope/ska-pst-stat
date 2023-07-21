@@ -28,51 +28,68 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <memory>
+#include <string>
 
 #include "ska/pst/common/utils/AsciiHeader.h"
-#include "ska/pst/stat/StatStorage.h"
 
-#ifndef __SKA_PST_STAT_StatPublisher_h
-#define __SKA_PST_STAT_StatPublisher_h
+#ifndef __SKA_PST_STAT_FileReader_h
+#define __SKA_PST_STAT_FileReader_h
 
 namespace ska::pst::stat {
 
+  typedef struct file_block {
+    //! pointer to the next block data to process
+    char* data_block;
+
+    //! the length, in bytes, of data to process
+    size_t block_length;
+
+    //! pointer to the next block of weights to process
+    char* weights;
+
+    //! the length, in bytes, of the weights to process
+    size_t weights_length;
+  } file_block_t;
+
   /**
-   * @brief An abstract class providing an API to publish computed statistics.
+   * @brief Class used for reading block of voltage from a file along with
+   * its weights.
    *
+   * This reader uses a memory mapped (mmap) to read and seek to the next
+   * appropriate block.
    */
-  class StatPublisher
+  class FileReader
   {
     public:
       /**
-       * @brief Create instance of a Stat Publisher object.
+       * @brief Create instance of a File Reader object.
        *
-       * @param config the configuration current voltage data stream.
-       * @param storage a shared pointer to the in memory storage of the computed statistics.
+       * @param config the configuration for the file processing job.
+       * @param data_file_path path to the data file to process.
+       * @param weights_file_path the path to the weights file for the data file.
        */
-      StatPublisher(const ska::pst::common::AsciiHeader& config, std::shared_ptr<StatStorage> storage);
+      FileReader(
+        const ska::pst::common::AsciiHeader& config,
+        const std::string& data_file_path,
+        const std::string& weights_file_path
+      );
 
       /**
-       * @brief Destroy the Stat Publisher object.
+       * @brief Destroy the File Reader object.
        *
        */
-      virtual ~StatPublisher();
+      virtual ~FileReader();
 
       /**
-       * @brief publish the current statistics to configured endpoint/location.
+       * @brief Get the next block of data and weights.
+       *
+       * This returns a struct that contains the pointer to the next block of data
+       * and weights.  It also includes the length, in bytes, that for both data
+       * and weights. Clients of this must not go beyond the length of data.
        */
-      virtual void publish() = 0;
-
-    protected:
-      //! shared pointer a statistics storage, shared also with the stat process or computer
-      std::shared_ptr<StatStorage> storage;
-
-      //! the configuration for the current stream of voltage data.
-      ska::pst::common::AsciiHeader config;
-
+      auto next_block() -> file_block_t;
   }
 
 } // ska::pst::stat
 
-#endif __SKA_PST_STAT_StatPublisher_h
+#endif __SKA_PST_STAT_FileReader_h
