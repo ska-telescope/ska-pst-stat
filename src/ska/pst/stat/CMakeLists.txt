@@ -7,6 +7,7 @@ configure_file(config.h.in config.h)
 set(public_headers
   version.h
   ${CMAKE_CURRENT_BINARY_DIR}/config.h
+  StatStorage.h
   StatPublisher.h
   StatHdf5FileWriter.h
 )

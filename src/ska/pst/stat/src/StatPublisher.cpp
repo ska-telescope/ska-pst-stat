@@ -39,7 +39,10 @@
 #include <vector>
 #include <H5Cpp.h>
 
-ska::pst::stat::StatPublisher::StatPublisher()
+ska::pst::stat::StatPublisher::StatPublisher(
+  const ska::pst::common::AsciiHeader& config,
+  std::shared_ptr<StatStorage> storage
+)
 {
   SPDLOG_DEBUG("ska::pst::stat::StatPublisher::StatPublisher");
 }

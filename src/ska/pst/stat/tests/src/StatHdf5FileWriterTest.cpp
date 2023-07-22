@@ -64,7 +64,7 @@ void StatHdf5FileWriterTest::TearDown()
 
 TEST_F(StatHdf5FileWriterTest, test_construct_delete) // NOLINT
 {
-  std::shared_ptr<StatHdf5FileWriter> sfw = std::make_shared<StatHdf5FileWriter>();
+  // std::shared_ptr<StatHdf5FileWriter> sfw = std::make_shared<StatHdf5FileWriter>();
 }
 
 TEST_F(StatHdf5FileWriterTest, test_hdf5_api) // NOLINT

@@ -244,8 +244,8 @@ namespace ska::pst::stat {
 
       //! number of spectral bins in the spectrogram
       uint32_t nfreq_bins{0}; 
-  }
+  };
 
 } // ska::pst::stat
 
-#endif __SKA_PST_STAT_StatStorage_h
+#endif

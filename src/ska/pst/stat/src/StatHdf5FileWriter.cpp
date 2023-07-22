@@ -39,7 +39,11 @@
 #include <vector>
 #include <H5Cpp.h>
 
-ska::pst::stat::StatHdf5FileWriter::StatHdf5FileWriter()
+ska::pst::stat::StatHdf5FileWriter::StatHdf5FileWriter(
+  const ska::pst::common::AsciiHeader& config,
+  std::shared_ptr<StatStorage> storage,
+  const std::string& file_path
+) : StatPublisher(config, storage)
 {
   SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::StatHdf5FileWriter");
 }

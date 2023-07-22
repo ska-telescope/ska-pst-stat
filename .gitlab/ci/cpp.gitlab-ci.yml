@@ -23,7 +23,8 @@
   extends: .common
   before_script:
     - *src_dir_ref_storage
-    - make local-apt-install-dependencies
+    - apt-get update -y 
+    - apt-get install -y $(cat dependencies/apt.txt)
   artifacts:
     paths:
       - build
@@ -32,6 +33,8 @@
   extends: .common
   before_script:
     - *src_dir_ref_replacement
+    - apt-get update -y 
+    - apt-get install -y $(cat dependencies/apt.txt)
 
 .common.lint:
   extends: .common.artifact-retriever
