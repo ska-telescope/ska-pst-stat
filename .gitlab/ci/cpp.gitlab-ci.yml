@@ -18,14 +18,13 @@
 .common:
   image: $GITLAB_OCI_SMRB_REGISTRY/$PST_SMRB_OCI_BUILDER:$PST_SMRB_OCI_COMMON_TAG
   tags: [k8srunner]
-  before_script:
-    - apt-get update -y 
-    - apt-get install -y $(cat dependencies/apt.txt)
 
 .common.artifact-builder:
   extends: .common
   before_script:
     - *src_dir_ref_storage
+    - apt-get update -y 
+    - apt-get install -y $(cat dependencies/apt.txt)
   artifacts:
     paths:
       - build
@@ -96,6 +95,8 @@ test_debug_build:
   stage: test
   needs: ["build_debug"]
   before_script:
+    - apt-get update -y 
+    - apt-get install -y $(cat dependencies/apt.txt)
     - make local-cpp-test-ctest
   script:
     - *src_dir_ref_storage
@@ -116,6 +117,8 @@ test_memcheck:
   stage: test
   needs: ["build_debug"]
   script:
+    - apt-get update -y 
+    - apt-get install -y $(cat dependencies/apt.txt)
     - make local-cpp-test-ctest-memcheck
   artifacts:
     paths:
