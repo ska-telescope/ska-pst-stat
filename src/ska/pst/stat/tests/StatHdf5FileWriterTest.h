@@ -40,6 +40,27 @@ namespace pst {
 namespace stat {
 namespace test {
 
+struct DatasetElement {
+    int EXECUTION_BLOCK_ID;
+    int SCAN_ID;
+    int BEAM_ID;
+    double T_MIN_MJD;
+    double T_MAX_MJD;
+    double TIME_OFFSET_SECONDS;
+    int NDAT;
+    double FREQ_MHZ;
+    int START_CHAN;
+    double BW_MHZ;
+    int NPOL;
+    int NDIM;
+    int NCHAN_input;
+    int NCHAN_DS;
+    int NDAT_DS;
+    int NBIN_HIST;
+    int NBIN_HIST2D;
+    double CHAN_FREQ_MHZ;
+};
+
 /**
  * @brief Test the StatHdf5FileWriter class
  *
