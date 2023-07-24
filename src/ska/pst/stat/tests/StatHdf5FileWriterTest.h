@@ -28,51 +28,58 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <memory>
 
-#include "ska/pst/common/utils/AsciiHeader.h"
-#include "ska/pst/stat/StatStorage.h"
+#include <gtest/gtest.h>
+#include "ska/pst/stat/StatHdf5FileWriter.h"
 
-#ifndef __SKA_PST_STAT_StatPublisher_h
-#define __SKA_PST_STAT_StatPublisher_h
+#ifndef SKA_PST_STAT_TESTS_StatHdf5FileWriterTest_h
+#define SKA_PST_STAT_TESTS_StatHdf5FileWriterTest_h
 
-namespace ska::pst::stat {
+namespace ska::pst::stat::test {
 
-  /**
-   * @brief An abstract class providing an API to publish computed statistics.
-   *
-   */
-  class StatPublisher
-  {
-    public:
-      /**
-       * @brief Create instance of a Stat Publisher object.
-       *
-       * @param config the configuration current voltage data stream.
-       * @param storage a shared pointer to the in memory storage of the computed statistics.
-       */
-      StatPublisher(const ska::pst::common::AsciiHeader& config, std::shared_ptr<StatStorage> storage);
+struct DatasetElement { // NOLINTBEGIN
+    int EXECUTION_BLOCK_ID;
+    int SCAN_ID;
+    int BEAM_ID;
+    double T_MIN_MJD;
+    double T_MAX_MJD;
+    double TIME_OFFSET_SECONDS;
+    int NDAT;
+    double FREQ_MHZ;
+    int START_CHAN;
+    double BW_MHZ;
+    int NPOL;
+    int NDIM;
+    int NCHAN_input;
+    int NCHAN_DS;
+    int NDAT_DS;
+    int NBIN_HIST;
+    int NBIN_HIST2D;
+    double CHAN_FREQ_MHZ;
+}; // NOLINTEND
 
-      /**
-       * @brief Destroy the Stat Publisher object.
-       *
-       */
-      virtual ~StatPublisher();
-
-      /**
-       * @brief publish the current statistics to configured endpoint/location.
-       */
-      virtual void publish() = 0;
-
+/**
+ * @brief Test the StatHdf5FileWriter class
+ *
+ * @details
+ *
+ */
+class StatHdf5FileWriterTest : public ::testing::Test
+{
     protected:
-      //! shared pointer a statistics storage, shared also with the stat process or computer
-      std::shared_ptr<StatStorage> storage;
+      void SetUp() override;
 
-      //! the configuration for the current stream of voltage data.
-      ska::pst::common::AsciiHeader config;
+      void TearDown() override;
 
-  };
+    public:
+        StatHdf5FileWriterTest();
 
-} // namespace ska::pst::stat
+        ~StatHdf5FileWriterTest() = default;
 
-#endif // __SKA_PST_STAT_StatPublisher_h
+    private:
+
+};
+
+} // namespace ska::pst::stat::test
+
+#endif // SKA_PST_STAT_TESTS_StatHdf5FileWriterTest_h

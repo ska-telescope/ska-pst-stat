@@ -1,0 +1,7 @@
+// the configured options and settings for SkaPstStat
+#define SkaPstStat_VERSION_MAJOR @SkaPstStat_VERSION_MAJOR@
+#define SkaPstStat_VERSION_MINOR @SkaPstStat_VERSION_MINOR@
+#define SkaPstStat_VERSION_PATCH @SkaPstStat_VERSION_PATCH@
+
+// define if Protobuf, gRPC and the SKA-PST-LMC Protobuf bindings are present
+#cmakedefine HAVE_PROTOBUF_gRPC_SKAPSTLMC

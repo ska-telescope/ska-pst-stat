@@ -70,8 +70,8 @@ namespace ska::pst::stat {
        */
       void publish() override;
 
-  }
+  };
 
-} // ska::pst::stat
+} // namespace ska::pst::stat
 
-#endif __SKA_PST_STAT_StatHdf5FileWriter_h
+#endif // __SKA_PST_STAT_StatHdf5FileWriter_h

@@ -30,8 +30,7 @@ SMRB_RUNTIME_IMAGE			?=${PST_SMRB_OCI_REGISTRY}/ska-pst-smrb
 STAT_BUILDER_IMAGE			?=${PST_SMRB_OCI_REGISTRY}/ska-pst-smrb-builder
 STAT_RUNTIME_IMAGE			?=ubuntu:22.04
 PST_SMRB_OCI_COMMON_TAG		?=${DEV_TAG}
-OCI_BUILD_ADDITIONAL_ARGS	?=--build-arg SMRB_RUNTIME_IMAGE=${SMRB_RUNTIME_IMAGE}:${PST_SMRB_OCI_COMMON_TAG} --build-arg STAT_BUILDER_IMAGE=${STAT_BUILDER_IMAGE}:${PST_SMRB_OCI_COMMON_TAG} --build-arg STAT_RUNTIME_IMAGE=${STAT_RUNTIME_IMAGE}
-PIV_COMMAND					=/opt/bin/HelloWorld
+OCI_BUILD_ADDITIONAL_ARGS	:=--build-arg SMRB_RUNTIME_IMAGE=${SMRB_RUNTIME_IMAGE}:${PST_SMRB_OCI_COMMON_TAG} --build-arg STAT_BUILDER_IMAGE=${STAT_BUILDER_IMAGE}:${PST_SMRB_OCI_COMMON_TAG} --build-arg STAT_RUNTIME_IMAGE=${STAT_RUNTIME_IMAGE}
 
 # Extend pipeline machinery targets
 .PHONY: docs-pre-build
@@ -42,3 +41,7 @@ docs-pre-build:
 	pip3 install -r docs/requirements.txt
 
 _VENV=.venv
+
+local-apt-install-dependencies:
+	apt-get update -y
+	apt-get install -y `cat dependencies/apt.txt`

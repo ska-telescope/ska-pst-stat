@@ -3,18 +3,18 @@
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *
+ * 
  * 1. Redistributions of source code must retain the above copyright notice,
  * this list of conditions and the following disclaimer.
- *
+ * 
  * 2. Redistributions in binary form must reproduce the above copyright
  * notice, this list of conditions and the following disclaimer in the
  * documentation and/or other materials provided with the distribution.
- *
+ * 
  * 3. Neither the name of the copyright holder nor the names of its
  * contributors may be used to endorse or promote products derived from this
  * software without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,51 +28,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <memory>
+#include <sstream>
+#include <string>
 
-#include "ska/pst/common/utils/AsciiHeader.h"
-#include "ska/pst/stat/StatStorage.h"
+#include "ska/pst/stat/version.h"
+#include "ska/pst/stat/config.h"
 
-#ifndef __SKA_PST_STAT_StatPublisher_h
-#define __SKA_PST_STAT_StatPublisher_h
-
-namespace ska::pst::stat {
-
-  /**
-   * @brief An abstract class providing an API to publish computed statistics.
-   *
-   */
-  class StatPublisher
-  {
-    public:
-      /**
-       * @brief Create instance of a Stat Publisher object.
-       *
-       * @param config the configuration current voltage data stream.
-       * @param storage a shared pointer to the in memory storage of the computed statistics.
-       */
-      StatPublisher(const ska::pst::common::AsciiHeader& config, std::shared_ptr<StatStorage> storage);
-
-      /**
-       * @brief Destroy the Stat Publisher object.
-       *
-       */
-      virtual ~StatPublisher();
-
-      /**
-       * @brief publish the current statistics to configured endpoint/location.
-       */
-      virtual void publish() = 0;
-
-    protected:
-      //! shared pointer a statistics storage, shared also with the stat process or computer
-      std::shared_ptr<StatStorage> storage;
-
-      //! the configuration for the current stream of voltage data.
-      ska::pst::common::AsciiHeader config;
-
-  };
-
-} // namespace ska::pst::stat
-
-#endif // __SKA_PST_STAT_StatPublisher_h
+auto ska::pst::stat::get_version_string() -> std::string
+{
+  std::stringstream ss;
+  ss << SkaPstStat_VERSION_MAJOR << ":"
+     << SkaPstStat_VERSION_MINOR << ":"
+     << SkaPstStat_VERSION_PATCH << std::endl;
+  return ss.str();
+}

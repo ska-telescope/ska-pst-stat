@@ -27,52 +27,33 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <cstdlib>
+#include <cstring>
+#include <H5Cpp.h>
+#include <iostream>
+#include <spdlog/spdlog.h>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
-#include <memory>
+#include "ska/pst/stat/StatHdf5FileWriter.h"
 
-#include "ska/pst/common/utils/AsciiHeader.h"
-#include "ska/pst/stat/StatStorage.h"
 
-#ifndef __SKA_PST_STAT_StatPublisher_h
-#define __SKA_PST_STAT_StatPublisher_h
+ska::pst::stat::StatHdf5FileWriter::StatHdf5FileWriter(
+  const ska::pst::common::AsciiHeader& config,
+  std::shared_ptr<StatStorage> storage,
+  const std::string& file_path
+) : StatPublisher(config, storage)
+{
+  SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::StatHdf5FileWriter");
+}
 
-namespace ska::pst::stat {
+ska::pst::stat::StatHdf5FileWriter::~StatHdf5FileWriter()
+{
+  SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::~StatHdf5FileWriter()");
+}
 
-  /**
-   * @brief An abstract class providing an API to publish computed statistics.
-   *
-   */
-  class StatPublisher
-  {
-    public:
-      /**
-       * @brief Create instance of a Stat Publisher object.
-       *
-       * @param config the configuration current voltage data stream.
-       * @param storage a shared pointer to the in memory storage of the computed statistics.
-       */
-      StatPublisher(const ska::pst::common::AsciiHeader& config, std::shared_ptr<StatStorage> storage);
-
-      /**
-       * @brief Destroy the Stat Publisher object.
-       *
-       */
-      virtual ~StatPublisher();
-
-      /**
-       * @brief publish the current statistics to configured endpoint/location.
-       */
-      virtual void publish() = 0;
-
-    protected:
-      //! shared pointer a statistics storage, shared also with the stat process or computer
-      std::shared_ptr<StatStorage> storage;
-
-      //! the configuration for the current stream of voltage data.
-      ska::pst::common::AsciiHeader config;
-
-  };
-
-} // namespace ska::pst::stat
-
-#endif // __SKA_PST_STAT_StatPublisher_h
+void ska::pst::stat::StatHdf5FileWriter::publish()
+{
+  SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::publish()");
+}

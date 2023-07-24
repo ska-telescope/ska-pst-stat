@@ -13,6 +13,9 @@ ENV LD_LIBRARY_PATH=/usr/local/lib/
 COPY . /mnt/
 WORKDIR /mnt/
 
+RUN apt update -y \
+    && make local-apt-install-dependencies
+
 RUN make local-cpp-clean-buildpath \
     && make local-cpp-build-release \
     && cd build && make install

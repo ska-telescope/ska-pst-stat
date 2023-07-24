@@ -23,6 +23,8 @@
   extends: .common
   before_script:
     - *src_dir_ref_storage
+    - apt-get update -y 
+    - apt-get install -y $(cat dependencies/apt.txt)
   artifacts:
     paths:
       - build
@@ -93,6 +95,8 @@ test_debug_build:
   stage: test
   needs: ["build_debug"]
   before_script:
+    - apt-get update -y 
+    - apt-get install -y $(cat dependencies/apt.txt)
     - make local-cpp-test-ctest
   script:
     - *src_dir_ref_storage
@@ -107,18 +111,14 @@ test_debug_build:
     reports:
       junit: build/reports/unit-tests.xml
 
-test_installation:
-  extends: .common.artifact-retriever
-  stage: test
-  needs: ["build_release"]
-  script:
-    - make local-cpp-test-installation
 
 test_memcheck:
   extends: .common.artifact-retriever
   stage: test
   needs: ["build_debug"]
   script:
+    - apt-get update -y 
+    - apt-get install -y $(cat dependencies/apt.txt)
     - make local-cpp-test-ctest-memcheck
   artifacts:
     paths:

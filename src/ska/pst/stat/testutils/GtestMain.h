@@ -28,51 +28,34 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <memory>
+#ifndef SKA_PST_STAT_TESTUTILS_GtestMain_h
+#define SKA_PST_STAT_TESTUTILS_GtestMain_h
 
-#include "ska/pst/common/utils/AsciiHeader.h"
-#include "ska/pst/stat/StatStorage.h"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wall"
+#include <gtest/gtest.h>
+#pragma GCC diagnostic pop
+#include <string>
 
-#ifndef __SKA_PST_STAT_StatPublisher_h
-#define __SKA_PST_STAT_StatPublisher_h
+namespace ska::pst::stat::test {
 
-namespace ska::pst::stat {
+/*
+ * @brief the data directory to find test data files
+ */
+std::string& test_data_dir();
 
-  /**
-   * @brief An abstract class providing an API to publish computed statistics.
-   *
-   */
-  class StatPublisher
-  {
-    public:
-      /**
-       * @brief Create instance of a Stat Publisher object.
-       *
-       * @param config the configuration current voltage data stream.
-       * @param storage a shared pointer to the in memory storage of the computed statistics.
-       */
-      StatPublisher(const ska::pst::common::AsciiHeader& config, std::shared_ptr<StatStorage> storage);
+/*
+ * @brief return the filename with the test_data_dir prepended
+ */
+std::string test_data_file(std::string const& filename);
 
-      /**
-       * @brief Destroy the Stat Publisher object.
-       *
-       */
-      virtual ~StatPublisher();
+/**
+ * @brief
+ *    Executable funtion to launch gtests
+ */
+int gtest_main(int argc, char** argv);
 
-      /**
-       * @brief publish the current statistics to configured endpoint/location.
-       */
-      virtual void publish() = 0;
+} // namespace ska::pst::stat::test
 
-    protected:
-      //! shared pointer a statistics storage, shared also with the stat process or computer
-      std::shared_ptr<StatStorage> storage;
+#endif // SKA_PST_STAT_TESTUTILS_GtestMain_h
 
-      //! the configuration for the current stream of voltage data.
-      ska::pst::common::AsciiHeader config;
-
-  };
-
-} // namespace ska::pst::stat
-
-#endif // __SKA_PST_STAT_StatPublisher_h
