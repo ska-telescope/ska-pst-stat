@@ -14,5 +14,3 @@ target_include_directories(ska-pst-stat-testutils
 target_link_libraries(ska-pst-stat-testutils GTest::gtest_main spdlog::spdlog)
 
 include_directories(..)
-
-#install(FILES GtestMain.hpp)
