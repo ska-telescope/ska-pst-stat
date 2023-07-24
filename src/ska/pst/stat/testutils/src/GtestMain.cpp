@@ -52,57 +52,56 @@ auto test_data_file(std::string const& filename) -> std::string
 
 auto gtest_main(int argc, char** argv) -> int
 {
-    // will process gtest options and pass on the rest
-    ska::pst::common::setup_spdlog();
+  // will process gtest options and pass on the rest
+  ska::pst::common::setup_spdlog();
 
-    testing::InitGoogleTest(&argc, argv);
-    // process extra command line options;
-    for (int i=0; i < argc; i++)
+  testing::InitGoogleTest(&argc, argv);
+  // process extra command line options;
+  for (int i=0; i < argc; i++)
+  {
+    std::string const arg(argv[i]); // NOLINT
+    if (arg == "--test_data")
     {
-        std::string const arg(argv[i]); // NOLINT
-        if (arg == "--test_data")
+        if(++i < argc)
         {
-            if(++i < argc)
-            {
-                std::string const val(argv[i]); //NOLINT
-                test_data_dir() = val;
-            }
-        }
-        if (arg == "--debug")
-        {
-            if (spdlog::get_level() != spdlog::level::trace)
-            {
-                spdlog::set_level(spdlog::level::debug);
-            }
-        }
-        if (arg == "--trace")
-        {
-            spdlog::set_level(spdlog::level::trace);
+            std::string const val(argv[i]); //NOLINT
+            test_data_dir() = val;
         }
     }
-
-    return RUN_ALL_TESTS();
+    if (arg == "--debug")
+    {
+        if (spdlog::get_level() != spdlog::level::trace)
+        {
+            spdlog::set_level(spdlog::level::debug);
+        }
+    }
+    if (arg == "--trace")
+    {
+        spdlog::set_level(spdlog::level::trace);
+    }
+  }
+  return RUN_ALL_TESTS();
 }
 
 auto get_shared_memory_bytes_used() -> uint32_t
 {
-    std::ostringstream cmd_stream;
-    uint32_t pid = getpid();
-    uint32_t bytes_used{0};
+  std::ostringstream cmd_stream;
+  uint32_t pid = getpid();
+  uint32_t bytes_used{0};
 
-    std::string filename = "/tmp/sysvipc_sum.txt";
+  std::string filename = "/tmp/sysvipc_sum.txt";
 
-    // this command parses /proc/sysvipc/shm for the current process ID and sums all the shared memory allocated
-    cmd_stream << "awk '$5==" << pid << "' /proc/sysvipc/shm | awk '{sum += $4} END {print sum}' > " << filename;
+  // this command parses /proc/sysvipc/shm for the current process ID and sums all the shared memory allocated
+  cmd_stream << "awk '$5==" << pid << "' /proc/sysvipc/shm | awk '{sum += $4} END {print sum}' > " << filename;
 
-    std::string cmd = cmd_stream.str();
-    std::system(cmd.c_str());
+  std::string cmd = cmd_stream.str();
+  std::system(cmd.c_str());
 
-    std::ifstream file;
-    file.open(filename);
-    file >> bytes_used;
-    file.close();
-    return bytes_used;
+  std::ifstream file;
+  file.open(filename);
+  file >> bytes_used;
+  file.close();
+  return bytes_used;
 }
 
 } // namespace ska::pst::stat::test
