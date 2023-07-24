@@ -78,7 +78,7 @@ TEST_F(StatHdf5FileWriterTest, test_hdf5_api) // NOLINT
 
   // Define the dataset dimensions
   const int rank = 1;
-  hsize_t dims[rank] = {1};
+  std::array<hsize_t, rank> dims = {1};
 
   // Create a compound datatype for the schema
   H5::CompType datatype(sizeof(DatasetElement));
@@ -102,11 +102,11 @@ TEST_F(StatHdf5FileWriterTest, test_hdf5_api) // NOLINT
   datatype.insertMember("CHAN_FREQ_MHZ", HOFFSET(DatasetElement, CHAN_FREQ_MHZ), H5::PredType::NATIVE_DOUBLE);
 
   // Create the dataset with the compound datatype
-  H5::DataSpace dataspace(rank, dims);
+  H5::DataSpace dataspace(rank, &dims[0]);
   H5::DataSet dataset = file.createDataSet("sample_data", datatype, dataspace);
 
   // Create a sample data element
-  DatasetElement dataPoint = {
+  DatasetElement dataPoint = { // NOLINTBEGIN
       12345,         // EXECUTION_BLOCK_ID
       98765,         // SCAN_ID
       1,             // BEAM_ID
@@ -125,62 +125,13 @@ TEST_F(StatHdf5FileWriterTest, test_hdf5_api) // NOLINT
       100,           // NBIN_HIST
       64,            // NBIN_HIST2D
       1285.122,      // CHAN_FREQ_MHZ
-  };
+  }; // NOLINTEND
 
   // Write the data to the dataset
   dataset.write(&dataPoint, datatype);
 
   /**
-   * @brief Expected output using h5dump from h5utils
-   * HDF5 "/tmp/sample_dataset.h5" {
-   * GROUP "/" {
-   *    DATASET "sample_data" {
-   *       DATATYPE  H5T_COMPOUND {
-   *          H5T_STD_I32LE "EXECUTION_BLOCK_ID";
-   *          H5T_STD_I32LE "SCAN_ID";
-   *          H5T_STD_I32LE "BEAM_ID";
-   *          H5T_IEEE_F64LE "T_MIN_MJD";
-   *          H5T_IEEE_F64LE "T_MAX_MJD";
-   *          H5T_IEEE_F64LE "TIME_OFFSET_SECONDS";
-   *          H5T_STD_I32LE "NDAT";
-   *          H5T_IEEE_F64LE "FREQ_MHZ";
-   *          H5T_STD_I32LE "START_CHAN";
-   *          H5T_IEEE_F64LE "BW_MHZ";
-   *          H5T_STD_I32LE "NPOL";
-   *          H5T_STD_I32LE "NDIM";
-   *          H5T_STD_I32LE "NCHAN_input";
-   *          H5T_STD_I32LE "NCHAN_DS";
-   *          H5T_STD_I32LE "NDAT_DS";
-   *          H5T_STD_I32LE "NBIN_HIST";
-   *          H5T_STD_I32LE "NBIN_HIST2D";
-   *          H5T_IEEE_F64LE "CHAN_FREQ_MHZ";
-   *       }
-   *       DATASPACE  SIMPLE { ( 1 ) / ( 1 ) }
-   *       DATA {
-   *       (0): {
-   *             12345,
-   *             98765,
-   *             1,
-   *             59000.1,
-   *             59001,
-   *             1.234,
-   *             1000,
-   *             1284.57,
-   *             512,
-   *             32.768,
-   *             4,
-   *             2,
-   *             8192,
-   *             1024,
-   *             256,
-   *             100,
-   *             64,
-   *             1285.12
-   *          }
-   *       }
-   *    }
-   * }
-   * }
+   * @brief 
    * 
    */
   // Close the dataset, dataspace, and file

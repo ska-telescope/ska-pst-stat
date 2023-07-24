@@ -44,4 +44,4 @@ _VENV=.venv
 
 local-apt-install-dependencies:
 	apt-get update -y
-	apt-get install -y $(cat dependencies/apt.txt)
+	apt-get install -y `cat dependencies/apt.txt`

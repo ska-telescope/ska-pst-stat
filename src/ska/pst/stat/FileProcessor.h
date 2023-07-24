@@ -81,6 +81,6 @@ namespace ska::pst:stat {
       FileReader reader;
   }
 
-} // ska::pst::stat
+} // namespace ska::pst::stat
 
-#endif __SKA_PST_STAT_FileProcessor_h
+#endif // __SKA_PST_STAT_FileProcessor_h

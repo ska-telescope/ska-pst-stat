@@ -73,6 +73,6 @@ namespace ska::pst::stat {
 
   };
 
-} // ska::pst::stat
+} // namespace ska::pst::stat
 
-#endif
+#endif // __SKA_PST_STAT_StatPublisher_h

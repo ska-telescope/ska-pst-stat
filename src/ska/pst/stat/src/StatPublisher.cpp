@@ -29,19 +29,19 @@
  */
 #include <cstdlib>
 #include <cstring>
-#include <stdexcept>
+#include <H5Cpp.h>
+#include <iostream>
 #include <spdlog/spdlog.h>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 #include "ska/pst/stat/StatPublisher.h"
 
-#include <iostream>
-#include <string>
-#include <vector>
-#include <H5Cpp.h>
 
 ska::pst::stat::StatPublisher::StatPublisher(
-  const ska::pst::common::AsciiHeader& config,
-  std::shared_ptr<StatStorage> storage
+  const ska::pst::common::AsciiHeader& /*config*/,
+  std::shared_ptr<StatStorage> /*storage*/
 )
 {
   SPDLOG_DEBUG("ska::pst::stat::StatPublisher::StatPublisher");

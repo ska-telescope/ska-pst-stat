@@ -246,6 +246,6 @@ namespace ska::pst::stat {
       uint32_t nfreq_bins{0}; 
   };
 
-} // ska::pst::stat
+} // namespace ska::pst::stat
 
-#endif
+#endif // __SKA_PST_STAT_StatStorage_h

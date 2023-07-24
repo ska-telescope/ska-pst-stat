@@ -14,7 +14,7 @@ COPY . /mnt/
 WORKDIR /mnt/
 
 RUN apt update -y \
-    && apt install -y libhdf5-dev
+    && make local-apt-install-dependencies
 
 RUN make local-cpp-clean-buildpath \
     && make local-cpp-build-release \

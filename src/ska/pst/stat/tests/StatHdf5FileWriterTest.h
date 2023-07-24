@@ -32,15 +32,12 @@
 #include <gtest/gtest.h>
 #include "ska/pst/stat/StatHdf5FileWriter.h"
 
-#ifndef SKA_PST_DSP_TESTS_StatHdf5FileWriterTest_h
-#define SKA_PST_DSP_TESTS_StatHdf5FileWriterTest_h
+#ifndef SKA_PST_STAT_TESTS_StatHdf5FileWriterTest_h
+#define SKA_PST_STAT_TESTS_StatHdf5FileWriterTest_h
 
-namespace ska {
-namespace pst {
-namespace stat {
-namespace test {
+namespace ska::pst::stat::test {
 
-struct DatasetElement {
+struct DatasetElement { // NOLINTBEGIN
     int EXECUTION_BLOCK_ID;
     int SCAN_ID;
     int BEAM_ID;
@@ -59,7 +56,7 @@ struct DatasetElement {
     int NBIN_HIST;
     int NBIN_HIST2D;
     double CHAN_FREQ_MHZ;
-};
+}; // NOLINTEND
 
 /**
  * @brief Test the StatHdf5FileWriter class
@@ -83,9 +80,6 @@ class StatHdf5FileWriterTest : public ::testing::Test
 
 };
 
-} // namespace test
-} // namespace stat
-} // namespace pst
-} // namespace ska
+} // namespace ska::pst::stat::test
 
-#endif // SKA_PST_SMRB_TESTS_StatHdf5FileWriterTest_h
+#endif // SKA_PST_STAT_TESTS_StatHdf5FileWriterTest_h

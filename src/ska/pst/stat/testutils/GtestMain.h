@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Square Kilometre Array Observatory
+ * Copyright 2023 Square Kilometre Array Observatory
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -50,19 +50,12 @@ std::string& test_data_dir();
 std::string test_data_file(std::string const& filename);
 
 /**
- * @brief Get the number of shared memory bytes in used by the current process
- *
- * @return uint32_t number of shared memory bytes in use.
- */
-uint32_t get_shared_memory_bytes_used();
-
-/**
  * @brief
  *    Executable funtion to launch gtests
  */
 int gtest_main(int argc, char** argv);
 
-} // ska::pst::stat::test
+} // namespace ska::pst::stat::test
 
 #endif // SKA_PST_STAT_TESTUTILS_GtestMain_h
 

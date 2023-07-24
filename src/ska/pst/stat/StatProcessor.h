@@ -86,6 +86,6 @@ namespace ska::pst::stat {
 
   }
 
-} // ska::pst::stat
+} // namespace ska::pst::stat
 
-#endif __SKA_PST_STAT_StatProcessor_h
+#endif // __SKA_PST_STAT_StatProcessor_h

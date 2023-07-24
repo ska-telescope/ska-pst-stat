@@ -131,6 +131,6 @@ namespace ska::pst::stat {
       std::shared_ptr<DataBlockStats> weights_rb_view;
   }
 
-} // ska::pst::stat
+} // namespace ska::pst::stat
 
-#endif __SKA_PST_STAT_StatApplicationManager_h
+#endif // __SKA_PST_STAT_StatApplicationManager_h

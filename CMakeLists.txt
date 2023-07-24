@@ -29,10 +29,6 @@ if (BUILD_TESTING)
   find_package(GTest REQUIRED)
 endif()
 
-# find_package(psrdada REQUIRED)
-# find_package(Protobuf)
-# find_package(gRPC)
-# find_package(SkaPstLmc)
 find_package(SkaPstCommon REQUIRED)
 find_package(SkaPstSmrb REQUIRED)
 find_package(spdlog REQUIRED)
@@ -40,8 +36,6 @@ find_package(HDF5 REQUIRED CXX)
 
 find_dependencies()
 
-# add_subdirectory(src/ska/helloworld)
-# add_subdirectory(src/apps)
 add_subdirectory(src/ska/pst/stat)
 
 # Install cmake config + version + target files

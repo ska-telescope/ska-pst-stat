@@ -90,6 +90,6 @@ namespace ska::pst::stat {
       auto next_block() -> file_block_t;
   }
 
-} // ska::pst::stat
+} // namespace ska::pst::stat
 
-#endif __SKA_PST_STAT_FileReader_h
+#endif // __SKA_PST_STAT_FileReader_h

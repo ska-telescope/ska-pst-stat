@@ -29,15 +29,15 @@
  */
 #include <cstdlib>
 #include <cstring>
-#include <stdexcept>
+#include <H5Cpp.h>
+#include <iostream>
 #include <spdlog/spdlog.h>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 #include "ska/pst/stat/StatHdf5FileWriter.h"
 
-#include <iostream>
-#include <string>
-#include <vector>
-#include <H5Cpp.h>
 
 ska::pst::stat::StatHdf5FileWriter::StatHdf5FileWriter(
   const ska::pst::common::AsciiHeader& config,
