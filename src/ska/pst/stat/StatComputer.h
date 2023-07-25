@@ -76,7 +76,7 @@ namespace ska::pst::stat {
       //! the configuration for the current stream of voltage data.
       ska::pst::common::AsciiHeader config;
 
-  }
+  };
 
 } // namespace ska::pst::stat
 

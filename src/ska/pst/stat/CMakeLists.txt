@@ -10,12 +10,17 @@ set(public_headers
   StatStorage.h
   StatPublisher.h
   StatHdf5FileWriter.h
+  StatComputer.h
+  StatStorage.h
+  StatProcessor.h
 )
 
 set(sources
   src/version.cpp
   src/StatPublisher.cpp
   src/StatHdf5FileWriter.cpp
+  src/StatComputer.cpp
+  src/StatProcessor.cpp
 )
 
 set(private_headers

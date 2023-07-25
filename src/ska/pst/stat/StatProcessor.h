@@ -33,6 +33,7 @@
 #include "ska/pst/common/utils/AsciiHeader.h"
 #include "ska/pst/stat/StatStorage.h"
 #include "ska/pst/stat/StatComputer.h"
+#include "ska/pst/stat/StatHdf5FileWriter.h"
 
 #ifndef __SKA_PST_STAT_StatProcessor_h
 #define __SKA_PST_STAT_StatProcessor_h
@@ -84,7 +85,7 @@ namespace ska::pst::stat {
       //! the configuration for the current stream of voltage data.
       ska::pst::common::AsciiHeader config;
 
-  }
+  };
 
 } // namespace ska::pst::stat
 
