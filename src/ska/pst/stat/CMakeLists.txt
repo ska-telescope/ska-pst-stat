@@ -11,7 +11,6 @@ set(public_headers
   StatPublisher.h
   StatHdf5FileWriter.h
   StatComputer.h
-  StatStorage.h
   StatProcessor.h
 )
 
@@ -20,6 +19,7 @@ set(sources
   src/StatPublisher.cpp
   src/StatHdf5FileWriter.cpp
   src/StatComputer.cpp
+  src/StatStorage.cpp
   src/StatProcessor.cpp
 )
 

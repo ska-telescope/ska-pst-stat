@@ -31,9 +31,10 @@
 #include <spdlog/spdlog.h>
 
 #include "ska/pst/stat/StatProcessor.h"
+#include "ska/pst/stat/StatHdf5FileWriter.h"
 
 ska::pst::stat::StatProcessor::StatProcessor(
-  const ska::pst::common::AsciiHeader& /*config*/
+  const ska::pst::common::AsciiHeader& config
 )
 {
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor");
@@ -46,7 +47,7 @@ ska::pst::stat::StatProcessor::StatProcessor(
   // Create StatHdf5FileWriter instance
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor create new unique StatHdf5FileWriter object");
   // TODO: Confirm the source of file_path
-  const std::string& file_path = "/tmp";
+  const std::string& file_path = config.get_val("STAT_OUTPUT_BASEPATH");
   publisher=std::make_unique<ska::pst::stat::StatHdf5FileWriter>(config, storage, file_path);
 }
 
@@ -66,9 +67,40 @@ void ska::pst::stat::StatProcessor::process(
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process weights={}", weights);
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process weights_length={}", weights_length);
 
-  /**
-  * storage->reset();
-  * computer->process(data_block, block_length, weights, weights_length);
-  * publisher->publish();
-  */
+  // need to determine a few parameters in the storage.
+  // TODO: confirm the source of nbytes_per_sample desired_time_bins desired_freq_bins nchan
+  uint32_t nbytes_per_sample = 0;
+  uint32_t desired_time_bins = 0;
+  uint32_t desired_freq_bins = 0;
+  uint32_t nchan = 0;
+
+  uint32_t nsamp_block = block_length / nbytes_per_sample;
+  if (block_length % nbytes_per_sample != 0)
+  {
+    throw std::current_exception();
+  }
+
+  uint32_t ntime_bins = nsamp_block;
+  while (ntime_bins > desired_time_bins)
+  {
+    ntime_bins /= 2;
+  }
+
+  uint32_t nfreq_bins = nchan;
+  while (nfreq_bins > desired_freq_bins)
+  {
+    nfreq_bins /= 2;
+  }
+
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process storage->resize({}, {})", ntime_bins, nfreq_bins);
+  storage->resize(ntime_bins, nfreq_bins);
+
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process storage->reset()");
+  storage->reset();
+
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process computer->process()");
+  computer->compute(data_block, block_length, weights, weights_length);
+
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process publisher->publish()");
+  publisher->publish();
 }

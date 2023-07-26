@@ -60,9 +60,10 @@ namespace ska::pst::stat {
       /**
        * @brief resize the storage given the configuration
        *
-       * @param config new configuration to apply to determine size of storage.
+       * @param ntime_bins rebinned time.
+       * @param nfreq_bins rebinned frequency.
        */
-      void resize(const ska::pst::common::AsciiHeader& config);
+      void resize(uint32_t ntime_bins, uint32_t nfreq_bins);
 
       /**
        * @brief reset the the storage back to zeros.

@@ -33,14 +33,25 @@
 #include "ska/pst/stat/StatComputer.h"
 
 ska::pst::stat::StatComputer::StatComputer(
-  const ska::pst::common::AsciiHeader& /*config*/,
-  std::shared_ptr<StatStorage> /*storage*/
+  const ska::pst::common::AsciiHeader& config,
+  std::shared_ptr<StatStorage> storage
 )
 {
   SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer");
+  this->config = config;
+  this->storage = storage;
 }
 
 ska::pst::stat::StatComputer::~StatComputer()
 {
   SPDLOG_DEBUG("ska::pst::stat::StatComputer::~StatComputer()");
+}
+
+void ska::pst::stat::StatComputer::compute(char * data_block, size_t block_length, char * weights, size_t weights_length)
+{
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::process()");
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::process data_block={}", data_block);
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::process block_length={}", block_length);
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::process weights={}", weights);
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::process weights_length={}", weights_length);
 }
