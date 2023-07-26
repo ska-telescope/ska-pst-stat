@@ -53,12 +53,23 @@ structured file format.
 TODO - document the structure of the file
 
 StatStorage
-^^^^^^^^^^^^
+^^^^^^^^^^^
 
-This is C++ struct that is used by the *StatComputer* to store the
-calculated statistics.
+This class provides an abstraction to all of the storaged required to hold
+the statistics products computed by the *StatComputer*. The class will be
+constructed with configuration parameters stored in a ska::pst::common::AsciiHeader
+with the following required parameters:
 
-TODO - document the fields
+  * NPOL    Number of polarisations in the input data stream (will always be 2).
+  * NDIM    Number of dimensions of each time stample (will always be 2).
+  * NCHAN   Number of channels in the input data stream.
+  * NBIT    Number of bits per sample in the input data stream.
+  * NREBIN  Number of bins in the re-binned input state histograms.
+
+The class provides public methods to resize the storage and to reset all the values
+of the storage to zero. As documented in the StatStorage Class API, the class exposes
+all of the storage fields as 1, 2 or 3-dimension std::vector attributes of the appropriate
+types.
 
 StatApplicationManager
 ^^^^^^^^^^^^^^^^^^^^^^^
