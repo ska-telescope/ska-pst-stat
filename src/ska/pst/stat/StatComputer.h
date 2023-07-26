@@ -29,6 +29,8 @@
  */
 
 #include <memory>
+#include <utility>
+#include <vector>
 
 #include "ska/pst/common/utils/AsciiHeader.h"
 #include "ska/pst/stat/StatStorage.h"
@@ -57,7 +59,7 @@ namespace ska::pst::stat {
        * @brief Destroy the Stat Computer object.
        *
        */
-      virtual ~StatComputer();
+      virtual ~StatComputer() = default;
 
       /**
        * @brief compute the statistics for block of data.
@@ -73,10 +75,58 @@ namespace ska::pst::stat {
       //! shared pointer a statistics storage, shared between the processor and publisher
       std::shared_ptr<StatStorage> storage;
 
-      //! the configuration for the current stream of voltage data.
-      ska::pst::common::AsciiHeader config;
+      template <typename T>
+      void compute_samples(T* data, char* weights, uint32_t nheaps);
 
-  }
+      //! get weights for current packet
+      auto get_weights(char * weights, uint32_t packet_number) -> float;
+
+      //! get RFI masks
+      auto get_rfi_masks(std::string rfi_mask) -> std::vector<std::pair<double, double>>;
+
+      //! Time per sample (in microsecs), used for populating time timeseries_bins
+      double tsamp{0.0};
+
+      //! Number of polarisations in the data stream
+      uint32_t npol{0};
+
+      //! Number of dimensions in the data stream
+      uint32_t ndim{0};
+
+      //! Number of channels in the data stream
+      uint32_t nchan{0};
+
+      //! Number of bits per sample in the data stream
+      uint32_t nbit{0};
+
+      //! Number of RFI channels that will be masked
+      uint32_t nmask{0};
+
+      //! Number of bits per sample in the weights stream
+      uint32_t weights_nbit{0};
+
+      //! Number of samples per UDP packet in the data stream
+      uint32_t nsamp_per_packet{0};
+
+      //! Number of channels per UDP packet in the data stream
+      uint32_t nchan_per_packet{0};
+
+      //! Number of samples per relative weight in the weights stream
+      uint32_t nsamp_per_weight{0};
+
+      //! Number of bytes per packet in the weights stream
+      uint32_t weights_packet_stride{0};
+
+      //! Size of a complete heap of data in the data stream, in btyes
+      uint32_t heap_resolution{0};
+
+      //! Size of the complex packet of data in the data stream, in bytes
+      uint32_t packet_resolution{0};
+
+      //! Number of UDP packets per heap in the data stream
+      uint32_t packets_per_heap{0};
+
+  };
 
 } // namespace ska::pst::stat
 

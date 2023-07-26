@@ -7,7 +7,7 @@ set(public_headers
   FileReader.h
   StatApplicationManager.h
   StatComputer.h
-  StatHdf5FilerWriter.h
+  StatHdf5FileWriter.h
   StatProcessor.h
   StatPublisher.h
   StatStorage.h
