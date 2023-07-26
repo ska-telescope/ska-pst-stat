@@ -63,7 +63,7 @@ TEST_F(StatStorageTest, test_construct_delete) // NOLINT
   ASSERT_EQ(storage.get_npol(), config.get_uint32("NPOL")); // NOLINT
   ASSERT_EQ(storage.get_ndim(), config.get_uint32("NDIM")); // NOLINT
   ASSERT_EQ(storage.get_nchan(), config.get_uint32("NCHAN")); // NOLINT
-  ASSERT_EQ(storage.get_nbin(), static_cast<uint32_t>(round(pow(2, config.get_double("NBIT"))))); // NOLINT
+  ASSERT_EQ(storage.get_nbin(), 1 << config.get_uint32("NBIT")); // NOLINT
   ASSERT_EQ(storage.get_nrebin(), config.get_uint32("STAT_NREBIN")); // NOLINT
   ASSERT_FALSE(storage.is_storage_resized()); // NOLINT
   ASSERT_FALSE(storage.is_storage_reset()); // NOLINT
@@ -78,50 +78,50 @@ TEST_F(StatStorageTest, test_resize) // NOLINT
   storage.resize(ntime_bins, nfreq_bins);
 
   ASSERT_TRUE(storage.is_storage_resized()); // NOLINT
-  ASSERT_FALSE(storage.is_storage_reset()); // NOLINT
+  ASSERT_TRUE(storage.is_storage_reset()); // NOLINT
   ASSERT_EQ(storage.get_ntime_bins(), ntime_bins); // NOLINT
   ASSERT_EQ(storage.get_nfreq_bins(), nfreq_bins); // NOLINT
 
   uint32_t npol = config.get_uint32("NPOL");
   uint32_t ndim = config.get_uint32("NDIM");
   uint32_t nchan = config.get_uint32("NCHAN");
-  uint32_t nbin = static_cast<uint32_t>(round(pow(2, config.get_double("NBIT"))));
+  uint32_t nbin = 1 << config.get_uint32("NBIT"); // NOLINT
   uint32_t nrebin = config.get_uint32("STAT_NREBIN");
 
   // check the vectors have been resized correctly
-  check_storage_1d_dims(storage.channel_centre_frequencies, nchan);
+  ASSERT_TRUE(check_storage_1d_dims(storage.channel_centre_frequencies, nchan)); // NOLINT
 
-  check_storage_2d_dims(storage.mean_frequency_avg, npol, ndim);
-  check_storage_2d_dims(storage.mean_frequency_avg_masked, npol, ndim);
-  check_storage_2d_dims(storage.variance_frequency_avg, npol, ndim);
-  check_storage_2d_dims(storage.variance_frequency_avg_masked, npol, ndim);
+  ASSERT_TRUE(check_storage_2d_dims(storage.mean_frequency_avg, npol, ndim)); // NOLINT
+  ASSERT_TRUE(check_storage_2d_dims(storage.mean_frequency_avg_masked, npol, ndim)); // NOLINT
+  ASSERT_TRUE(check_storage_2d_dims(storage.variance_frequency_avg, npol, ndim)); // NOLINT
+  ASSERT_TRUE(check_storage_2d_dims(storage.variance_frequency_avg_masked, npol, ndim)); // NOLINT
 
-  check_storage_3d_dims(storage.mean_spectrum, npol, ndim, nchan);
-  check_storage_3d_dims(storage.variance_spectrum, npol, ndim, nchan);
+  ASSERT_TRUE(check_storage_3d_dims(storage.mean_spectrum, npol, ndim, nchan)); // NOLINT
+  ASSERT_TRUE(check_storage_3d_dims(storage.variance_spectrum, npol, ndim, nchan)); // NOLINT
 
-  check_storage_2d_dims(storage.mean_spectral_power, npol, nchan);
-  check_storage_2d_dims(storage.max_spectral_power, npol, nchan);
+  ASSERT_TRUE(check_storage_2d_dims(storage.mean_spectral_power, npol, nchan)); // NOLINT
+  ASSERT_TRUE(check_storage_2d_dims(storage.max_spectral_power, npol, nchan)); // NOLINT
 
-  check_storage_3d_dims(storage.histogram_1d_freq_avg, npol, ndim, nbin);
-  check_storage_3d_dims(storage.histogram_1d_freq_avg_masked, npol, ndim, nbin);
+  ASSERT_TRUE(check_storage_3d_dims(storage.histogram_1d_freq_avg, npol, ndim, nbin)); // NOLINT
+  ASSERT_TRUE(check_storage_3d_dims(storage.histogram_1d_freq_avg_masked, npol, ndim, nbin)); // NOLINT
 
-  check_storage_3d_dims(storage.rebinned_histogram_2d_freq_avg, npol, nrebin, nrebin);
-  check_storage_3d_dims(storage.rebinned_histogram_2d_freq_avg_masked, npol, nrebin, nrebin);
+  ASSERT_TRUE(check_storage_3d_dims(storage.rebinned_histogram_2d_freq_avg, npol, nrebin, nrebin)); // NOLINT
+  ASSERT_TRUE(check_storage_3d_dims(storage.rebinned_histogram_2d_freq_avg_masked, npol, nrebin, nrebin)); // NOLINT
 
-  check_storage_3d_dims(storage.rebinned_histogram_1d_freq_avg, ndim, nrebin, nrebin);
-  check_storage_3d_dims(storage.rebinned_histogram_1d_freq_avg_masked, npol, ndim, nrebin);
+  ASSERT_TRUE(check_storage_3d_dims(storage.rebinned_histogram_1d_freq_avg, ndim, nrebin, nrebin)); // NOLINT
+  ASSERT_TRUE(check_storage_3d_dims(storage.rebinned_histogram_1d_freq_avg_masked, npol, ndim, nrebin)); // NOLINT
 
-  check_storage_3d_dims(storage.num_clipped_samples_spectrum, npol, ndim, nchan);
-  check_storage_2d_dims(storage.num_clipped_samples, npol, ndim);
+  ASSERT_TRUE(check_storage_3d_dims(storage.num_clipped_samples_spectrum, npol, ndim, nchan)); // NOLINT
+  ASSERT_TRUE(check_storage_2d_dims(storage.num_clipped_samples, npol, ndim)); // NOLINT
 
-  check_storage_1d_dims(storage.timeseries_bins, ntime_bins);
-  check_storage_1d_dims(storage.frequency_bins, nfreq_bins);
+  ASSERT_TRUE(check_storage_1d_dims(storage.timeseries_bins, ntime_bins)); // NOLINT
+  ASSERT_TRUE(check_storage_1d_dims(storage.frequency_bins, nfreq_bins)); // NOLINT
 
-  check_storage_3d_dims(storage.spectrogram, npol, nfreq_bins, ntime_bins);
-  check_storage_3d_dims(storage.timeseries, npol, ntime_bins, storage.get_ntime_vals());
-  check_storage_3d_dims(storage.timeseries_masked, npol, ntime_bins, storage.get_ntime_vals());
+  ASSERT_TRUE(check_storage_3d_dims(storage.spectrogram, npol, nfreq_bins, ntime_bins)); // NOLINT
+  ASSERT_TRUE(check_storage_3d_dims(storage.timeseries, npol, ntime_bins, storage.get_ntime_vals())); // NOLINT
+  ASSERT_TRUE(check_storage_3d_dims(storage.timeseries_masked, npol, ntime_bins, storage.get_ntime_vals())); // NOLINT
 
-  check_storage_1d_dims(storage.rfi_mask_lut, nchan);
+  ASSERT_TRUE(check_storage_1d_dims(storage.rfi_mask_lut, nchan)); // NOLINT
 }
 
 TEST_F(StatStorageTest, test_reset) // NOLINT
@@ -137,45 +137,83 @@ TEST_F(StatStorageTest, test_reset) // NOLINT
   ASSERT_TRUE(storage.is_storage_reset()); // NOLINT
 
   storage.resize(ntime_bins, nfreq_bins);
-  ASSERT_FALSE(storage.is_storage_reset()); // NOLINT
-
-  storage.reset();
+  ASSERT_TRUE(storage.is_storage_resized()); // NOLINT
   ASSERT_TRUE(storage.is_storage_reset()); // NOLINT
 
+  float float_val = 1.0;
+  uint32_t u32_val = 1;
+
+  fill_storage_2d(storage.mean_frequency_avg, float_val);
+  fill_storage_2d(storage.mean_frequency_avg_masked, float_val);
+  fill_storage_2d(storage.variance_frequency_avg, float_val);
+  fill_storage_2d(storage.variance_frequency_avg_masked, float_val);
+
+  fill_storage_3d(storage.mean_spectrum, float_val);
+  fill_storage_3d(storage.variance_spectrum, float_val);
+
+  fill_storage_2d(storage.mean_spectral_power, float_val);
+  fill_storage_2d(storage.max_spectral_power, float_val);
+
+  fill_storage_3d(storage.histogram_1d_freq_avg, u32_val);
+  fill_storage_3d(storage.histogram_1d_freq_avg_masked, u32_val);
+
+  fill_storage_3d(storage.rebinned_histogram_2d_freq_avg, u32_val);
+  fill_storage_3d(storage.rebinned_histogram_2d_freq_avg_masked, u32_val);
+
+  fill_storage_3d(storage.rebinned_histogram_1d_freq_avg, u32_val);
+  fill_storage_3d(storage.rebinned_histogram_1d_freq_avg_masked, u32_val);
+
+  fill_storage_3d(storage.num_clipped_samples_spectrum, u32_val);
+  fill_storage_2d(storage.num_clipped_samples, u32_val);
+
+  fill_storage_1d(storage.timeseries_bins, float_val);
+  fill_storage_1d(storage.frequency_bins, float_val);
+
+  fill_storage_3d(storage.spectrogram, float_val);
+  fill_storage_3d(storage.timeseries, float_val);
+  fill_storage_3d(storage.timeseries_masked, float_val);
+
+  fill_storage_1d(storage.rfi_mask_lut, true);
+
+  storage.resize(ntime_bins, nfreq_bins);
+
+  float_val = 0.0;
+  u32_val = 0;
+
   // check the vectors have all been zeroed
-  check_storage_1d_vals(storage.channel_centre_frequencies);
+  ASSERT_TRUE(check_storage_1d_vals(storage.channel_centre_frequencies, float_val)); // NOLINT
 
-  check_storage_2d_vals(storage.mean_frequency_avg);
-  check_storage_2d_vals(storage.mean_frequency_avg_masked);
-  check_storage_2d_vals(storage.variance_frequency_avg);
-  check_storage_2d_vals(storage.variance_frequency_avg_masked);
+  ASSERT_TRUE(check_storage_2d_vals(storage.mean_frequency_avg, float_val)); // NOLINT
+  ASSERT_TRUE(check_storage_2d_vals(storage.mean_frequency_avg_masked, float_val)); // NOLINT
+  ASSERT_TRUE(check_storage_2d_vals(storage.variance_frequency_avg, float_val)); // NOLINT
+  ASSERT_TRUE(check_storage_2d_vals(storage.variance_frequency_avg_masked, float_val)); // NOLINT
 
-  check_storage_3d_vals(storage.mean_spectrum);
-  check_storage_3d_vals(storage.variance_spectrum);
+  ASSERT_TRUE(check_storage_3d_vals(storage.mean_spectrum, float_val)); // NOLINT
+  ASSERT_TRUE(check_storage_3d_vals(storage.variance_spectrum, float_val)); // NOLINT
 
-  check_storage_2d_vals(storage.mean_spectral_power);
-  check_storage_2d_vals(storage.max_spectral_power);
+  ASSERT_TRUE(check_storage_2d_vals(storage.mean_spectral_power, float_val)); // NOLINT
+  ASSERT_TRUE(check_storage_2d_vals(storage.max_spectral_power, float_val)); // NOLINT
 
-  check_storage_3d_vals(storage.histogram_1d_freq_avg);
-  check_storage_3d_vals(storage.histogram_1d_freq_avg_masked);
+  ASSERT_TRUE(check_storage_3d_vals(storage.histogram_1d_freq_avg, u32_val)); // NOLINT
+  ASSERT_TRUE(check_storage_3d_vals(storage.histogram_1d_freq_avg_masked, u32_val)); // NOLINT
 
-  check_storage_3d_vals(storage.rebinned_histogram_2d_freq_avg);
-  check_storage_3d_vals(storage.rebinned_histogram_2d_freq_avg_masked);
+  ASSERT_TRUE(check_storage_3d_vals(storage.rebinned_histogram_2d_freq_avg, u32_val)); // NOLINT
+  ASSERT_TRUE(check_storage_3d_vals(storage.rebinned_histogram_2d_freq_avg_masked, u32_val)); // NOLINT
 
-  check_storage_3d_vals(storage.rebinned_histogram_1d_freq_avg);
-  check_storage_3d_vals(storage.rebinned_histogram_1d_freq_avg_masked);
+  ASSERT_TRUE(check_storage_3d_vals(storage.rebinned_histogram_1d_freq_avg, u32_val)); // NOLINT
+  ASSERT_TRUE(check_storage_3d_vals(storage.rebinned_histogram_1d_freq_avg_masked, u32_val)); // NOLINT
 
-  check_storage_3d_vals(storage.num_clipped_samples_spectrum);
-  check_storage_2d_vals(storage.num_clipped_samples);
+  ASSERT_TRUE(check_storage_3d_vals(storage.num_clipped_samples_spectrum, u32_val)); // NOLINT
+  ASSERT_TRUE(check_storage_2d_vals(storage.num_clipped_samples, u32_val)); // NOLINT
 
-  check_storage_1d_vals(storage.timeseries_bins);
-  check_storage_1d_vals(storage.frequency_bins);
+  ASSERT_TRUE(check_storage_1d_vals(storage.timeseries_bins, float_val)); // NOLINT
+  ASSERT_TRUE(check_storage_1d_vals(storage.frequency_bins, float_val)); // NOLINT
 
-  check_storage_3d_vals(storage.spectrogram);
-  check_storage_3d_vals(storage.timeseries);
-  check_storage_3d_vals(storage.timeseries_masked);
+  ASSERT_TRUE(check_storage_3d_vals(storage.spectrogram, float_val)); // NOLINT
+  ASSERT_TRUE(check_storage_3d_vals(storage.timeseries, float_val)); // NOLINT
+  ASSERT_TRUE(check_storage_3d_vals(storage.timeseries_masked, float_val)); // NOLINT
 
-  check_storage_1d_vals(storage.rfi_mask_lut);
+  ASSERT_TRUE(check_storage_1d_vals(storage.rfi_mask_lut, false)); // NOLINT
 }
 
 } // namespace ska::pst::stat::test

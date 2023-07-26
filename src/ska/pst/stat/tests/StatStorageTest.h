@@ -59,61 +59,94 @@ class StatStorageTest : public ::testing::Test
     ska::pst::common::AsciiHeader config;
 
     template <typename T>
-    void check_storage_1d_dims(std::vector<T> storage, uint32_t dim1)
+    void fill_storage_1d(std::vector<T>& vec, T value)
     {
-      ASSERT_EQ(storage.size(), dim1); // NOLINT
+      std::fill(vec.begin(), vec.end(), value);
     }
 
     template <typename T>
-    void check_storage_2d_dims(std::vector<std::vector<T>> storage, uint32_t dim1, uint32_t dim2)
+    void fill_storage_2d(std::vector<std::vector<T>>& vec, T value)
     {
-      ASSERT_EQ(storage.size(), dim1); // NOLINT
-      for (uint32_t i=0; i<storage.size(); i++)
+      for (uint32_t i=0; i<vec.size(); i++)
       {
-        ASSERT_EQ(storage[i].size(), dim2); // NOLINT
+        std::fill(vec[i].begin(), vec[i].end(), value);
       }
     }
 
     template <typename T>
-    void check_storage_3d_dims(std::vector<std::vector<T>> storage, uint32_t dim1, uint32_t dim2, uint32_t dim3)
+    void fill_storage_3d(std::vector<std::vector<std::vector<T>>>& vec, T value)
     {
-      ASSERT_EQ(storage.size(), dim1); // NOLINT
-      for (uint32_t i=0; i<storage.size(); i++)
+      for (uint32_t i=0; i<vec.size(); i++)
       {
-        ASSERT_EQ(storage[i].size(), dim2); // NOLINT
-        for (uint32_t j=0; j<storage.size(); j++)
+        for (uint32_t j=0; j<vec[i].size(); j++)
         {
-          ASSERT_EQ(storage[i][j].size(), dim3); // NOLINT
+          std::fill(vec[i][j].begin(), vec[i][j].end(), value);
         }
       }
     }
 
-      template<typename T>
-      void check_storage_1d_vals(std::vector<T>& vec)
-      {
-        ASSERT_TRUE(std::all_of(vec.begin(), vec.end(), [](T i) { return i == 0; })); // NOLINT
-      }
+    template <typename T>
+    bool check_storage_1d_dims(const std::vector<T>& vec, uint32_t dim1)
+    {
+      return (vec.size() == dim1);
+    }
 
-      template<typename T>
-      void check_storage_2d_vals(std::vector<std::vector<T>>& vec)
+    template <typename T>
+    bool check_storage_2d_dims(const std::vector<std::vector<T>>& vec, uint32_t dim1, uint32_t dim2)
+    {
+      bool ok = (vec.size() == dim1);
+      for (uint32_t i=0; i<vec.size(); i++)
       {
-        for (uint32_t i=0; i<vec.size(); i++)
+        ok &= (vec[i].size() == dim2);
+      }
+      return ok;
+    }
+
+    template <typename T>
+    bool check_storage_3d_dims(const std::vector<std::vector<T>>& vec, uint32_t dim1, uint32_t dim2, uint32_t dim3)
+    {
+      bool ok = (vec.size() == dim1);
+      for (uint32_t i=0; i<vec.size(); i++)
+      {
+        ok &= (vec[i].size() == dim2);
+        for (uint32_t j=0; j<vec[i].size(); j++)
         {
-          ASSERT_TRUE(std::all_of(vec[i].begin(), vec[i].end(), [](T i) { return i == 0; })); // NOLINT
+          ok &= (vec[i][j].size() == dim3);
         }
       }
+      return ok;
+    }
 
-      template<typename T>
-      void check_storage_3d_vals(std::vector<std::vector<std::vector<T>>>& vec)
+    template<typename T>
+    bool check_storage_1d_vals(const std::vector<T>& vec, T val)
+    {
+      return std::all_of(vec.begin(), vec.end(), [&](T i) { return i == val; });
+    }
+
+    template<typename T>
+    bool check_storage_2d_vals(const std::vector<std::vector<T>>& vec, T val)
+    {
+      bool ok = true;
+      for (uint32_t i=0; i<vec.size(); i++)
       {
-        for (uint32_t i=0; i<vec.size(); i++)
+        ok &= std::all_of(vec[i].begin(), vec[i].end(), [&](T j) { return j == val; });
+      }
+      return ok;
+    }
+
+    template<typename T>
+    bool check_storage_3d_vals(const std::vector<std::vector<std::vector<T>>>& vec, T val)
+    {
+      bool ok = true;
+      for (uint32_t i=0; i<vec.size(); i++)
+      {
+        for (uint32_t j=0; j<vec[i].size(); j++)
         {
-          for (uint32_t j=0; j<vec[i].size(); j++)
-          {
-            ASSERT_TRUE(std::all_of(vec[i][j].begin(), vec[i][j].end(), [](T i) { return i == 0; })); // NOLINT
-          }
+          ok |= std::all_of(vec[i][j].begin(), vec[i][j].end(), [&](T k) { return k == val; });
         }
       }
+      return ok;
+    }
 
   private:
 

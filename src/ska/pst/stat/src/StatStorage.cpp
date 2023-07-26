@@ -43,8 +43,10 @@ ska::pst::stat::StatStorage::StatStorage(const ska::pst::common::AsciiHeader& co
   npol = config.get_uint32("NPOL");
   ndim = config.get_uint32("NDIM");
   nchan = config.get_uint32("NCHAN");
-  nbin = static_cast<uint32_t>(round(pow(2.0, config.get_double("NBIT"))));
+  nbin = 1 << config.get_uint32("NBIT");
   nrebin = config.get_uint32("STAT_NREBIN");
+  SPDLOG_DEBUG("ska::pst::stat::StatStorage::StatStorage npol={} ndim={} nchan={} nbin={} nrebin={}",
+    npol, ndim, nchan, nbin, nrebin);
 }
 
 ska::pst::stat::StatStorage::~StatStorage()
@@ -94,6 +96,9 @@ void ska::pst::stat::StatStorage::resize(uint32_t _ntime_bins, uint32_t _nfreq_b
 
   SPDLOG_DEBUG("ska::pst::stat::StatStorage::resize resized=true");
   storage_resized = true;
+
+  SPDLOG_DEBUG("ska::pst::stat::StatStorage::resize reset()");
+  reset();
 }
 
 void ska::pst::stat::StatStorage::reset()

@@ -38,7 +38,13 @@
 namespace ska::pst::stat {
 
   /**
-   * @brief A struct that has public field for the computer update and publisher to read from.
+   * @brief StatStorage provides an abstract management of the storage of the
+   * statistical vectors that are computed by StatComputer and published by
+   * StatPublishers. The management of StatStorage is performed by the StatProcessor.
+   *
+   * Upon instansiation, no storage is allocated until the resize method is called.
+   * As the StatComputer integrates values into the statistical vectors, the StatProcessor
+   * must also use the reset method to initialise all of the vectors with value of 0.
    *
    */
   struct StatStorage
@@ -358,10 +364,15 @@ namespace ska::pst::stat {
       template<typename T>
       void resize_1d(std::vector<T>& vec, uint32_t dim1)
       {
-        if (vec.size() != dim1)
+        bool dim1_resized = (vec.size() != dim1);
+        if (dim1_resized)
+        {
+          vec.resize(dim1, 0);
+        }
+        // if a resize has occured, then the storage is no longer in a reset state
+        if (dim1_resized)
         {
           storage_reset = false;
-          vec.resize(dim1);
         }
       }
 
@@ -376,18 +387,24 @@ namespace ska::pst::stat {
       template<typename T>
       void resize_2d(std::vector<std::vector<T>>& vec, uint32_t dim1, uint32_t dim2)
       {
-        if (vec.size() != dim1)
+        bool dim1_resized = (vec.size() != dim1);
+        if (dim1_resized)
         {
-          storage_reset = false;
           vec.resize(dim1);
         }
+
+        bool dim2_resized = false;
         for (uint32_t i=0; i<dim1; i++)
         {
-          if (vec[i].size() != dim2)
+          dim2_resized |= (vec[i].size() != dim2);
+          if (dim1_resized || dim2_resized)
           {
-            storage_reset = false;
             vec[i].resize(dim2);
           }
+        }
+        if (dim1_resized || dim2_resized)
+        {
+          storage_reset = false;
         }
       }
 
@@ -403,26 +420,32 @@ namespace ska::pst::stat {
       template<typename T>
       void resize_3d(std::vector<std::vector<std::vector<T>>>& vec, uint32_t dim1, uint32_t dim2, uint32_t dim3)
       {
-        if (vec.size() != dim1)
+        bool dim1_resized = (vec.size() != dim1);
+        if (dim1_resized)
         {
-          storage_reset = false;
           vec.resize(dim1);
         }
+        bool dim2_resized = false;
+        bool dim3_resized = false;
         for (uint32_t i=0; i<dim1; i++)
         {
-          if (vec[i].size() != dim2)
+          dim2_resized |= (vec[i].size() != dim2);
+          if (dim1_resized || dim2_resized)
           {
-            storage_reset = false;
             vec[i].resize(dim2);
           }
           for (uint32_t j=0; j<dim2; j++)
           {
-            if (vec[i][j].size() != dim3)
+            dim3_resized |= (vec[i][j].size() != dim3);
+            if (dim1_resized || dim2_resized || dim3_resized)
             {
-              storage_reset = false;
               vec[i][j].resize(dim3);
             }
           }
+        }
+        if (dim1_resized || dim2_resized || dim3_resized)
+        {
+          storage_reset = false;
         }
       }
 
@@ -438,7 +461,7 @@ namespace ska::pst::stat {
         std::fill(vec.begin(), vec.end(), 0);
       }
 
-     /**
+      /**
        * @brief reset the 2 dimensional vector elements to zero
        *
        * @tparam T storage type of the vector
@@ -453,7 +476,7 @@ namespace ska::pst::stat {
         }
       }
 
-     /**
+      /**
        * @brief reset the 2 dimensional vector elements to zero
        *
        * @tparam T storage type of the vector
