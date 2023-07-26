@@ -30,7 +30,6 @@
 
 #include <memory>
 
-#include "ska/pst/common/utils/AsciiHeader.h"
 #include "ska/pst/stat/StatStorage.h"
 #include "ska/pst/stat/StatComputer.h"
 #include "ska/pst/stat/StatHdf5FileWriter.h"
