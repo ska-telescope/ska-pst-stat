@@ -4,10 +4,10 @@ allow_mixing
 package ska::pst::common {
   class ApplicationManager <<abstract>>
 
-} 
+}
 package ska::pst::smrb {
   class DataBlockView
-} 
+}
 
 class StatApplicationManager {
   + StatApplicationManager()
@@ -42,7 +42,7 @@ class StatProcessor {
   + StatProcessor(config: AsciiHeader)
   + ~StatProcessor()
   + process(block_ptr: char*, block_length: usize_t, weights_ptr: char*, weights_length: usize_t)
-  - storage: std::shared_ptr<StatStorage> 
+  - storage: std::shared_ptr<StatStorage>
   - computer: std::unique_ptr<StatComputer>
   - writer: std::unique_ptr<StatPublisher>
   - config: AsciiHeader
@@ -52,14 +52,24 @@ class StatComputer {
   + StatComputer(config: AsciiHeader, std::shared_ptr<StatStorage> storage)
   + ~StatComputer()
   + compute(block_ptr: char*, block_length: usize_t, weights_ptr: char*, weights_length: usize_t)
-  - storage: std::shared_ptr<StatStorage> 
+  - storage: std::shared_ptr<StatStorage>
   - config: AsciiHeader
 }
 
 class StatStorage {
   + StatStorage(config: AsciiHeader)
-  + resize(config: AsciiHeader)
+  + resize(uint32_t ntime_bins, uint32_t nfreq_bins)
   + reset()
+  + uint32_t get_npol()
+  + uint32_t get_ndim()
+  + uint32_t get_nchan()
+  + uint32_t get_nbin()
+  + uint32_t get_nrebin()
+  + uint32_t get_ntime_bins()
+  + uint32_t get_nfreq_bins()
+  + uint32_t get_ntime_vals()
+  + bool is_storage_resized()
+  + bool is_storage_reset()
   + mean_frequency_avg: std::vector<std::vector<float>>
   + mean_frequency_avg_masked: std::vector<std::vector<float>>
   + variance_frequency_avg: std::vector<std::vector<float>>
@@ -79,6 +89,7 @@ class StatStorage {
   + spectrogram: std::vector<std::vector<std::vector<float>>>
   + timeseries: std::vector<std::vector<std::vector<float>>>
   + timeseries_masked: std::vector<std::vector<std::vector<float>>>
+  + rfi_mask_lut: std::vector<bool>
 }
 
 class StatPublisher <<abstract>> {
@@ -97,7 +108,7 @@ class StatHdf5FileWriter implements StatPublisher {
 
 StatProcessor *-- StatComputer
 StatProcessor *-- StatPublisher
-StatProcessor o-- StatStorage 
+StatProcessor o-- StatStorage
 StatComputer o-- StatStorage
 StatPublisher o-- StatStorage
 

@@ -44,7 +44,7 @@ author = 'PST Team'
 
 # The full version, including alpha/beta/rc tags
 with open('../../.release') as f:
-    version = f.readline().strip().split("=")[1]
+    version = f.readline().strip().split("release=")[1]
     release = version
 
 # -- General configuration ---------------------------------------------------

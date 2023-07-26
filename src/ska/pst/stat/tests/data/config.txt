@@ -1,0 +1,5 @@
+NPOL          2
+NDIM          2
+NCHAN         20736
+NBIT          16
+STAT_NREBIN   256
