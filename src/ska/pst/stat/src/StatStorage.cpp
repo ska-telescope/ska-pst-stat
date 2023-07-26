@@ -28,67 +28,117 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <iostream>
 #include <spdlog/spdlog.h>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
 #include "ska/pst/stat/StatStorage.h"
 
-ska::pst::stat::StatStorage::StatStorage(
-  const ska::pst::common::AsciiHeader& config
-)
+ska::pst::stat::StatStorage::StatStorage(const ska::pst::common::AsciiHeader& config)
 {
   SPDLOG_DEBUG("ska::pst::stat::StatStorage::StatStorage");
-  this->config = config;
+
+  npol = config.get_uint32("NPOL");
+  ndim = config.get_uint32("NDIM");
+  nchan = config.get_uint32("NCHAN");
+  nbin = 1 << config.get_uint32("NBIT");
+  nrebin = config.get_uint32("STAT_NREBIN");
+  SPDLOG_DEBUG("ska::pst::stat::StatStorage::StatStorage npol={} ndim={} nchan={} nbin={} nrebin={}",
+    npol, ndim, nchan, nbin, nrebin);
 }
 
 ska::pst::stat::StatStorage::~StatStorage()
 {
-  SPDLOG_DEBUG("ska::pst::stat::StatStorage::~StatStorage");
+  SPDLOG_DEBUG("ska::pst::stat::StatStorage::~StatStorage()");
+}
+
+void ska::pst::stat::StatStorage::resize(uint32_t _ntime_bins, uint32_t _nfreq_bins)
+{
+  SPDLOG_DEBUG("ska::pst::stat::StatStorage::resize ntime_bins={} nfreq_bins={}", _ntime_bins, _nfreq_bins);
+  ntime_bins = _ntime_bins;
+  nfreq_bins = _nfreq_bins;
+
+  resize_1d(channel_centre_frequencies, nchan);
+
+  resize_2d(mean_frequency_avg, npol, ndim);
+  resize_2d(mean_frequency_avg_masked, npol, ndim);
+  resize_2d(variance_frequency_avg, npol, ndim);
+  resize_2d(variance_frequency_avg_masked, npol, ndim);
+
+  resize_3d(mean_spectrum, npol, ndim, nchan);
+  resize_3d(variance_spectrum, npol, ndim, nchan);
+
+  resize_2d(mean_spectral_power, npol, nchan);
+  resize_2d(max_spectral_power, npol, nchan);
+
+  resize_3d(histogram_1d_freq_avg, npol, ndim, nbin);
+  resize_3d(histogram_1d_freq_avg_masked, npol, ndim, nbin);
+
+  resize_3d(rebinned_histogram_2d_freq_avg, npol, nrebin, nrebin);
+  resize_3d(rebinned_histogram_2d_freq_avg_masked, npol, nrebin, nrebin);
+
+  resize_3d(rebinned_histogram_1d_freq_avg, ndim, nrebin, nrebin);
+  resize_3d(rebinned_histogram_1d_freq_avg_masked, npol, ndim, nrebin);
+
+  resize_3d(num_clipped_samples_spectrum, npol, ndim, nchan);
+  resize_2d(num_clipped_samples, npol, ndim);
+
+  resize_1d(timeseries_bins, ntime_bins);
+  resize_1d(frequency_bins, nfreq_bins);
+
+  resize_3d(spectrogram, npol, nfreq_bins, ntime_bins);
+  resize_3d(timeseries, npol, ntime_bins, ntime_vals);
+  resize_3d(timeseries_masked, npol, ntime_bins, ntime_vals);
+
+  resize_1d(rfi_mask_lut, nchan);
+
+  SPDLOG_DEBUG("ska::pst::stat::StatStorage::resize resized=true");
+  storage_resized = true;
+
+  SPDLOG_DEBUG("ska::pst::stat::StatStorage::resize reset()");
+  reset();
 }
 
 void ska::pst::stat::StatStorage::reset()
 {
-  SPDLOG_DEBUG("ska::pst::stat::StatStorage::reset");
-  // 1d arrays
-  std::fill(channel_centre_frequencies.begin(),channel_centre_frequencies.end(),0.0); // float
-  std::fill(timeseries_bins.begin(),timeseries_bins.end(),0.0); // float
-  std::fill(frequnecy_bins.begin(),frequnecy_bins.end(),0.0); // float
+  SPDLOG_DEBUG("ska::pst::stat::StatStorage::reset()");
 
-  // 2d arrays
-  // Assumed header fields
-  uint32_t npol = this->config.get_uint32("NPOL");
-  uint32_t ndim = this->config.get_uint32("NDIM");
-  uint32_t nchan = this->config.get_uint32("NCHAN");
-  uint32_t nbit = this->config.get_uint32("NBIT");
-  uint32_t nbin_rescaled = this->config.get_uint32("NBIN_RESCALED");
+  reset_1d(channel_centre_frequencies);
 
-  for(uint32_t ipol=0; ipol<npol; ipol++)
-  {
-    std::fill(mean_frequency_avg[ipol].begin(), mean_frequency_avg[ipol].end(), 0.0);
-    std::fill(mean_frequency_avg_masked[ipol].begin(), mean_frequency_avg_masked[ipol].end(), 0.0);
-    std::fill(variance_frequency_avg[ipol].begin(), variance_frequency_avg[ipol].end(), 0.0);
-    std::fill(variance_frequency_avg_masked[ipol].begin(), variance_frequency_avg_masked[ipol].end(), 0.0);
-    std::fill(mean_spectral_power[ipol].begin(), mean_spectral_power[ipol].end(), 0.0);
-    std::fill(max_spectral_power[ipol].begin(), max_spectral_power[ipol].end(), 0.0);
-    std::fill(num_clipped_samples[ipol].begin(), num_clipped_samples[ipol].end(), 0.0);
-    for(uint32_t idim=0; idim<ndim; idim++)
-    {
-      std::fill(mean_spectrum[ipol][idim].begin(), mean_spectrum[ipol][idim].end(), 0);
-      std::fill(variance_spectrum[ipol][idim].begin(), variance_spectrum[ipol][idim].end(), 0);
-      std::fill(histogram_1d_freq_avg[ipol][idim].begin(), histogram_1d_freq_avg[ipol][idim].end(), 0);
-      std::fill(histogram_1d_freq_avg_masked[ipol][idim].begin(), histogram_1d_freq_avg_masked[ipol][idim].end(), 0);
-      std::fill(rebinned_histogram_2d_freq_avg[ipol][idim].begin(), rebinned_histogram_2d_freq_avg[ipol][idim].end(), 0);
-      std::fill(rebinned_histogram_1d_freq_avg[ipol][idim].begin(), rebinned_histogram_1d_freq_avg[ipol][idim].end(), 0);
-      std::fill(rebinned_histogram_1d_freq_avg_masked[ipol][idim].begin(), rebinned_histogram_1d_freq_avg_masked[ipol][idim].end(), 0);
-      std::fill(num_clipped_samples_spectrum[ipol][idim].begin(), num_clipped_samples_spectrum[ipol][idim].end(), 0);
-      std::fill(spectrogram[ipol][idim].begin(), spectrogram[ipol][idim].end(), 0);
-      std::fill(timeseries[ipol][idim].begin(), timeseries[ipol][idim].end(), 0);
-      std::fill(timeseries_masked[ipol][idim].begin(), timeseries_masked[ipol][idim].end(), 0);
-    }
-  }
+  reset_2d(mean_frequency_avg);
+  reset_2d(mean_frequency_avg_masked);
+  reset_2d(variance_frequency_avg);
+  reset_2d(variance_frequency_avg_masked);
 
+  reset_3d(mean_spectrum);
+  reset_3d(variance_spectrum);
 
-}
+  reset_2d(mean_spectral_power);
+  reset_2d(max_spectral_power);
 
-void ska::pst::stat::StatStorage::resize(uint32_t ntime_bins, uint32_t nfreq_bins)
-{
-  SPDLOG_DEBUG("ska::pst::stat::StatStorage::resize ntime_bins={} nfreq_bins={}", ntime_bins, nfreq_bins);
+  reset_3d(histogram_1d_freq_avg);
+  reset_3d(histogram_1d_freq_avg_masked);
+
+  reset_3d(rebinned_histogram_2d_freq_avg);
+  reset_3d(rebinned_histogram_2d_freq_avg_masked);
+
+  reset_3d(rebinned_histogram_1d_freq_avg);
+  reset_3d(rebinned_histogram_1d_freq_avg_masked);
+
+  reset_3d(num_clipped_samples_spectrum);
+  reset_2d(num_clipped_samples);
+
+  reset_1d(timeseries_bins);
+  reset_1d(frequency_bins);
+
+  reset_3d(spectrogram);
+  reset_3d(timeseries);
+  reset_3d(timeseries_masked);
+
+  reset_1d(rfi_mask_lut);
+
+  SPDLOG_DEBUG("ska::pst::stat::StatStorage::reset storage_reset=true");
+  storage_reset = true;
 }

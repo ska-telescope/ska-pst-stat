@@ -38,7 +38,13 @@
 namespace ska::pst::stat {
 
   /**
-   * @brief A struct that has public field for the computer update and publisher to read from.
+   * @brief StatStorage provides an abstract management of the storage of the
+   * statistical vectors that are computed by StatComputer and published by
+   * StatPublishers. The management of StatStorage is performed by the StatProcessor.
+   *
+   * Upon instansiation, no storage is allocated until the resize method is called.
+   * As the StatComputer integrates values into the statistical vectors, the StatProcessor
+   * must also use the reset method to initialise all of the vectors with value of 0.
    *
    */
   struct StatStorage
@@ -58,10 +64,10 @@ namespace ska::pst::stat {
       virtual ~StatStorage();
 
       /**
-       * @brief resize the storage given the configuration
+       * @brief resize the storage vectors, based on the config and binning parameters
        *
-       * @param ntime_bins rebinned time.
-       * @param nfreq_bins rebinned frequency.
+       * @param ntime_bins number of temporal bins in the timeseries and spectrogram
+       * @param nfreq_bins number of spectral bins in the spectrofram
        */
       void resize(uint32_t ntime_bins, uint32_t nfreq_bins);
 
@@ -166,10 +172,44 @@ namespace ska::pst::stat {
        */
       std::vector<std::vector<std::vector<uint32_t>>> histogram_1d_freq_avg_masked;
 
+      /**
+       * @brief Rebinned 2D histogram of the input data integer states for each polarisation,
+       * averaged over all channels.
+       *
+       * First dimension is polarisation (2 dimensions)
+       * Second dimension is the bining of the real component (I)
+       * Third dimension is the bining of the imaginary component (Q)
+       */
       std::vector<std::vector<std::vector<uint32_t>>> rebinned_histogram_2d_freq_avg;
+
+      /**
+       * @brief Rebinned 2D histogram of the input data integer states for each polarisation,
+       * averaged over all channels, expect those flagged for RFI
+       *
+       * First dimension is polarisation (2 dimensions)
+       * Second dimension is the bining of the real component (I)
+       * Third dimension is the bining of the imaginary component (Q)
+       */
       std::vector<std::vector<std::vector<uint32_t>>> rebinned_histogram_2d_freq_avg_masked;
 
+      /**
+       * @brief rebinned histogram of the input data integer states for each polarisation and dimension,
+       * averaged over all channels.
+       *
+       * First dimension is polarisation (2 dimensions)
+       * Second dimension is the real and imaginary components (I and Q).
+       * Third dimension is the binning data (i.e. the number in the bin)
+       */
       std::vector<std::vector<std::vector<uint32_t>>> rebinned_histogram_1d_freq_avg;
+
+      /**
+       * @brief rebinned histogram of the input data integer states for each polarisation and dimension,
+       * averaged over all channels, expect those flagged for RFI.
+       *
+       * First dimension is polarisation (2 dimensions)
+       * Second dimension is the real and imaginary components (I and Q).
+       * Third dimension is the binning data (i.e. the number in the bin)
+       */
       std::vector<std::vector<std::vector<uint32_t>>> rebinned_histogram_1d_freq_avg_masked;
 
       /**
@@ -201,7 +241,7 @@ namespace ska::pst::stat {
        * @brief the frequncy bins used for the spectrogram attribute.
        *
        */
-      std::vector<float> frequnecy_bins;
+      std::vector<float> frequency_bins;
 
       /**
        * @brief spectrogram of the data for each polarisation, averaged a
@@ -233,18 +273,259 @@ namespace ska::pst::stat {
        */
       std::vector<std::vector<std::vector<float>>> timeseries_masked;
 
+      /**
+       * @brief Lookup table of RFI masks for each channel, true value indicates channel is masked for RFI
+       *
+       * First dimension is channel
+       */
+      std::vector<bool> rfi_mask_lut;
+
+      /**
+       * @brief Get the number of polarisations used in the storage
+       *
+       * @return uint32_t number of polarisations
+       */
+      uint32_t get_npol() { return npol; };
+
+      /**
+       * @brief Get the number of dimensions used in the storage
+       *
+       * @return uint32_t number of dimensions
+       */
+      uint32_t get_ndim () { return ndim; };
+
+      /**
+       * @brief Get the number of channels used in the storage
+       *
+       * @return uint32_t number of channels
+       */
+      uint32_t get_nchan() { return nchan; };
+
+      /**
+       * @brief Get the number of input state bins used in the storage
+       *
+       * @return uint32_t number of input state bins
+       */
+      uint32_t get_nbin() { return nbin; };
+
+      /**
+       * @brief Get the number of rebinned input states used in the storage
+       *
+       * @return uint32_t number of rebinned input states
+       */
+      uint32_t get_nrebin() { return nrebin; };
+
+      /**
+       * @brief Get the number of temporal bins used in the spectrogram and timeseries storage
+       *
+       * @return uint32_t number of temporal bins
+       */
+      uint32_t get_ntime_bins() { return ntime_bins; };
+
+      /**
+       * @brief Get the number of spectral bins used in the spectrogram storage
+       *
+       * @return uint32_t number of spectral bins
+       */
+      uint32_t get_nfreq_bins() { return nfreq_bins; };
+
+      /**
+       * @brief Get the number of temporal bin dimenions in the timeseries storage [3]
+       *
+       * @return uint32_t number of temporal bins dimensions
+       */
+      uint32_t get_ntime_vals() { return ntime_vals; };
+
+      /**
+       * @brief Get flag for whether the storage has been resized
+       *
+       * @return true storage has been resized
+       * @return false storage has not been resized
+       */
+      bool is_storage_resized() { return storage_resized; }
+
+      /**
+       * @brief Get flag for whether the storage has been reset
+       *
+       * @return true storage has been reset
+       * @return false storage has not been reset
+       */
+      bool is_storage_reset() { return storage_reset; }
+
     private:
+
+      /**
+       * @brief resize the 1 dimensional vector
+       *
+       * @tparam T storage type of the vector
+       * @param vec vector to be resized
+       * @param dim1 new size of the vector
+       */
+      template<typename T>
+      void resize_1d(std::vector<T>& vec, uint32_t dim1)
+      {
+        bool dim1_resized = (vec.size() != dim1);
+        if (dim1_resized)
+        {
+          vec.resize(dim1, 0);
+        }
+        // if a resize has occured, then the storage is no longer in a reset state
+        if (dim1_resized)
+        {
+          storage_reset = false;
+        }
+      }
+
+      /**
+       * @brief resize the 2 dimensional vector
+       *
+       * @tparam T storage type of the vector
+       * @param vec vector to be resized
+       * @param dim1 first dimension of the vector
+       * @param dim2 second dimension of the vector
+       */
+      template<typename T>
+      void resize_2d(std::vector<std::vector<T>>& vec, uint32_t dim1, uint32_t dim2)
+      {
+        bool dim1_resized = (vec.size() != dim1);
+        if (dim1_resized)
+        {
+          vec.resize(dim1);
+        }
+
+        bool dim2_resized = false;
+        for (uint32_t i=0; i<dim1; i++)
+        {
+          dim2_resized |= (vec[i].size() != dim2);
+          if (dim1_resized || dim2_resized)
+          {
+            vec[i].resize(dim2);
+          }
+        }
+        if (dim1_resized || dim2_resized)
+        {
+          storage_reset = false;
+        }
+      }
+
+      /**
+       * @brief resize the 2 dimensional vector
+       *
+       * @tparam T storage type of the vector
+       * @param vec vector to be resized
+       * @param dim1 first dimension of the vector
+       * @param dim2 second dimension of the vector
+       * @param dim3 third dimension of the vector
+       */
+      template<typename T>
+      void resize_3d(std::vector<std::vector<std::vector<T>>>& vec, uint32_t dim1, uint32_t dim2, uint32_t dim3)
+      {
+        bool dim1_resized = (vec.size() != dim1);
+        if (dim1_resized)
+        {
+          vec.resize(dim1);
+        }
+        bool dim2_resized = false;
+        bool dim3_resized = false;
+        for (uint32_t i=0; i<dim1; i++)
+        {
+          dim2_resized |= (vec[i].size() != dim2);
+          if (dim1_resized || dim2_resized)
+          {
+            vec[i].resize(dim2);
+          }
+          for (uint32_t j=0; j<dim2; j++)
+          {
+            dim3_resized |= (vec[i][j].size() != dim3);
+            if (dim1_resized || dim2_resized || dim3_resized)
+            {
+              vec[i][j].resize(dim3);
+            }
+          }
+        }
+        if (dim1_resized || dim2_resized || dim3_resized)
+        {
+          storage_reset = false;
+        }
+      }
+
+      /**
+       * @brief reset the 1 dimensional vector elements to zero
+       *
+       * @tparam T storage type of the vector
+       * @param vec vector to reset to zero
+       */
+      template<typename T>
+      void reset_1d(std::vector<T>& vec)
+      {
+        std::fill(vec.begin(), vec.end(), 0);
+      }
+
+      /**
+       * @brief reset the 2 dimensional vector elements to zero
+       *
+       * @tparam T storage type of the vector
+       * @param vec vector to reset to zero
+       */
+      template<typename T>
+      void reset_2d(std::vector<std::vector<T>>& vec)
+      {
+        for (uint32_t i=0; i<vec.size(); i++)
+        {
+          std::fill(vec[i].begin(), vec[i].end(), 0);
+        }
+      }
+
+      /**
+       * @brief reset the 2 dimensional vector elements to zero
+       *
+       * @tparam T storage type of the vector
+       * @param vec vector to reset to zero
+       */
+      template<typename T>
+      void reset_3d(std::vector<std::vector<std::vector<T>>>& vec)
+      {
+        for (uint32_t i=0; i<vec.size(); i++)
+        {
+          for (uint32_t j=0; j<vec[i].size(); j++)
+          {
+            std::fill(vec[i][j].begin(), vec[i][j].end(), 0);
+          }
+        }
+      }
+
       //! the configuration for the current stream of voltage data.
       ska::pst::common::AsciiHeader config;
 
-      //! lookup table of RFI masks for each channel, true value indicates channel is masked for RFI
-      std::vector<bool> rfi_mask_lut;
+      //! flag to indicate if the storage has been resized
+      bool storage_resized{false};
+
+      //! flag to indicate if the storage has been resized, but not reset
+      bool storage_reset{false};
 
       //! number of temporal bins in the timeseries, timeseries_masked and spectrogram attributes
-      uint32_t ntime_bins{0}; 
+      uint32_t ntime_bins{0};
 
       //! number of spectral bins in the spectrogram
-      uint32_t nfreq_bins{0}; 
+      uint32_t nfreq_bins{0};
+
+      //! number of values for each timeseries bins [min, mean, max]
+      uint32_t ntime_vals{3};
+
+      //! number of polarisations represented in storage vectors
+      uint32_t npol{2};
+
+      //! number of dimensions represented in storage vectors
+      uint32_t ndim{2};
+
+      //! number of channels representated in storage vectors
+      uint32_t nchan{0};
+
+      //! number of bins represented in storage vectors
+      uint32_t nbin{0};
+
+      //! number of rebinned bins represented in storage vectors
+      uint32_t nrebin{256};
   };
 
 } // namespace ska::pst::stat

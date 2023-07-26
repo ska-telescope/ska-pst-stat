@@ -16,6 +16,7 @@ set(public_headers
 
 set(sources
   src/version.cpp
+  src/StatStorage.cpp
   src/StatPublisher.cpp
   src/StatHdf5FileWriter.cpp
   src/StatComputer.cpp
