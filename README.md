@@ -31,7 +31,12 @@ Now launch this builder image as a container. Note the current working directory
 
     make local-dev-env
 
-The library and applications can be built using the standardise makefile templates provided by CICD infrastructure.
+Finally, install the required HDF5 development libraries
+
+    apt-get update -y
+    apt install libhdf5-dev -y
+
+The library and applications can now be built using the standard makefile templates provided by CICD infrastructure.
 
 ### Debug Build
 

@@ -88,7 +88,7 @@ namespace ska::pst::stat {
        * and weights. Clients of this must not go beyond the length of data.
        */
       auto next_block() -> file_block_t;
-  }
+  };
 
 } // namespace ska::pst::stat
 

@@ -28,60 +28,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <memory>
+#include <iostream>
+#include <spdlog/spdlog.h>
+#include <stdexcept>
 #include <string>
+#include <vector>
 
-#include "ska/pst/common/utils/AsciiHeader.h"
-#include "ska/pst/stat/StatProcessor.h"
-#include "ska/pst/stat/FileReader.h"
+#include "ska/pst/stat/FileProcessor.h"
 
-#ifndef __SKA_PST_STAT_FileProcessor_h
-#define __SKA_PST_STAT_FileProcessor_h
-
-namespace ska::pst::stat {
-
-  /**
-   * @brief Class used for processing input voltage data files to
-   * calculate the output statistics.
-   */
-  class FileProcessor
-  {
-    public:
-      /**
-       * @brief Create instance of a File Processor object.
-       *
-       * @param config the configuration for the file processing job.
-       * @param data_file_path path to the data file to process.
-       * @param weights_file_path the path to the weights file for the data file.
-       */
-      FileProcessor(
+ska::pst::stat::FileProcessor::FileProcessor(
         const ska::pst::common::AsciiHeader& config,
         const std::string& data_file_path,
-        const std::string& weights_file_path
-      );
+        const std::string& weights_file_path)
+        : reader (config, data_file_path, weights_file_path)
+{
+  SPDLOG_DEBUG("ska::pst::stat::FileProcessor::FileProcessor");
+}
 
-      /**
-       * @brief Destroy the File Processor object.
-       *
-       */
-      virtual ~FileProcessor();
+ska::pst::stat::FileProcessor::~FileProcessor()
+{
+  SPDLOG_DEBUG("ska::pst::stat::FileProcessor::~FileProcessor()");
+}
 
-      /**
-       * @brief Process the file based on the configuration passed in the constructor.
-       */
-      void process();
-
-    private:
-      //! shared pointer a statistics processor
-      std::shared_ptr<StatProcessor> processor;
-
-      //! the configuration for the current file processing
-      ska::pst::common::AsciiHeader config;
-
-      //! the file reader that us used to mmap the data and weights files
-      FileReader reader;
-  };
-
-} // namespace ska::pst::stat
-
-#endif // __SKA_PST_STAT_FileProcessor_h
+void ska::pst::stat::FileProcessor::process()
+{
+  SPDLOG_DEBUG("ska::pst::stat::FileProcessor::process");
+}

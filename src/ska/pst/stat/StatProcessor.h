@@ -39,6 +39,8 @@
 
 namespace ska::pst::stat {
 
+  class StatPublisher;
+  
   /**
    * @brief A class that does the core computation of statistics per block of data.
    *
@@ -84,7 +86,7 @@ namespace ska::pst::stat {
       //! the configuration for the current stream of voltage data.
       ska::pst::common::AsciiHeader config;
 
-  }
+  };
 
 } // namespace ska::pst::stat
 
