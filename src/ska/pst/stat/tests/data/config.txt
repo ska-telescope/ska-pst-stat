@@ -3,3 +3,10 @@ NDIM          2
 NCHAN         20736
 NBIT          16
 STAT_NREBIN   256
+
+RESOLUTION              5308416
+
+UDP_NSAMP               32
+STAT_OUTPUT_BASEPATH    /tmp
+STAT_REQ_TIME_BINS      4
+STAT_REQ_FREQ_BINS      4

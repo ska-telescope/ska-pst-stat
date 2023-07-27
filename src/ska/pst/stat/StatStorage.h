@@ -409,7 +409,7 @@ namespace ska::pst::stat {
       }
 
       /**
-       * @brief resize the 2 dimensional vector
+       * @brief resize the 3 dimensional vector
        *
        * @tparam T storage type of the vector
        * @param vec vector to be resized
@@ -477,7 +477,7 @@ namespace ska::pst::stat {
       }
 
       /**
-       * @brief reset the 2 dimensional vector elements to zero
+       * @brief reset the 3 dimensional vector elements to zero
        *
        * @tparam T storage type of the vector
        * @param vec vector to reset to zero

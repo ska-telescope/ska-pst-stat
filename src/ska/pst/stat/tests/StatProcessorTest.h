@@ -37,6 +37,18 @@
 #define SKA_PST_STAT_TESTS_StatProcessorTest_h
 
 namespace ska::pst::stat::test {
+/**
+  */
+  class TestStatProcessor : public StatProcessor
+  {
+    public:
+      TestStatProcessor(const ska::pst::common::AsciiHeader config) : StatProcessor(config) {this->config=config;};
+  
+      ~TestStatProcessor() = default;
+
+      ska::pst::common::AsciiHeader get_config() { return config; }
+      std::shared_ptr<StatStorage> get_storage() { return storage; }
+  };
 
 /**
  * @brief Test the StatProcessor class
@@ -55,10 +67,13 @@ namespace ska::pst::stat::test {
       StatProcessorTest();
   
       ~StatProcessorTest() = default;
+
+      void init_config();
+      void clear_config();
   
       ska::pst::common::AsciiHeader config;
   
-      std::shared_ptr<StatProcessor> sp;
+      std::shared_ptr<TestStatProcessor> sp;
   
     private:
   
