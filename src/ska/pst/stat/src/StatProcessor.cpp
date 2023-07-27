@@ -38,25 +38,26 @@ TODO: implement the following architectural change
 - split config involving data and weights
 */
 ska::pst::stat::StatProcessor::StatProcessor(
-  const ska::pst::common::AsciiHeader& config
+  const ska::pst::common::AsciiHeader& data_config,
+  const ska::pst::common::AsciiHeader& weights_config
 )
 {
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor");
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor create new shared StatStorage object");
-  storage=std::make_shared<ska::pst::stat::StatStorage>(config);
+  storage=std::make_shared<ska::pst::stat::StatStorage>(data_config);
 
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor create new unique StatComputer object");
-  computer=std::make_unique<ska::pst::stat::StatComputer>(config, storage);
+  computer=std::make_unique<ska::pst::stat::StatComputer>(data_config, storage);
 
   // Create StatHdf5FileWriter instance
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor create new unique StatHdf5FileWriter object");
   // TODO: Confirm the source of file_path
-  const std::string& file_path = config.get_val("STAT_OUTPUT_BASEPATH");
-  publisher=std::make_unique<ska::pst::stat::StatHdf5FileWriter>(config, storage, file_path);
+  const std::string& file_path = data_config.get_val("STAT_OUTPUT_BASEPATH");
+  publisher=std::make_unique<ska::pst::stat::StatHdf5FileWriter>(data_config, storage, file_path);
 
-  data_resolution = config.get_uint32("RESOLUTION");
-  req_time_bins = config.get_uint32("STAT_REQ_TIME_BINS");
-  req_freq_bins = config.get_uint32("STAT_REQ_FREQ_BINS");
+  data_resolution = data_config.get_uint32("RESOLUTION");
+  req_time_bins = data_config.get_uint32("STAT_REQ_TIME_BINS");
+  req_freq_bins = data_config.get_uint32("STAT_REQ_FREQ_BINS");
 
   if (req_time_bins == 0 || req_time_bins > max_time_bins)
   {
@@ -74,7 +75,7 @@ ska::pst::stat::StatProcessor::StatProcessor(
     SPDLOG_INFO("ska::pst::stat::StatProcessor::StatProcessor req_freq_bins set to {}", req_freq_bins);
   }
 
-  this->config=config;
+  this->data_config=data_config;
 }
 
 ska::pst::stat::StatProcessor::~StatProcessor()
@@ -97,10 +98,10 @@ void ska::pst::stat::StatProcessor::process(
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process weights_length={}", weights_length);
 
   // need to determine a few parameters in the storage.  
-  uint32_t nbytes_per_sample = config.compute_bits_per_sample() / ska::pst::common::bits_per_byte;
-  uint32_t desired_time_bins = config.get_uint32("STAT_REQ_TIME_BINS"); // storage->get_ntime_bins();
-  uint32_t desired_freq_bins = config.get_uint32("STAT_REQ_FREQ_BINS"); // storage->get_nfreq_bins();
-  uint32_t nchan = config.get_uint32("NCHAN");
+  uint32_t nbytes_per_sample = data_config.compute_bits_per_sample() / ska::pst::common::bits_per_byte;
+  uint32_t desired_time_bins = data_config.get_uint32("STAT_REQ_TIME_BINS"); // storage->get_ntime_bins();
+  uint32_t desired_freq_bins = data_config.get_uint32("STAT_REQ_FREQ_BINS"); // storage->get_nfreq_bins();
+  uint32_t nchan = data_config.get_uint32("NCHAN");
   
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process nbytes_per_sample={}", nbytes_per_sample);
   if (nbytes_per_sample <= 0)

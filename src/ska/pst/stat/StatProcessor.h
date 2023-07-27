@@ -50,9 +50,10 @@ namespace ska::pst::stat {
       /**
        * @brief Create instance of a Stat Processor object.
        *
-       * @param config the configuration current voltage data stream.
+       * @param data_config the configuration current data stream involving the data block.
+       * @param weights_config the configuration current data stream involving the weights block.
        */
-      StatProcessor(const ska::pst::common::AsciiHeader& config);
+      StatProcessor(const ska::pst::common::AsciiHeader& data_config, const ska::pst::common::AsciiHeader& weights_config);
 
       /**
        * @brief Destroy the Stat Processor object.
@@ -83,10 +84,14 @@ namespace ska::pst::stat {
       std::unique_ptr<StatPublisher> publisher;
 
       //! the configuration for the current stream of voltage data.
-      ska::pst::common::AsciiHeader config;
+      ska::pst::common::AsciiHeader data_config;
+      //! the configuration for the current stream of voltage data.
+      ska::pst::common::AsciiHeader weights_config;
 
-      //! minimum resolution of the input data stream
+      //! minimum resolution of the input data stream involving the data block
       uint32_t data_resolution;
+      //! minimum resolution of the input data stream involving the weights block
+      uint32_t weights_resolution;
 
       uint32_t req_time_bins{1024};
 

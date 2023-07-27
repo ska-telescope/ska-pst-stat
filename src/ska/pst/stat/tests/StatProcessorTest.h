@@ -42,11 +42,16 @@ namespace ska::pst::stat::test {
   class TestStatProcessor : public StatProcessor
   {
     public:
-      TestStatProcessor(const ska::pst::common::AsciiHeader config) : StatProcessor(config) {this->config=config;};
+      TestStatProcessor(const ska::pst::common::AsciiHeader data_config, const ska::pst::common::AsciiHeader weights_config) :
+      StatProcessor(data_config, weights_config) 
+      {
+        this->data_config=data_config;this->weights_config=weights_config;
+      };
   
       ~TestStatProcessor() = default;
 
-      ska::pst::common::AsciiHeader get_config() { return config; }
+      ska::pst::common::AsciiHeader get_data_config() { return data_config; }
+      ska::pst::common::AsciiHeader get_weights_config() { return weights_config; }
       std::shared_ptr<StatStorage> get_storage() { return storage; }
   };
 
@@ -71,7 +76,8 @@ namespace ska::pst::stat::test {
       void init_config();
       void clear_config();
   
-      ska::pst::common::AsciiHeader config;
+      ska::pst::common::AsciiHeader data_config;
+      ska::pst::common::AsciiHeader weights_config;
   
       std::shared_ptr<TestStatProcessor> sp;
   
