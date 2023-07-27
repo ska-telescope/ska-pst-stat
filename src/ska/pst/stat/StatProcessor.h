@@ -30,6 +30,7 @@
 
 #include <memory>
 
+#include "ska/pst/common/definitions.h"
 #include "ska/pst/stat/StatStorage.h"
 #include "ska/pst/stat/StatComputer.h"
 #include "ska/pst/stat/StatHdf5FileWriter.h"
@@ -66,10 +67,10 @@ namespace ska::pst::stat {
        *
        * @param data_block a pointer to the start of the data block to compute statistics for.
        * @param block_length the size, in bytes, of the data block to process.
-       * @param weights a pointer to the start of the weights block to use in computing statistics.
+       * @param weights_block a pointer to the start of the weights block to use in computing statistics.
        * @param weights_length the size, in bytes, of the weights to process.
        */
-      void process(char * data_block, size_t block_length, char * weights, size_t weights_length);
+      void process(char * data_block, size_t block_length, char * weights_block, size_t weights_length);
 
     protected:
       //! shared pointer a statistics storage, shared also with the computer and publisher
@@ -83,6 +84,17 @@ namespace ska::pst::stat {
 
       //! the configuration for the current stream of voltage data.
       ska::pst::common::AsciiHeader config;
+
+      //! minimum resolution of the input data stream
+      uint32_t data_resolution;
+
+      uint32_t req_time_bins{1024};
+
+      uint32_t req_freq_bins{1024};
+
+      uint32_t max_freq_bins{2048};
+
+      uint32_t max_time_bins{32786};
 
   };
 
