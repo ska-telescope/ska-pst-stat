@@ -73,6 +73,7 @@ namespace ska::pst::stat {
        */
       void process(char * data_block, size_t block_length, char * weights_block, size_t weights_length);
 
+
     protected:
       //! shared pointer a statistics storage, shared also with the computer and publisher
       std::shared_ptr<StatStorage> storage;
@@ -85,11 +86,13 @@ namespace ska::pst::stat {
 
       //! the configuration for the current stream of voltage data.
       ska::pst::common::AsciiHeader data_config;
-      //! the configuration for the current stream of voltage data.
+
+      //! the configuration for the current stream of voltage weights.
       ska::pst::common::AsciiHeader weights_config;
 
       //! minimum resolution of the input data stream involving the data block
       uint32_t data_resolution;
+
       //! minimum resolution of the input data stream involving the weights block
       uint32_t weights_resolution;
 

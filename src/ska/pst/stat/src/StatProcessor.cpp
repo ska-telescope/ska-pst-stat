@@ -33,10 +33,6 @@
 #include "ska/pst/stat/StatProcessor.h"
 #include "ska/pst/stat/StatHdf5FileWriter.h"
 
-/*
-TODO: implement the following architectural change
-- split config involving data and weights
-*/
 ska::pst::stat::StatProcessor::StatProcessor(
   const ska::pst::common::AsciiHeader& data_config,
   const ska::pst::common::AsciiHeader& weights_config
@@ -49,19 +45,17 @@ ska::pst::stat::StatProcessor::StatProcessor(
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor create new unique StatComputer object");
   computer=std::make_unique<ska::pst::stat::StatComputer>(data_config, storage);
 
-  // Create StatHdf5FileWriter instance
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor create new unique StatHdf5FileWriter object");
-  // TODO: Confirm the source of file_path
   const std::string& file_path = data_config.get_val("STAT_OUTPUT_BASEPATH");
   publisher=std::make_unique<ska::pst::stat::StatHdf5FileWriter>(data_config, storage, file_path);
 
   data_resolution = data_config.get_uint32("RESOLUTION");
+  weights_resolution = weights_config.get_uint32("RESOLUTION");
   req_time_bins = data_config.get_uint32("STAT_REQ_TIME_BINS");
   req_freq_bins = data_config.get_uint32("STAT_REQ_FREQ_BINS");
 
   if (req_time_bins == 0 || req_time_bins > max_time_bins)
   {
-    // create a warning
     SPDLOG_WARN("ska::pst::stat::StatProcessor::StatProcessor req_time_bins={}", req_time_bins);
     req_time_bins = 1024;
     SPDLOG_INFO("ska::pst::stat::StatProcessor::StatProcessor req_time_bins set to {}", req_time_bins);
@@ -69,13 +63,13 @@ ska::pst::stat::StatProcessor::StatProcessor(
 
   if (req_freq_bins == 0 || req_freq_bins > max_freq_bins)
   {
-    // create a warning
     SPDLOG_WARN("ska::pst::stat::StatProcessor::StatProcessor req_freq_bins={}", req_freq_bins);
     req_freq_bins = 1024;
     SPDLOG_INFO("ska::pst::stat::StatProcessor::StatProcessor req_freq_bins set to {}", req_freq_bins);
   }
 
   this->data_config=data_config;
+  this->weights_config=weights_config;
 }
 
 ska::pst::stat::StatProcessor::~StatProcessor()
@@ -83,10 +77,6 @@ ska::pst::stat::StatProcessor::~StatProcessor()
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::~StatProcessor()");
 }
 
-/*
-TODO: implement the following architectural change
-- split processing involving data and weights
-*/
 void ska::pst::stat::StatProcessor::process(
     char * data_block,
     size_t data_length,
@@ -97,24 +87,32 @@ void ska::pst::stat::StatProcessor::process(
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process data_length={}", data_length);
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process weights_length={}", weights_length);
 
+  if ( data_block == nullptr )
+  {
+    SPDLOG_WARN("ska::pst::stat::StatProcessor::process data_block pointer is null");
+    throw std::runtime_error("ska::pst::stat::StatProcessor::process data_block pointer is null");
+  }
+  if ( weights_block == nullptr )
+  {
+    SPDLOG_WARN("ska::pst::stat::StatProcessor::process weights_block pointer is null");
+    throw std::runtime_error("ska::pst::stat::StatProcessor::process weights_block pointer is null");
+  }
+
   // need to determine a few parameters in the storage.  
   uint32_t nbytes_per_sample = data_config.compute_bits_per_sample() / ska::pst::common::bits_per_byte;
-  uint32_t desired_time_bins = data_config.get_uint32("STAT_REQ_TIME_BINS"); // storage->get_ntime_bins();
-  uint32_t desired_freq_bins = data_config.get_uint32("STAT_REQ_FREQ_BINS"); // storage->get_nfreq_bins();
   uint32_t nchan = data_config.get_uint32("NCHAN");
   
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process nbytes_per_sample={}", nbytes_per_sample);
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process nchan={}", nchan);
   if (nbytes_per_sample <= 0)
   {
+    SPDLOG_WARN("ska::pst::stat::StatProcessor::process nbytes_per_sample not greater than 0");
     throw std::runtime_error("ska::pst::stat::StatProcessor::process nbytes_per_sample not greater than 0");
   }
-  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process desired_time_bins={}", desired_time_bins);
-  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process desired_freq_bins={}", desired_freq_bins);
-  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process nchan={}", nchan);
 
-  if (data_length == 0 || nbytes_per_sample == 0)
+  if (data_length == 0 || weights_length == 0)
   {
-
+    SPDLOG_WARN("ska::pst::stat::StatProcessor::process nbytes_per_sample not greater than 0");
     throw std::runtime_error(std::string("ska::pst::stat::StatProcessor::process data_length={} nbytes_per_sample={}", data_length, nbytes_per_sample));
   }
 
@@ -126,11 +124,15 @@ void ska::pst::stat::StatProcessor::process(
     throw std::runtime_error("ska::pst::stat::StatProcessor::process data resolution not a multiple of nbytes_per_sample");
   }
 
-  if (data_length % data_resolution != 0)
+    if (data_length % data_resolution != 0)
   {
-    // throw an error
     SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process data_length \% data_resolution={}", (data_length % data_resolution));
     throw std::runtime_error("ska::pst::stat::StatProcessor::process block length not a multiple of data_resolution");
+  }
+  if (weights_length % weights_resolution != 0)
+  {
+    SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process weights_length \% weights_resolution={}", (weights_length % weights_resolution));
+    throw std::runtime_error("ska::pst::stat::StatProcessor::process block length not a multiple of weights_resolution");
   }
 
   uint32_t ntime_factor = std::max(nsamp_block / req_time_bins, uint32_t(1));
