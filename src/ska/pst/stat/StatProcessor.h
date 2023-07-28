@@ -96,13 +96,22 @@ namespace ska::pst::stat {
       //! minimum resolution of the input data stream involving the weights block
       uint32_t weights_resolution;
 
-      uint32_t req_time_bins{1024};
+      uint32_t req_time_bins{0};
 
-      uint32_t req_freq_bins{1024};
+      uint32_t req_freq_bins{0};
 
-      uint32_t max_freq_bins{2048};
+      //! default number of time bins in spectrogram
+      static constexpr uint32_t default_ntime_bins = 1024;
 
-      uint32_t max_time_bins{32786};
+      //! default number of frequency bins in spectrogram
+      static constexpr uint32_t default_nfreq_bins = 1024;
+
+      //! maximum allowed number of frequency bins in spectrogram
+      static constexpr uint32_t max_freq_bins = 2048;
+
+      //! maximum allowed number of time bins in spectrogram
+      static constexpr uint32_t max_time_bins = 32768;
+
 
   };
 

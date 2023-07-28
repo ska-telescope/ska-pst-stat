@@ -34,11 +34,11 @@
 #include "ska/pst/stat/StatHdf5FileWriter.h"
 
 ska::pst::stat::StatProcessor::StatProcessor(
-  const ska::pst::common::AsciiHeader& data_config,
-  const ska::pst::common::AsciiHeader& weights_config
-)
+  const ska::pst::common::AsciiHeader& _data_config,
+  const ska::pst::common::AsciiHeader& _weights_config
+) : data_config(_data_config), weights_config(_weights_config)
+
 {
-  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor");
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor create new shared StatStorage object");
   storage=std::make_shared<ska::pst::stat::StatStorage>(data_config);
 
@@ -54,22 +54,19 @@ ska::pst::stat::StatProcessor::StatProcessor(
   req_time_bins = data_config.get_uint32("STAT_REQ_TIME_BINS");
   req_freq_bins = data_config.get_uint32("STAT_REQ_FREQ_BINS");
 
-  if (req_time_bins == 0 || req_time_bins > max_time_bins)
+  if (req_time_bins <= 0 || req_time_bins > max_time_bins)
   {
     SPDLOG_WARN("ska::pst::stat::StatProcessor::StatProcessor req_time_bins={}", req_time_bins);
-    req_time_bins = 1024;
+    req_time_bins = default_ntime_bins;
     SPDLOG_INFO("ska::pst::stat::StatProcessor::StatProcessor req_time_bins set to {}", req_time_bins);
   }
 
-  if (req_freq_bins == 0 || req_freq_bins > max_freq_bins)
+  if (req_freq_bins <= 0 || req_freq_bins > max_freq_bins)
   {
     SPDLOG_WARN("ska::pst::stat::StatProcessor::StatProcessor req_freq_bins={}", req_freq_bins);
-    req_freq_bins = 1024;
+    req_freq_bins = default_nfreq_bins;
     SPDLOG_INFO("ska::pst::stat::StatProcessor::StatProcessor req_freq_bins set to {}", req_freq_bins);
   }
-
-  this->data_config=data_config;
-  this->weights_config=weights_config;
 }
 
 ska::pst::stat::StatProcessor::~StatProcessor()
@@ -89,12 +86,12 @@ void ska::pst::stat::StatProcessor::process(
 
   if ( data_block == nullptr )
   {
-    SPDLOG_WARN("ska::pst::stat::StatProcessor::process data_block pointer is null");
+    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process data_block pointer is null");
     throw std::runtime_error("ska::pst::stat::StatProcessor::process data_block pointer is null");
   }
   if ( weights_block == nullptr )
   {
-    SPDLOG_WARN("ska::pst::stat::StatProcessor::process weights_block pointer is null");
+    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process weights_block pointer is null");
     throw std::runtime_error("ska::pst::stat::StatProcessor::process weights_block pointer is null");
   }
 
@@ -106,13 +103,13 @@ void ska::pst::stat::StatProcessor::process(
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process nchan={}", nchan);
   if (nbytes_per_sample <= 0)
   {
-    SPDLOG_WARN("ska::pst::stat::StatProcessor::process nbytes_per_sample not greater than 0");
+    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process nbytes_per_sample not greater than 0");
     throw std::runtime_error("ska::pst::stat::StatProcessor::process nbytes_per_sample not greater than 0");
   }
 
   if (data_length == 0 || weights_length == 0)
   {
-    SPDLOG_WARN("ska::pst::stat::StatProcessor::process nbytes_per_sample not greater than 0");
+    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process nbytes_per_sample not greater than 0");
     throw std::runtime_error(std::string("ska::pst::stat::StatProcessor::process data_length={} nbytes_per_sample={}", data_length, nbytes_per_sample));
   }
 
@@ -135,11 +132,11 @@ void ska::pst::stat::StatProcessor::process(
     throw std::runtime_error("ska::pst::stat::StatProcessor::process block length not a multiple of weights_resolution");
   }
 
-  uint32_t ntime_factor = std::max(nsamp_block / req_time_bins, uint32_t(1));
+  uint32_t ntime_factor = std::max(nsamp_block / req_time_bins, static_cast<uint32_t>(1));
   uint32_t ntime_bins = nsamp_block / ntime_factor;
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process ntime_bins={}", ntime_bins);
 
-  uint32_t nfreq_factor = std::max(nchan / req_freq_bins, uint32_t(1));
+  uint32_t nfreq_factor = std::max(nchan / req_freq_bins, static_cast<uint32_t>(1));
   uint32_t nfreq_bins = nchan / nfreq_factor;
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process nfreq_bins={}", nfreq_bins);
 

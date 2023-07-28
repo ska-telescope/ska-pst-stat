@@ -31,6 +31,7 @@
 
 #include <gtest/gtest.h>
 #include "ska/pst/common/utils/AsciiHeader.h"
+#include "ska/pst/common/definitions.h"
 #include "ska/pst/stat/StatProcessor.h"
 
 #ifndef SKA_PST_STAT_TESTS_StatProcessorTest_h
@@ -53,6 +54,7 @@ namespace ska::pst::stat::test {
       ska::pst::common::AsciiHeader get_data_config() { return data_config; }
       ska::pst::common::AsciiHeader get_weights_config() { return weights_config; }
       std::shared_ptr<StatStorage> get_storage() { return storage; }
+
   };
 
 /**
@@ -80,6 +82,8 @@ namespace ska::pst::stat::test {
       ska::pst::common::AsciiHeader weights_config;
   
       std::shared_ptr<TestStatProcessor> sp;
+      size_t get_data_length() { return sp->get_data_config().get_uint32("UDP_NSAMP") * sp->get_data_config().get_uint32("NCHAN") * sp->get_data_config().get_uint32("NDIM") * sp->get_data_config().get_uint32("NPOL") * (sp->get_data_config().get_uint32("NBIT")/ska::pst::common::bits_per_byte); };
+      size_t get_weights_length() { return sp->get_weights_config().get_uint32("UDP_NSAMP") * sp->get_weights_config().get_uint32("NCHAN") * sp->get_weights_config().get_uint32("NDIM") * sp->get_weights_config().get_uint32("NPOL") * (sp->get_weights_config().get_uint32("NBIT")/ska::pst::common::bits_per_byte); };
   
     private:
   

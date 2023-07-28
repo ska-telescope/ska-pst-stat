@@ -104,10 +104,10 @@ TEST_F(StatProcessorTest, test_construct_delete) // NOLINT
 TEST_F(StatProcessorTest, test_process_valid_values) // NOLINT
 {
   sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
-  size_t data_length = sp->get_data_config().get_uint32("UDP_NSAMP") * sp->get_data_config().get_uint32("NCHAN") * sp->get_data_config().get_uint32("NDIM") * sp->get_data_config().get_uint32("NPOL") * (sp->get_data_config().get_uint32("NBIT")/8);
+  size_t data_length = get_data_length();
   std::vector<char> data_block(data_length);
 
-  size_t weights_length = sp->get_data_config().get_uint32("UDP_NSAMP") * sp->get_data_config().get_uint32("NCHAN") * sp->get_data_config().get_uint32("NDIM") * sp->get_data_config().get_uint32("NPOL") * (sp->get_data_config().get_uint32("NBIT")/8);
+  size_t weights_length = get_weights_length();
   std::vector<char> weights_block(weights_length);
 
   ASSERT_NO_THROW(sp->process(
@@ -117,14 +117,14 @@ TEST_F(StatProcessorTest, test_process_valid_values) // NOLINT
     weights_length));
 }
 
-TEST_F(StatProcessorTest, test_constructor_threshold_overrides)
+TEST_F(StatProcessorTest, test_constructor_threshold_overrides) // NOLINT
 {
   data_config.set("STAT_REQ_TIME_BINS", 0);
   sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
-  size_t data_length = sp->get_data_config().get_uint32("UDP_NSAMP") * sp->get_data_config().get_uint32("NCHAN") * sp->get_data_config().get_uint32("NDIM") * sp->get_data_config().get_uint32("NPOL") * (sp->get_data_config().get_uint32("NBIT")/8);
+  size_t data_length = get_data_length();
   std::vector<char> data_block(data_length);
 
-  size_t weights_length = sp->get_data_config().get_uint32("UDP_NSAMP") * sp->get_data_config().get_uint32("NCHAN") * sp->get_data_config().get_uint32("NDIM") * sp->get_data_config().get_uint32("NPOL") * (sp->get_data_config().get_uint32("NBIT")/8);
+  size_t weights_length = get_weights_length();
   std::vector<char> weights_block(weights_length);
 
   ASSERT_NO_THROW(sp->process(
@@ -151,10 +151,10 @@ TEST_F(StatProcessorTest, test_process_invalid_values) // NOLINT
   data_config.set("NCHAN", 0);
   sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
 
-  size_t data_length = sp->get_data_config().get_uint32("UDP_NSAMP") * sp->get_data_config().get_uint32("NCHAN") * sp->get_data_config().get_uint32("NDIM") * sp->get_data_config().get_uint32("NPOL") * (sp->get_data_config().get_uint32("NBIT")/8);
+  size_t data_length = get_data_length();
   std::vector<char> data_block(data_length);
 
-  size_t weights_length = sp->get_data_config().get_uint32("UDP_NSAMP") * sp->get_data_config().get_uint32("NCHAN") * sp->get_data_config().get_uint32("NDIM") * sp->get_data_config().get_uint32("NPOL") * (sp->get_data_config().get_uint32("NBIT")/8);
+  size_t weights_length = get_weights_length();
   std::vector<char> weights_block(weights_length);
 
   EXPECT_ANY_THROW(sp->process(
@@ -168,10 +168,10 @@ TEST_F(StatProcessorTest, test_process_invalid_values) // NOLINT
   data_config.set("NBIT", 0);
   sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
 
-  data_length = sp->get_data_config().get_uint32("UDP_NSAMP") * sp->get_data_config().get_uint32("NCHAN") * sp->get_data_config().get_uint32("NDIM") * sp->get_data_config().get_uint32("NPOL") * (sp->get_data_config().get_uint32("NBIT")/8);
+  data_length = get_data_length();
   data_block = std::vector<char>(data_length);
 
-  weights_length = sp->get_data_config().get_uint32("UDP_NSAMP") * sp->get_data_config().get_uint32("NCHAN") * sp->get_data_config().get_uint32("NDIM") * sp->get_data_config().get_uint32("NPOL") * (sp->get_data_config().get_uint32("NBIT")/8);
+  weights_length = get_weights_length();
   weights_block = std::vector<char>(weights_length);
 
   EXPECT_ANY_THROW(sp->process(
@@ -185,27 +185,10 @@ TEST_F(StatProcessorTest, test_process_invalid_values) // NOLINT
   data_config.set("NPOL", 0);
   sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
 
-  data_length = sp->get_data_config().get_uint32("UDP_NSAMP") * sp->get_data_config().get_uint32("NCHAN") * sp->get_data_config().get_uint32("NDIM") * sp->get_data_config().get_uint32("NPOL") * (sp->get_data_config().get_uint32("NBIT")/8);
+  data_length = get_data_length();
   data_block = std::vector<char>(data_length);
 
-  weights_length = sp->get_data_config().get_uint32("UDP_NSAMP") * sp->get_data_config().get_uint32("NCHAN") * sp->get_data_config().get_uint32("NDIM") * sp->get_data_config().get_uint32("NPOL") * (sp->get_data_config().get_uint32("NBIT")/8);
-  weights_block = std::vector<char>(weights_length);
-
-  EXPECT_ANY_THROW(sp->process(
-    &data_block[0],
-    data_length,
-    &weights_block[0],
-    weights_length)
-  );
-
-  init_config();
-  data_config.set("NDIM", 0);
-  sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
-
-  data_length = sp->get_data_config().get_uint32("UDP_NSAMP") * sp->get_data_config().get_uint32("NCHAN") * sp->get_data_config().get_uint32("NDIM") * sp->get_data_config().get_uint32("NPOL") * (sp->get_data_config().get_uint32("NBIT")/8);
-  data_block = std::vector<char>(data_length);
-
-  weights_length = sp->get_data_config().get_uint32("UDP_NSAMP") * sp->get_data_config().get_uint32("NCHAN") * sp->get_data_config().get_uint32("NDIM") * sp->get_data_config().get_uint32("NPOL") * (sp->get_data_config().get_uint32("NBIT")/8);
+  weights_length = get_weights_length();
   weights_block = std::vector<char>(weights_length);
 
   EXPECT_ANY_THROW(sp->process(
@@ -220,10 +203,10 @@ TEST_F(StatProcessorTest, test_process_null_pointer_error) // NOLINT
 {
   sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
 
-  size_t data_length = sp->get_data_config().get_uint32("UDP_NSAMP") * sp->get_data_config().get_uint32("NCHAN") * sp->get_data_config().get_uint32("NDIM") * sp->get_data_config().get_uint32("NPOL") * (sp->get_data_config().get_uint32("NBIT")/8);
+  size_t data_length = get_data_length();
   std::vector<char> data_block(data_length);
 
-  size_t weights_length = sp->get_data_config().get_uint32("UDP_NSAMP") * sp->get_data_config().get_uint32("NCHAN") * sp->get_data_config().get_uint32("NDIM") * sp->get_data_config().get_uint32("NPOL") * (sp->get_data_config().get_uint32("NBIT")/8);
+  size_t weights_length = get_weights_length();
   std::vector<char> weights_block(weights_length);
 
   EXPECT_ANY_THROW(sp->process(
@@ -251,6 +234,51 @@ TEST_F(StatProcessorTest, test_process_null_pointer_error) // NOLINT
     data_length,
     &weights_block[0],
     0)
+  );
+}
+
+TEST_F(StatProcessorTest, test_length_multiple_of_resolution) // NOLINT
+{
+  sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
+
+  size_t data_length = get_data_length();
+  std::vector<char> data_block(data_length);
+
+  size_t weights_length = get_weights_length();
+  std::vector<char> weights_block(weights_length);
+
+  EXPECT_ANY_THROW(sp->process(
+    &data_block[0],
+    3,
+    &weights_block[0],
+    weights_length)
+  );
+
+  EXPECT_ANY_THROW(sp->process(
+    &data_block[0],
+    data_length,
+    &weights_block[0],
+    3)
+  );
+}
+
+TEST_F(StatProcessorTest, test_resolution_multiple_of_bytes_per_sample) // NOLINT
+{
+  init_config();
+  data_config.set("RESOLUTION", 3);
+  sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
+
+  size_t data_length = get_data_length();
+  std::vector<char> data_block(data_length);
+
+  size_t weights_length = get_weights_length();
+  std::vector<char> weights_block(weights_length);
+
+  EXPECT_ANY_THROW(sp->process(
+    &data_block[0],
+    data_length,
+    &weights_block[0],
+    weights_length)
   );
 }
 
