@@ -31,12 +31,11 @@ Now launch this builder image as a container. Note the current working directory
 
     make local-dev-env
 
-Finally, install the required HDF5 development libraries
+After the builder container is launched, install any residual dependencies with
 
-    apt-get update -y
-    apt install libhdf5-dev -y
+    make local-apt-install-dependencies
 
-The library and applications can now be built using the standard makefile templates provided by CICD infrastructure.
+The STAT library and applications can now be built using the standard makefile templates provided by CICD infrastructure.
 
 ### Debug Build
 

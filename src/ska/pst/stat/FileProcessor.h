@@ -32,8 +32,9 @@
 #include <string>
 
 #include "ska/pst/common/utils/AsciiHeader.h"
+#include "ska/pst/common/utils/DataWeightsFileBlockLoader.h"
+
 #include "ska/pst/stat/StatProcessor.h"
-#include "ska/pst/stat/FileReader.h"
 
 #ifndef __SKA_PST_STAT_FileProcessor_h
 #define __SKA_PST_STAT_FileProcessor_h
@@ -78,8 +79,8 @@ namespace ska::pst::stat {
       //! the configuration for the current file processing
       ska::pst::common::AsciiHeader config;
 
-      //! the file reader that us used to mmap the data and weights files
-      FileReader reader;
+      //! the block loader that us used to mmap the data and weights files
+      std::shared_ptr<ska::pst::common::DataWeightsBlockLoader> block_loader;
   };
 
 } // namespace ska::pst::stat

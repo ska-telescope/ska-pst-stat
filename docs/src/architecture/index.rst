@@ -91,7 +91,7 @@ This class is used by the *ska_pst_stat_file_processor* application to
 process a specific set of data and weights files. When the application
 runs it will read a config file into a ska::pst::common::AsciiHeader that
 is passed into the constructor of this class. When the instance of this
-class is created it will create an instance of both a FileReader and
+class is created it will create an instance of both a DataWeightFileBlockLoader and
 a StatProcessor
 
 Sequences

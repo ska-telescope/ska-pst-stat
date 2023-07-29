@@ -40,7 +40,8 @@ ska::pst::stat::FileProcessor::FileProcessor(
         const ska::pst::common::AsciiHeader& config,
         const std::string& data_file_path,
         const std::string& weights_file_path)
-        : reader (config, data_file_path, weights_file_path)
+        : block_loader(new ska::pst::common::DataWeightsFileBlockLoader(data_file_path, weights_file_path)),
+          processor(new StatProcessor(config))
 {
   SPDLOG_DEBUG("ska::pst::stat::FileProcessor::FileProcessor");
 }
@@ -48,6 +49,9 @@ ska::pst::stat::FileProcessor::FileProcessor(
 ska::pst::stat::FileProcessor::~FileProcessor()
 {
   SPDLOG_DEBUG("ska::pst::stat::FileProcessor::~FileProcessor()");
+
+  auto block = block_loader->next_block();
+  processor->process (block.data_block, block.data_size, block.weights_block, block.weights_size);
 }
 
 void ska::pst::stat::FileProcessor::process()
