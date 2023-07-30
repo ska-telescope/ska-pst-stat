@@ -30,6 +30,7 @@
 
 #include <algorithm>
 #include <spdlog/spdlog.h>
+#include <sstream>
 
 #include "ska/pst/stat/StatComputer.h"
 #include "ska/pst/stat/StatStorage.h"
@@ -47,7 +48,7 @@ ska::pst::stat::StatComputer::StatComputer(
   npol = config.get_uint32("NPOL");
   nbit = config.get_uint32("NBIT");
   nchan = config.get_uint32("NCHAN");
-  tsamp = config.get_double("TSAMP");
+  // tsamp = config.get_double("TSAMP");
   nmask = config.get_uint32("NMASK");
 
   nsamp_per_packet = config.get_uint32("UDP_NSAMP");
@@ -67,21 +68,29 @@ ska::pst::stat::StatComputer::StatComputer(
   auto start_freq = centre_freq - bandwidth / 2.0;
   auto start_chan_centre_freq =  start_freq + channel_bandwidth / 2.0;
 
-  auto rfi_masks = get_rfi_masks(config.get_val("FREQ_MASK"));
-  if (rfi_masks.size() != nmask) {
-    SPDLOG_WARN("Expected {} RFI masks but found {}", nmask, rfi_masks.size());
+  std::vector<std::pair<double,double>> rfi_masks;
+  if (config.has("FREQ_MASK")) {
+    rfi_masks = get_rfi_masks(config.get_val("FREQ_MASK"));
+    if (rfi_masks.size() != nmask) {
+      SPDLOG_WARN("Expected {} RFI masks but found {}", nmask, rfi_masks.size());
+    }
   }
 
+  uint32_t num_masked = 0;
   for (auto ichan = 0; ichan<nchan; ichan++)
   {
-    auto channel_start_freq = start_freq + ichan * channel_bandwidth;
+    auto channel_start_freq = start_freq + double(ichan) * channel_bandwidth;
     auto channel_end_freq = channel_start_freq + channel_bandwidth;
 
     // this is mathematically the same as the average of channel_start_freq and channel_end_freq
-    auto channel_centre_freq = start_chan_centre_freq + ichan * channel_bandwidth;
+    auto channel_centre_freq = start_chan_centre_freq + double(ichan) * channel_bandwidth;
 
     storage->channel_centre_frequencies[ichan] = channel_centre_freq;
     storage->rfi_mask_lut[ichan] = false;
+    SPDLOG_TRACE("chan {} centre frequency is {:.4f} MHz, frequncy band is {:.4f} MHz to {:.4f} MHz", ichan,
+      channel_centre_freq, channel_start_freq, channel_end_freq
+    );
+
     for (auto &rfi_mask_pair : rfi_masks)
     {
       // want to find if a channel freq range overlaps with the RFI mask freq range
@@ -94,15 +103,21 @@ ska::pst::stat::StatComputer::StatComputer(
       // From 1, check end > RFI start and less than RFI end i.e. (RFI start, RFI end)
       if (
         (channel_start_freq >= rfi_mask_pair.first && channel_start_freq < rfi_mask_pair.second) ||
-        (channel_end_freq = rfi_mask_pair.first && channel_end_freq < rfi_mask_pair.second)
+        (channel_end_freq > rfi_mask_pair.first && channel_end_freq < rfi_mask_pair.second)
       )
       {
+        SPDLOG_WARN("chan {} frequency band {:.4f} MHz to {:.4f} MHz is between {:.4f} MHz and {:.4f} MHz. Marking as masked",
+          ichan, channel_start_freq, channel_end_freq,
+          rfi_mask_pair.first, rfi_mask_pair.second
+        );
         storage->rfi_mask_lut[ichan] = true;
+        num_masked++;
         break;
       }
     }
   }
 
+  SPDLOG_DEBUG("Number of masked channels = {}", num_masked);
 }
 
 void ska::pst::stat::StatComputer::compute(
@@ -112,11 +127,19 @@ void ska::pst::stat::StatComputer::compute(
   size_t weights_length
 )
 {
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::compute - start");
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::compute - block_length={}, weights_length={}", block_length, weights_length);
+
   // assert block_length is a heap_resolution
-  // might be at the end of the file - may not have a full heap, what should we do?
+  // might be at the end of the file - may not have a full heap
   if (block_length % heap_resolution != 0)
   {
-    throw std::runtime_error("Foobar");
+    std::stringstream error_msg;
+    error_msg << "ska::pst::stat::StatComputer::compute - expected block_length " << block_length <<
+      " to be a multiple of heap_resolution " << heap_resolution;
+
+    SPDLOG_WARN(error_msg.str());
+    throw std::runtime_error(error_msg.str());
   }
   const uint32_t nheaps = block_length / heap_resolution;
   auto expected_num_packets = nheaps * packets_per_heap;
@@ -124,7 +147,7 @@ void ska::pst::stat::StatComputer::compute(
   // assert weights_length is a multiple weights_packet_stride - do we have enough weights?
   auto expected_weights_length = expected_num_packets * weights_packet_stride;
   if (weights_length != expected_weights_length) {
-    throw std::runtime_error("batman!");
+    throw std::runtime_error("ska::pst::stat::StatComputer::compute - expected weights_length to be " + expected_weights_length);
   }
 
   // unpack the 8 or 16 bit signed integers
@@ -145,8 +168,11 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
   const int max_bin = (1 << nbit) - 1;
 
   uint32_t packet_number = 0;
-  uint32_t count = 0;
-  uint32_t count_masked = 0;
+
+  uint32_t pola_samples = 0;
+  uint32_t pola_samples_masked = 0;
+  uint32_t polb_samples = 0;
+  uint32_t polb_samples_masked = 0;
 
   for (auto iheap=0; iheap<nheaps; iheap++)
   {
@@ -159,50 +185,96 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
         for (auto ichan=0; ichan<nchan_per_packet; ichan++)
         {
           const auto ochan = (ipacket * nchan_per_packet) + ichan;
+          const bool channel_masked = storage->rfi_mask_lut[ochan];
           for (auto isamp=0; isamp<nsamp_per_packet; isamp++)
           {
+            // needed for Wilford algorithm to calc variance
+            float n;
+            float n_masked;
+            float n_curr_channel = iheap * nsamp_per_packet + isamp + 1;
+
+            if (ipol == 0) {
+              pola_samples++;
+              if (!channel_masked) {
+                pola_samples_masked++;
+              }
+              n = pola_samples;
+              n_masked = pola_samples_masked;
+            } else {
+              polb_samples++;
+              if (!channel_masked) {
+                polb_samples_masked++;
+              }
+              n = polb_samples;
+              n_masked = polb_samples_masked;
+            }
+
             auto value_i_int = data[I_INDEX]; // data[0]
             auto value_q_int = data[Q_INDEX]; // data[1]
             int value_i_bin = static_cast<int>(value_i_int) + binning_offset;
             int value_q_bin = static_cast<int>(value_q_int) + binning_offset;
 
-            auto value_i = value_i_int / scale_factor;
-            auto value_q = value_q_int / scale_factor;
+            float value_i = float(value_i_int) / scale_factor;
+            float value_q = float(value_q_int) / scale_factor;
 
-            auto value_i2 = value_i * value_i;
-            auto value_q2 = value_q * value_q;
-            auto power = value_i2 + value_q2;
+            float value_i2 = pow(value_i, 2);
+            float value_q2 = pow(value_q, 2);
+            float power = value_i2 + value_q2;
 
-            // accumulate value across all channels - will be normalised later
-            storage->mean_frequency_avg[ipol][I_INDEX] += value_i;
-            storage->mean_frequency_avg[ipol][Q_INDEX] += value_q;
+            // use Wilford 1962 algorithm as it is numerically stable
+            auto prev_mean_i = storage->mean_frequency_avg[ipol][I_INDEX];
+            auto prev_mean_q = storage->mean_frequency_avg[ipol][Q_INDEX];
 
-            // accumulate value for channel - will be normalised later
-            storage->mean_spectrum[ipol][I_INDEX][ochan] += value_i;
-            storage->mean_spectrum[ipol][Q_INDEX][ochan] += value_q;
+            auto value_i_mean_diff = value_i - prev_mean_i;
+            auto value_q_mean_diff = value_q - prev_mean_q;
 
-            // accumulate value2 across all channels - will be converted to var later
-            storage->variance_frequency_avg[ipol][I_INDEX] += value_i2;
-            storage->variance_frequency_avg[ipol][Q_INDEX] += value_q2;
+            storage->mean_frequency_avg[ipol][I_INDEX] += value_i_mean_diff/n;
+            storage->mean_frequency_avg[ipol][Q_INDEX] += value_q_mean_diff/n;
 
-            // accumulate value2 for channels - will be converted to var later
-            storage->variance_spectrum[ipol][I_INDEX][ochan] += value_i2;
-            storage->variance_spectrum[ipol][Q_INDEX][ochan] += value_q2;
+            storage->variance_frequency_avg[ipol][I_INDEX] += (
+              (value_i - storage->mean_frequency_avg[ipol][I_INDEX]) * value_i_mean_diff
+            );
+            storage->variance_frequency_avg[ipol][Q_INDEX] += (
+              (value_q - storage->mean_frequency_avg[ipol][Q_INDEX]) * value_q_mean_diff
+            );
 
-            count += 1;
-            if (!storage->rfi_mask_lut[ichan]) {
-              storage->mean_frequency_avg_masked[ipol][I_INDEX] += value_i;
-              storage->mean_frequency_avg_masked[ipol][Q_INDEX] += value_q;
-              storage->variance_frequency_avg_masked[ipol][I_INDEX] += value_i2;
-              storage->variance_frequency_avg_masked[ipol][Q_INDEX] += value_q2;
-              count_masked += 1;
+            auto prev_chan_mean_i = storage->mean_spectrum[ipol][I_INDEX][ochan];
+            auto prev_chan_mean_q = storage->mean_spectrum[ipol][Q_INDEX][ochan];
+
+            auto value_i_mean_chan_diff = value_i - prev_chan_mean_i;
+            auto value_q_mean_chan_diff = value_q - prev_chan_mean_q;
+
+            storage->mean_spectrum[ipol][I_INDEX][ochan] += value_i_mean_chan_diff/n_curr_channel;
+            storage->mean_spectrum[ipol][Q_INDEX][ochan] += value_q_mean_chan_diff/n_curr_channel;
+            storage->variance_spectrum[ipol][I_INDEX][ochan] += (
+              (value_i - storage->mean_spectrum[ipol][I_INDEX][ochan]) * value_i_mean_chan_diff
+            );
+            storage->variance_spectrum[ipol][Q_INDEX][ochan] += (
+              (value_q - storage->mean_spectrum[ipol][Q_INDEX][ochan]) * value_q_mean_chan_diff
+            );
+
+            if (!channel_masked) {
+              auto prev_mean_i_masked = storage->mean_frequency_avg_masked[ipol][I_INDEX];
+              auto prev_mean_q_masked = storage->mean_frequency_avg_masked[ipol][Q_INDEX];
+
+              auto value_i_mean_diff_masked = value_i - prev_mean_i_masked;
+              auto value_q_mean_diff_masked = value_q - prev_mean_q_masked;
+
+              storage->mean_frequency_avg_masked[ipol][I_INDEX] += value_i_mean_diff_masked/n_masked;
+              storage->mean_frequency_avg_masked[ipol][Q_INDEX] += value_q_mean_diff_masked/n_masked;
+              storage->variance_frequency_avg_masked[ipol][I_INDEX] += (
+                (value_i - storage->mean_frequency_avg_masked[ipol][I_INDEX]) * value_i_mean_diff_masked
+              );
+              storage->variance_frequency_avg_masked[ipol][Q_INDEX] += (
+                (value_q - storage->mean_frequency_avg_masked[ipol][Q_INDEX]) * value_q_mean_diff_masked
+              );
             }
 
-            // accumulate power - will be normalised later
-            storage->mean_spectral_power[ipol][ochan] += power;
+            // mean spectral power
+            storage->mean_spectral_power[ipol][ochan] += power/(nheaps * nsamp_per_packet);
 
-            // max power
-            storage->mean_spectral_power[ipol][ochan] = std::max(storage->mean_spectral_power[ipol][ochan], power);
+            // max spectral power
+            storage->max_spectral_power[ipol][ochan] = std::max(storage->max_spectral_power[ipol][ochan], power);
 
             // 1D histogram bins
             storage->histogram_1d_freq_avg[ipol][I_INDEX][value_i_bin] += 1;
@@ -230,55 +302,38 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
   // technically everything after this doesn't have to be in the templated class, it can be in
   // a comman private method
 
-  // our counts include both polarisations, need to divide npol. This is used for calculating averages
-  count /= npol;
-  count_masked /= npol;
-  auto count_per_channel = count / nchan;
+  uint32_t total_sample_per_chan = nheaps * nsamp_per_packet;
+  uint32_t total_samples = pola_samples;
+  uint32_t total_samples_masked = pola_samples_masked;
+
+  SPDLOG_DEBUG("total_samples={}, total_samples_masked={}, total_sample_per_chan={}",
+    total_samples, total_samples_masked, total_sample_per_chan
+  );
 
   for (auto ipol=0; ipol < npol; ipol++)
   {
-    auto mean_i = storage->mean_frequency_avg[ipol][I_INDEX] / count;
-    storage->mean_frequency_avg[ipol][I_INDEX] = mean_i;
+    SPDLOG_DEBUG("storage->variance_frequency_avg[ipol][I_INDEX] before norm = {}", storage->variance_frequency_avg[ipol][I_INDEX]);
+    storage->variance_frequency_avg[ipol][I_INDEX] /= float(total_samples - 1);
+    storage->variance_frequency_avg[ipol][Q_INDEX] /= float(total_samples - 1);
 
-    auto mean_q = storage->mean_frequency_avg[ipol][Q_INDEX] / count;
-    storage->mean_frequency_avg[ipol][Q_INDEX] = mean_q;
+    SPDLOG_DEBUG("ipol={}, mean_i={}, mean_q={}, var_i={}, var_q={}", ipol,
+      storage->mean_frequency_avg[ipol][I_INDEX], storage->mean_frequency_avg[ipol][Q_INDEX],
+      storage->variance_frequency_avg[ipol][I_INDEX], storage->variance_frequency_avg[ipol][Q_INDEX]
+    );
 
-    // Var(X) = E(X^2) - E(X)^2
-    // we have previously stored the Sum(X^2) in each dimension, divide by count
-    // E(X) is just the mean
-    auto var_i = storage->variance_frequency_avg[ipol][I_INDEX] / count - mean_i * mean_i;
-    storage->variance_frequency_avg[ipol][I_INDEX] = var_i;
+    storage->variance_frequency_avg_masked[ipol][I_INDEX] /= (total_samples_masked - 1);
+    storage->variance_frequency_avg_masked[ipol][Q_INDEX] /= (total_samples_masked - 1);
 
-    auto var_q = storage->variance_frequency_avg[ipol][Q_INDEX] / count - mean_q * mean_q;
-    storage->variance_frequency_avg[ipol][Q_INDEX] = var_q;
-
-    auto mean_i_masked = storage->mean_frequency_avg_masked[ipol][I_INDEX] / count_masked;
-    storage->mean_frequency_avg_masked[ipol][I_INDEX] = mean_i_masked;
-
-    auto mean_q_masked = storage->mean_frequency_avg_masked[ipol][Q_INDEX] / count_masked;
-    storage->mean_frequency_avg_masked[ipol][Q_INDEX] = mean_q_masked;
-
-    auto var_i_masked = storage->variance_frequency_avg_masked[ipol][I_INDEX] / count_masked - mean_i_masked * mean_i_masked;
-    storage->variance_frequency_avg_masked[ipol][I_INDEX] = var_i_masked;
-
-    auto var_q_masked = storage->variance_frequency_avg_masked[ipol][Q_INDEX] / count_masked - mean_q_masked * mean_q_masked;
-    storage->variance_frequency_avg_masked[ipol][Q_INDEX] = var_q_masked;
+    SPDLOG_DEBUG("ipol={}, mean_i_masked={}, mean_q_masked={}, var_i_masked={}, var_q_masked={}",
+      ipol,
+      storage->mean_frequency_avg_masked[ipol][I_INDEX], storage->mean_frequency_avg_masked[ipol][Q_INDEX],
+      storage->variance_frequency_avg_masked[ipol][I_INDEX], storage->variance_frequency_avg_masked[ipol][Q_INDEX]
+    );
 
     for (auto ichan=0; ichan < nchan; ichan++)
     {
-      auto chan_mean_i = storage->mean_spectrum[ipol][I_INDEX][ichan] / count_per_channel;
-      storage->mean_frequency_avg[ipol][I_INDEX] = chan_mean_i;
-
-      auto chan_mean_q = storage->mean_spectrum[ipol][Q_INDEX][ichan] / count_per_channel;
-      storage->mean_frequency_avg[ipol][Q_INDEX] = chan_mean_q;
-
-      auto chan_var_i = storage->variance_spectrum[ipol][I_INDEX][ichan] / count_per_channel - chan_mean_i * chan_mean_i;
-      storage->variance_spectrum[ipol][I_INDEX][ichan] = chan_var_i;
-
-      auto chan_var_q = storage->variance_spectrum[ipol][Q_INDEX][ichan] / count_per_channel - chan_mean_q * chan_mean_q;
-      storage->variance_spectrum[ipol][Q_INDEX][ichan] = chan_var_q;
-
-      storage->mean_spectral_power[ipol][ichan] /= count_per_channel;
+      storage->variance_spectrum[ipol][I_INDEX][ichan] /= (total_sample_per_chan - 1);
+      storage->variance_spectrum[ipol][Q_INDEX][ichan] /= (total_sample_per_chan - 1);
     }
   }
 
@@ -301,10 +356,12 @@ auto ska::pst::stat::StatComputer::get_rfi_masks(std::string rfi_mask_str) -> st
 
   int start = 0;
   int mask_idx = 0;
+  bool end = false;
   do {
     int idx = rfi_mask_str.find(',', start);
     if (idx == std::string::npos) {
-      break;
+      end = true;
+      idx = rfi_mask_str.length();
     }
 
     int length = idx - start;
@@ -321,8 +378,10 @@ auto ska::pst::stat::StatComputer::get_rfi_masks(std::string rfi_mask_str) -> st
     double start_freq = std::stod(mask_pair_str.substr(0,idx));
     double end_freq = std::stod(mask_pair_str.substr(idx+1));
 
+    SPDLOG_INFO("ska::pst::stat::StatComputer::get_rfi_masks - masking from {:.2f} MHz to {:.2f} MHz", start_freq, end_freq);
+
     masks.push_back(std::make_pair(start_freq, end_freq));
-  } while (true);
+  } while (!end);
 
   return masks;
 }
