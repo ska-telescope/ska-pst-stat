@@ -120,8 +120,7 @@ void ska::pst::stat::StatProcessor::process(
     SPDLOG_ERROR("ska::pst::stat::StatProcessor::process data_resolution \% nbytes_per_sample={}", (data_resolution % nbytes_per_sample));
     throw std::runtime_error("ska::pst::stat::StatProcessor::process data resolution not a multiple of nbytes_per_sample");
   }
-
-    if (data_length % data_resolution != 0)
+  if (data_length % data_resolution != 0)
   {
     SPDLOG_ERROR("ska::pst::stat::StatProcessor::process data_length \% data_resolution={}", (data_length % data_resolution));
     throw std::runtime_error("ska::pst::stat::StatProcessor::process block length not a multiple of data_resolution");
