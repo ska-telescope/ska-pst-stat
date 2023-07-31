@@ -12,3 +12,5 @@ WT_NSAMP             8
 PACKET_WEIGHTS_SIZE  0
 PACKET_SCALES_SIZE   4
 STAT_NREBIN          1
+NFREQ_BINS           2
+NTIME_BINS           4

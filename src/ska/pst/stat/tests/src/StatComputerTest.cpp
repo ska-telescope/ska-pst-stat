@@ -64,7 +64,17 @@ void StatComputerTest::configure(const ska::pst::common::AsciiHeader& config, bo
 {
   storage = std::make_shared<StatStorage>(config);
   // this should come from config
-  storage->resize(1, 1);
+  uint32_t nfreq_bins{1};
+  if (config.has("NFREQ_BINS")) {
+    nfreq_bins = config.get_uint32("NFREQ_BINS");
+  }
+  uint32_t ntime_bins{1};
+  if (config.has("NTIME_BINS")) {
+    ntime_bins = config.get_uint32("NTIME_BINS");
+  }
+
+  storage->resize(ntime_bins, nfreq_bins);
+
   layout = std::make_shared<TestDataLayout>(config);
   if (use_generator) {
     generator = ska::pst::common::DataGeneratorFactory("GaussianNoise", layout);
@@ -395,6 +405,132 @@ TEST_F(StatComputerTest, test_masked_channels) // NOLINT
   ASSERT_FLOAT_EQ(storage->max_spectral_power[0][3], 405);
   ASSERT_FLOAT_EQ(storage->mean_spectral_power[1][3], 207.625);
   ASSERT_FLOAT_EQ(storage->max_spectral_power[1][3], 569);
+
+  for (auto ipol = 0; ipol < storage->get_npol(); ipol++)
+  {
+    for (auto freq_bin = 0; freq_bin < storage->get_nfreq_bins(); freq_bin++)
+    {
+      for (auto time_bin = 0; time_bin < storage->get_ntime_bins(); time_bin++)
+      {
+        SPDLOG_DEBUG("StatComputerTest::test_compute - storage->spectrogram[{}][{}][{}]={}",
+          ipol, freq_bin, time_bin, storage->spectrogram[ipol][freq_bin][time_bin]
+        );
+      }
+    }
+    for (auto time_bin = 0; time_bin < storage->get_ntime_bins(); time_bin++)
+    {
+      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->timeseries[{}][{}][MAX]={}",
+        ipol, time_bin, storage->timeseries[ipol][time_bin][0]
+      );
+      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->timeseries[{}][{}][MIN]={}",
+        ipol, time_bin, storage->timeseries[ipol][time_bin][1]
+      );
+      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->timeseries[{}][{}][MEAN]={}",
+        ipol, time_bin, storage->timeseries[ipol][time_bin][2]
+      );
+      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->timeseries_masked[{}][{}][MAX]={}",
+        ipol, time_bin, storage->timeseries_masked[ipol][time_bin][0]
+      );
+      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->timeseries_masked[{}][{}][MIN]={}",
+        ipol, time_bin, storage->timeseries_masked[ipol][time_bin][1]
+      );
+      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->timeseries_masked[{}][{}][MEAN]={}",
+        ipol, time_bin, storage->timeseries_masked[ipol][time_bin][2]
+      );
+    }
+  }
+
+  // assertions of spectrogram
+  ASSERT_FLOAT_EQ(storage->spectrogram[0][0][0], 938);
+  ASSERT_FLOAT_EQ(storage->spectrogram[0][0][1], 563);
+  ASSERT_FLOAT_EQ(storage->spectrogram[0][0][2], 1089);
+  ASSERT_FLOAT_EQ(storage->spectrogram[0][0][3], 1663);
+  ASSERT_FLOAT_EQ(storage->spectrogram[0][1][0], 1278);
+  ASSERT_FLOAT_EQ(storage->spectrogram[0][1][1], 1120);
+  ASSERT_FLOAT_EQ(storage->spectrogram[0][1][2], 1966);
+  ASSERT_FLOAT_EQ(storage->spectrogram[0][1][3], 310);
+
+  ASSERT_FLOAT_EQ(storage->spectrogram[1][0][0], 791);
+  ASSERT_FLOAT_EQ(storage->spectrogram[1][0][1], 1626);
+  ASSERT_FLOAT_EQ(storage->spectrogram[1][0][2], 982);
+  ASSERT_FLOAT_EQ(storage->spectrogram[1][0][3], 238);
+  ASSERT_FLOAT_EQ(storage->spectrogram[1][1][0], 1583);
+  ASSERT_FLOAT_EQ(storage->spectrogram[1][1][1], 576);
+  ASSERT_FLOAT_EQ(storage->spectrogram[1][1][2], 832);
+  ASSERT_FLOAT_EQ(storage->spectrogram[1][1][3], 1449);
+
+  // assertions of timeseries (Pol A - max)
+  ASSERT_FLOAT_EQ(storage->timeseries[0][0][0], 593);
+  ASSERT_FLOAT_EQ(storage->timeseries[0][1][0], 793);
+  ASSERT_FLOAT_EQ(storage->timeseries[0][2][0], 1028);
+  ASSERT_FLOAT_EQ(storage->timeseries[0][3][0], 629);
+
+  // assertions of timeseries (Pol A - min)
+  ASSERT_FLOAT_EQ(storage->timeseries[0][0][1], 34);
+  ASSERT_FLOAT_EQ(storage->timeseries[0][1][1], 8);
+  ASSERT_FLOAT_EQ(storage->timeseries[0][2][1], 125);
+  ASSERT_FLOAT_EQ(storage->timeseries[0][3][1], 64);
+
+  // assertions of timeseries (Pol A - mean)
+  ASSERT_FLOAT_EQ(storage->timeseries[0][0][2], 277);
+  ASSERT_FLOAT_EQ(storage->timeseries[0][1][2], 210.375);
+  ASSERT_FLOAT_EQ(storage->timeseries[0][2][2], 381.875);
+  ASSERT_FLOAT_EQ(storage->timeseries[0][3][2], 246.625);
+
+  // assertions of timeseries (Pol B - max)
+  ASSERT_FLOAT_EQ(storage->timeseries[1][0][0], 1025);
+  ASSERT_FLOAT_EQ(storage->timeseries[1][1][0], 653);
+  ASSERT_FLOAT_EQ(storage->timeseries[1][2][0], 530);
+  ASSERT_FLOAT_EQ(storage->timeseries[1][3][0], 569);
+
+  // assertions of timeseries (Pol B - min)
+  ASSERT_FLOAT_EQ(storage->timeseries[1][0][1], 2);
+  ASSERT_FLOAT_EQ(storage->timeseries[1][1][1], 72);
+  ASSERT_FLOAT_EQ(storage->timeseries[1][2][1], 25);
+  ASSERT_FLOAT_EQ(storage->timeseries[1][3][1], 8);
+
+  // assertions of timeseries (Pol B - mean)
+  ASSERT_FLOAT_EQ(storage->timeseries[1][0][2], 296.75);
+  ASSERT_FLOAT_EQ(storage->timeseries[1][1][2], 275.25);
+  ASSERT_FLOAT_EQ(storage->timeseries[1][2][2], 226.75);
+  ASSERT_FLOAT_EQ(storage->timeseries[1][3][2], 210.875);
+
+  // assertions of timeseries_masked (Pol A - max)
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][0][0], 593);
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][1][0], 793);
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][2][0], 1028);
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][3][0], 85);
+
+  // assertions of timeseries_masked (Pol A - min)
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][0][1], 100);
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][1][1], 25);
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][2][1], 225);
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][3][1], 64);
+
+  // assertions of timeseries_masked (Pol A - mean)
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][0][2], 319.5);
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][1][2], 280);
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][2][2], 491.5);
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][3][2], 77.5);
+
+  // assertions of timeseries_masked (Pol B - max)
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][0][0], 1025);
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][1][0], 226);
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][2][0], 401);
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][3][0], 569);
+
+  // assertions of timeseries_masked (Pol B - min)
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][0][1], 2);
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][1][1], 72);
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][2][1], 25);
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][3][1], 41);
+
+  // assertions of timeseries_masked (Pol B - mean)
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][0][2], 395.75);
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][1][2], 144);
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][2][2], 208);
+  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][3][2], 362.25);
+
 }
 
 TEST_F(StatComputerTest, test_clipped_channels) // NOLINT
