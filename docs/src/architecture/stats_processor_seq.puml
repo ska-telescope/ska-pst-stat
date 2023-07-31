@@ -1,6 +1,6 @@
 @startuml PST STAT Processor
 actor Client
-Client -> StatProcessor: StatProcessor(config)
+Client -> StatProcessor: StatProcessor(data_config, weights_config)
 activate StatProcessor
 activate StatComputer
 activate StatPublisher
