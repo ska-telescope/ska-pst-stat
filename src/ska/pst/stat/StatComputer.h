@@ -53,7 +53,7 @@ namespace ska::pst::stat {
        * @param config the configuration current voltage data stream.
        * @param storage a shared pointer to the in memory storage of the computed statistics.
        */
-      StatComputer(const ska::pst::common::AsciiHeader& config, std::shared_ptr<StatStorage> storage);
+      StatComputer(const ska::pst::common::AsciiHeader& config, const std::shared_ptr<StatStorage>& storage);
 
       /**
        * @brief Destroy the Stat Computer object.
@@ -82,7 +82,7 @@ namespace ska::pst::stat {
       auto get_weights(char * weights, uint32_t packet_number) -> float;
 
       //! get RFI masks
-      auto get_rfi_masks(std::string rfi_mask) -> std::vector<std::pair<double, double>>;
+      auto get_rfi_masks(const std::string& rfi_mask) -> std::vector<std::pair<double, double>>;
 
       //! Time per sample (in microsecs), used for populating time timeseries_bins
       double tsamp{0.0};

@@ -1,0 +1,14 @@
+NDIM                 2
+NPOL                 2
+NBIT                 16
+NCHAN                4
+NMASK                2
+FREQ_MASK            850:950
+FREQ                 1000
+BW                   400
+UDP_NSAMP            8
+UDP_NCHAN            4
+WT_NSAMP             8
+PACKET_WEIGHTS_SIZE  0
+PACKET_SCALES_SIZE   4
+STAT_NREBIN          1
