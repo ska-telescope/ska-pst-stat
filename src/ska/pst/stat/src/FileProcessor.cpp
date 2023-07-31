@@ -57,7 +57,7 @@ void ska::pst::stat::FileProcessor::process()
   SPDLOG_DEBUG("ska::pst::stat::FileProcessor::process");
 
   auto block = block_loader->next_block();
-  processor->process (block.data_block, block.data_size, block.weights_block, block.weights_size);
+  processor->process (block.data.block, block.data.size, block.weights.block, block.weights.size);
 }
 
 
