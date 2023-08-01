@@ -92,7 +92,7 @@ class StatComputerTest : public ::testing::Test
     //! Number of bytes per packet in the weights stream
     uint32_t weights_packet_stride{0};
 
-    //! Size of a complete heap of data in the data stream, in btyes
+    //! Size of a complete heap of data in the data stream, in bytes
     uint32_t heap_resolution{0};
 
     //! Size of the complex packet of data in the data stream, in bytes

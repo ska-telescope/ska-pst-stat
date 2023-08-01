@@ -35,8 +35,8 @@
 #include "ska/pst/common/utils/AsciiHeader.h"
 #include "ska/pst/common/utils/DataGenerator.h"
 
-#ifndef SKA_PST_STAT_TESTS_TestDataGenerator_h
-#define SKA_PST_STAT_TESTS_TestDataGenerator_h
+#ifndef SKA_PST_STAT_TESTS_TestDataLayout_h
+#define SKA_PST_STAT_TESTS_TestDataLayout_h
 
 namespace ska::pst::stat::test {
 
@@ -68,4 +68,4 @@ namespace ska::pst::stat::test {
 
 } // namespace ska::pst::stat::test
 
-#endif // SKA_PST_STAT_TESTS_TestDataGenerator_h
+#endif // SKA_PST_STAT_TESTS_TestDataLayout_h

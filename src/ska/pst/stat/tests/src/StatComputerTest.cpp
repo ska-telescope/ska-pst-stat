@@ -62,13 +62,18 @@ void StatComputerTest::configure(bool use_generator)
 {
   storage = std::make_shared<StatStorage>(config);
   // this should come from config
-  uint32_t nfreq_bins{1};
-  if (config.has("NFREQ_BINS")) {
-    nfreq_bins = config.get_uint32("NFREQ_BINS");
+  uint32_t nfreq_bins{0};
+  if (config.has("STAT_REQ_FREQ_BINS")) {
+    nfreq_bins = config.get_uint32("STAT_REQ_FREQ_BINS");
+  } else {
+    throw std::runtime_error("STAT_REQ_FREQ_BINS not set in test configuration");
   }
-  uint32_t ntime_bins{1};
-  if (config.has("NTIME_BINS")) {
-    ntime_bins = config.get_uint32("NTIME_BINS");
+
+  uint32_t ntime_bins{0};
+  if (config.has("STAT_REQ_TIME_BINS")) {
+    ntime_bins = config.get_uint32("STAT_REQ_TIME_BINS");
+  } else {
+    throw std::runtime_error("STAT_REQ_TIME_BINS not set in test configuration");
   }
 
   storage->resize(ntime_bins, nfreq_bins);
@@ -108,6 +113,11 @@ void StatComputerTest::configure(bool use_generator)
 
 void StatComputerTest::generate_packets(const uint32_t num_packets)
 {
+  SPDLOG_DEBUG("StatComputerTest::generate_packets()");
+  if (generator == nullptr) {
+    throw std::runtime_error("Test requested to generate packets but configured not to use a generator");
+  }
+
   SPDLOG_DEBUG("StatComputerTest::generate_packets generating {} packets", num_packets);
   // we need to resize and reset data and weights
   auto total_weights_size = num_packets * weights_packet_stride;
@@ -196,6 +206,7 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
 
   computer->compute(data_block, data_length, reinterpret_cast<char *>(&scale), 4);
 
+  // [0,1][0,1] are [pol][dim]
   ASSERT_FLOAT_EQ(storage->mean_frequency_avg[0][0], 2.96875);
   ASSERT_FLOAT_EQ(storage->variance_frequency_avg[0][0], 185.0635081);
   ASSERT_FLOAT_EQ(storage->mean_frequency_avg_masked[0][0], 2.96875);
@@ -229,6 +240,7 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
     }
   }
 
+  // [0,1][0,1][x] are [pol][dim][chan]
   ASSERT_FLOAT_EQ(storage->mean_spectrum[0][0][0], 2.96875);
   ASSERT_FLOAT_EQ(storage->variance_spectrum[0][0][0], 185.0635081);
   ASSERT_FLOAT_EQ(storage->mean_spectrum[0][1][0], 2.375);
@@ -238,6 +250,7 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
   ASSERT_FLOAT_EQ(storage->mean_spectrum[1][1][0], 6);
   ASSERT_FLOAT_EQ(storage->variance_spectrum[1][1][0], 130.5806452);
 
+  // [0,1][0,1][x] are [pol][dim]
   ASSERT_FLOAT_EQ(storage->mean_spectral_power[0][0], 278.96875);
   ASSERT_FLOAT_EQ(storage->max_spectral_power[0][0], 1028);
   ASSERT_FLOAT_EQ(storage->mean_spectral_power[1][0], 252.40625);
@@ -350,6 +363,7 @@ TEST_F(StatComputerTest, test_masked_channels) // NOLINT
   }
 
   // channel 1
+  // [0,1][0,1][0] are [pol][dim][chan]
   ASSERT_FLOAT_EQ(storage->mean_spectrum[0][0][0], 1.5);
   ASSERT_FLOAT_EQ(storage->variance_spectrum[0][0][0], 169.4285714);
   ASSERT_FLOAT_EQ(storage->mean_spectrum[0][1][0], 4.25);
@@ -364,6 +378,7 @@ TEST_F(StatComputerTest, test_masked_channels) // NOLINT
   ASSERT_FLOAT_EQ(storage->max_spectral_power[1][0], 576);
 
   // channel 2
+  // [0,1][0,1][1] are [pol][dim][chan]
   ASSERT_FLOAT_EQ(storage->mean_spectrum[0][0][1], 5.625);
   ASSERT_FLOAT_EQ(storage->variance_spectrum[0][0][1], 161.125);
   ASSERT_FLOAT_EQ(storage->mean_spectrum[0][1][1], 2.5);
@@ -378,6 +393,7 @@ TEST_F(StatComputerTest, test_masked_channels) // NOLINT
   ASSERT_FLOAT_EQ(storage->max_spectral_power[1][1], 653);
 
   // channel 3
+  // [0,1][0,1][2] are [pol][dim][chan]
   ASSERT_FLOAT_EQ(storage->mean_spectrum[0][0][2], 6.125);
   ASSERT_FLOAT_EQ(storage->variance_spectrum[0][0][2], 312.9821429);
   ASSERT_FLOAT_EQ(storage->mean_spectrum[0][1][2], 2.75);
@@ -392,6 +408,7 @@ TEST_F(StatComputerTest, test_masked_channels) // NOLINT
   ASSERT_FLOAT_EQ(storage->max_spectral_power[1][2], 1025);
 
   // channel 4
+  // [0,1][0,1][3] are [pol][dim][chan]
   ASSERT_FLOAT_EQ(storage->mean_spectrum[0][0][3], -1.375);
   ASSERT_FLOAT_EQ(storage->variance_spectrum[0][0][3], 132.5535714);
   ASSERT_FLOAT_EQ(storage->mean_spectrum[0][1][3], 0);
@@ -440,6 +457,7 @@ TEST_F(StatComputerTest, test_masked_channels) // NOLINT
   }
 
   // assertions of spectrogram
+  // [0,1][0,1][0] are [pol][freq_bin][temp_bin]
   ASSERT_FLOAT_EQ(storage->spectrogram[0][0][0], 938);
   ASSERT_FLOAT_EQ(storage->spectrogram[0][0][1], 563);
   ASSERT_FLOAT_EQ(storage->spectrogram[0][0][2], 1089);
@@ -448,7 +466,6 @@ TEST_F(StatComputerTest, test_masked_channels) // NOLINT
   ASSERT_FLOAT_EQ(storage->spectrogram[0][1][1], 1120);
   ASSERT_FLOAT_EQ(storage->spectrogram[0][1][2], 1966);
   ASSERT_FLOAT_EQ(storage->spectrogram[0][1][3], 310);
-
   ASSERT_FLOAT_EQ(storage->spectrogram[1][0][0], 791);
   ASSERT_FLOAT_EQ(storage->spectrogram[1][0][1], 1626);
   ASSERT_FLOAT_EQ(storage->spectrogram[1][0][2], 982);
@@ -457,6 +474,9 @@ TEST_F(StatComputerTest, test_masked_channels) // NOLINT
   ASSERT_FLOAT_EQ(storage->spectrogram[1][1][1], 576);
   ASSERT_FLOAT_EQ(storage->spectrogram[1][1][2], 832);
   ASSERT_FLOAT_EQ(storage->spectrogram[1][1][3], 1449);
+
+  // for the assertions below of timeseries/timeseris_masked
+  // the [0,1][0,1,2,3][0,1,2] = [pol][temp_bin][max,min,mean]
 
   // assertions of timeseries (Pol A - max)
   ASSERT_FLOAT_EQ(storage->timeseries[0][0][0], 593);
@@ -565,11 +585,13 @@ TEST_F(StatComputerTest, test_clipped_channels) // NOLINT
 
   computer->compute(data_block, data_length, reinterpret_cast<char *>(&scale), 4);
 
+  // [0,1][0,1] are [pol][dim]
   ASSERT_EQ(storage->num_clipped_samples[0][0], 2);
   ASSERT_EQ(storage->num_clipped_samples[0][1], 2);
   ASSERT_EQ(storage->num_clipped_samples[1][0], 2);
   ASSERT_EQ(storage->num_clipped_samples[1][1], 2);
 
+  // [0,1][0,1][x] are [pol][dim][chan]
   // channel 1
   ASSERT_EQ(storage->num_clipped_samples_spectrum[0][0][0], 1);
   ASSERT_EQ(storage->num_clipped_samples_spectrum[0][1][0], 0);

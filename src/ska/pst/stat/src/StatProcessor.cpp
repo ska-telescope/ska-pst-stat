@@ -39,20 +39,11 @@ ska::pst::stat::StatProcessor::StatProcessor(
 ) : data_config(_data_config), weights_config(_weights_config)
 
 {
-  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor create new shared StatStorage object");
-  storage = std::make_shared<ska::pst::stat::StatStorage>(data_config);
-
-  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor create new unique StatComputer object");
-  computer = std::make_unique<ska::pst::stat::StatComputer>(data_config, weights_config, storage);
-
-  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor create new unique StatHdf5FileWriter object");
-  const std::string& file_path = data_config.get_val("STAT_OUTPUT_BASEPATH");
-  publisher = std::make_unique<ska::pst::stat::StatHdf5FileWriter>(data_config, storage, file_path);
-
   data_resolution = data_config.get_uint32("RESOLUTION");
   weights_resolution = weights_config.get_uint32("RESOLUTION");
   req_time_bins = data_config.get_uint32("STAT_REQ_TIME_BINS");
   req_freq_bins = data_config.get_uint32("STAT_REQ_FREQ_BINS");
+  nchan = data_config.get_uint32("NCHAN");
 
   if (req_time_bins <= 0 || req_time_bins > max_time_bins)
   {
@@ -67,6 +58,17 @@ ska::pst::stat::StatProcessor::StatProcessor(
     req_freq_bins = default_nfreq_bins;
     SPDLOG_INFO("ska::pst::stat::StatProcessor::StatProcessor req_freq_bins set to {}", req_freq_bins);
   }
+
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor create new shared StatStorage object");
+  storage = std::make_shared<ska::pst::stat::StatStorage>(data_config);
+
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor create new unique StatComputer object");
+  computer = std::make_unique<ska::pst::stat::StatComputer>(data_config, weights_config, storage);
+
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor create new unique StatHdf5FileWriter object");
+  const std::string& file_path = data_config.get_val("STAT_OUTPUT_BASEPATH");
+  publisher = std::make_unique<ska::pst::stat::StatHdf5FileWriter>(data_config, storage, file_path);
+
 }
 
 ska::pst::stat::StatProcessor::~StatProcessor()
@@ -97,10 +99,8 @@ void ska::pst::stat::StatProcessor::process(
 
   // need to determine a few parameters in the storage.
   uint32_t nbytes_per_sample = data_config.compute_bits_per_sample() / ska::pst::common::bits_per_byte;
-  uint32_t nchan = data_config.get_uint32("NCHAN");
 
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process nbytes_per_sample={}", nbytes_per_sample);
-  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process nchan={}", nchan);
   if (nbytes_per_sample <= 0)
   {
     SPDLOG_ERROR("ska::pst::stat::StatProcessor::process nbytes_per_sample not greater than 0");

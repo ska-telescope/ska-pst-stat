@@ -56,7 +56,7 @@ namespace ska::pst::stat {
       StatComputer(
         const ska::pst::common::AsciiHeader& data_config,
         const ska::pst::common::AsciiHeader& weights_config,
-        const std::shared_ptr<StatStorage>& storage
+        std::shared_ptr<StatStorage> storage
       );
 
       /**
@@ -100,8 +100,8 @@ namespace ska::pst::stat {
       template <typename T>
       void compute_samples(T* data, char* weights, uint32_t nheaps);
 
-      //! get weights for current packet
-      auto get_weights(char * weights, uint32_t packet_number) -> float;
+      //! get scale factor for current packet
+      auto get_scale_factor(char * weights, uint32_t packet_number) -> float;
 
       //! get RFI masks
       auto get_rfi_masks(const std::string& rfi_mask) -> std::vector<std::pair<double, double>>;
@@ -139,7 +139,7 @@ namespace ska::pst::stat {
       //! Number of bytes per packet in the weights stream
       uint32_t weights_packet_stride{0};
 
-      //! Size of a complete heap of data in the data stream, in btyes
+      //! Size of a complete heap of data in the data stream, in bytes
       uint32_t heap_resolution{0};
 
       //! Size of the complex packet of data in the data stream, in bytes

@@ -145,7 +145,7 @@ void ska::pst::stat::StatComputer::initialise()
   if (data_config.has("FREQ_MASK")) {
     rfi_masks = get_rfi_masks(data_config.get_val("FREQ_MASK"));
     if (rfi_masks.size() != nmask) {
-      SPDLOG_WARN("Expected {} RFI masks but found {}", nmask, rfi_masks.size());
+      SPDLOG_ERROR("Expected {} RFI masks but found {}", nmask, rfi_masks.size());
     }
   }
 
@@ -177,7 +177,7 @@ void ska::pst::stat::StatComputer::initialise()
       // From 1, check end > RFI start and less than RFI end i.e. (RFI start, RFI end)
       if (
         (channel_start_freq >= rfi_mask_pair.first && channel_start_freq < rfi_mask_pair.second) ||
-        (channel_end_freq > rfi_mask_pair.first && channel_end_freq < rfi_mask_pair.second)
+        (channel_end_freq > rfi_mask_pair.first && channel_end_freq <= rfi_mask_pair.second)
       )
       {
         SPDLOG_WARN("chan {} frequency band {:.4f} MHz to {:.4f} MHz is between {:.4f} MHz and {:.4f} MHz. Marking as masked",
@@ -224,7 +224,7 @@ void ska::pst::stat::StatComputer::compute(
     error_msg << "ska::pst::stat::StatComputer::compute - expected block_length " << block_length <<
       " to be a multiple of heap_resolution " << heap_resolution;
 
-    SPDLOG_WARN(error_msg.str());
+    SPDLOG_ERROR(error_msg.str());
     throw std::runtime_error(error_msg.str());
   }
   const uint32_t nheaps = block_length / heap_resolution;
@@ -252,14 +252,15 @@ void ska::pst::stat::StatComputer::compute(
 template <typename T>
 void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint32_t nheaps)
 {
+  // binning_offset is used to turn convert signed data to unsiged data
+  // for NBIT = 8, data goes from -128 to 127, the binning offset is 128 and bins goes from 0 to 255
+  // for NBIT = 16, data goes from -32768 to 32767, the binning offset is 32768 and bins goes from 0 to 65535
   const int binning_offset = 1 << (nbit - 1);
   const int max_bin = (1 << nbit) - 1;
 
   uint32_t packet_number{0};
-  uint32_t pola_samples{0};
-  uint32_t pola_samples_masked{0};
-  uint32_t polb_samples{0};
-  uint32_t polb_samples_masked{0};
+  std::vector<uint32_t> pol_samples(npol,  0);
+  std::vector<uint32_t> pol_samples_masked(npol,  0);
 
   auto total_samples_per_channel = nheaps * nsamp_per_packet;
   if (total_samples_per_channel % storage->get_ntime_bins() != 0)
@@ -311,19 +312,22 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
     {
       centre_freq += (storage->channel_centre_frequencies[ichan + offset]) / static_cast<float>(freq_binning_factor);
     }
+    storage->frequency_bins[freq_bin] = centre_freq;
   }
 
   for (uint32_t iheap=0; iheap<nheaps; iheap++)
   {
+    const uint32_t isamp_heap = iheap * nsamp_per_packet;
+    uint32_t base_ochan{0};
     for (uint32_t ipacket=0; ipacket<packets_per_heap; ipacket++)
     {
-      const float scale_factor = get_weights(weights, packet_number);
+      const float scale_factor = get_scale_factor(weights, packet_number);
 
       for (uint32_t ipol=0; ipol<npol; ipol++)
       {
         for (uint32_t ichan=0; ichan<nchan_per_packet; ichan++)
         {
-          const uint32_t ochan = (ipacket * nchan_per_packet) + ichan;
+          const uint32_t ochan =  base_ochan + ichan;
           const bool channel_masked = storage->rfi_mask_lut[ochan];
 
           // linter is giving this as a false positive - clang-analyzer-core.UndefinedBinaryOperatorResult
@@ -332,29 +336,16 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
 
           for (auto isamp=0; isamp<nsamp_per_packet; isamp++)
           {
-            auto osamp = iheap * nsamp_per_packet + isamp;
+            auto osamp = isamp_heap + isamp;
             auto temporal_bin = osamp / temporal_binning_factor;
             timeseries_counts[ipol][temporal_bin] += 1;
 
             // needed for Wilford algorithm to calc variance
-            uint32_t n{0};
-            uint32_t n_masked{0};
             uint32_t n_curr_channel = osamp + 1;
 
-            if (ipol == 0) {
-              pola_samples++;
-              if (!channel_masked) {
-                pola_samples_masked++;
-              }
-              n = pola_samples;
-              n_masked = pola_samples_masked;
-            } else {
-              polb_samples++;
-              if (!channel_masked) {
-                polb_samples_masked++;
-              }
-              n = polb_samples;
-              n_masked = polb_samples_masked;
+            pol_samples[ipol]++;
+            if (!channel_masked) {
+              pol_samples_masked[ipol]++;
             }
 
             auto value_i_int = data[I_IDX]; // NOLINT
@@ -362,22 +353,17 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
             int value_i_bin = static_cast<int>(value_i_int) + binning_offset;
             int value_q_bin = static_cast<int>(value_q_int) + binning_offset;
 
-            float value_i = static_cast<float>(value_i_int) / scale_factor;
-            float value_q = static_cast<float>(value_q_int) / scale_factor;
+            float value_i = static_cast<float>(value_i_int) * scale_factor;
+            float value_q = static_cast<float>(value_q_int) * scale_factor;
 
-            float value_i2 = powf(value_i, 2);
-            float value_q2 = powf(value_q, 2);
-            float power = value_i2 + value_q2;
+            float power = value_i * value_i + value_q * value_q;
 
             // use Wilford 1962 algorithm as it is numerically stable
-            auto prev_mean_i = storage->mean_frequency_avg[ipol][I_IDX];
-            auto prev_mean_q = storage->mean_frequency_avg[ipol][Q_IDX];
+            auto value_i_mean_diff = value_i - storage->mean_frequency_avg[ipol][I_IDX];
+            auto value_q_mean_diff = value_q - storage->mean_frequency_avg[ipol][Q_IDX];
 
-            auto value_i_mean_diff = value_i - prev_mean_i;
-            auto value_q_mean_diff = value_q - prev_mean_q;
-
-            storage->mean_frequency_avg[ipol][I_IDX] += value_i_mean_diff/static_cast<float>(n);
-            storage->mean_frequency_avg[ipol][Q_IDX] += value_q_mean_diff/static_cast<float>(n);
+            storage->mean_frequency_avg[ipol][I_IDX] += value_i_mean_diff/static_cast<float>(pol_samples[ipol]);
+            storage->mean_frequency_avg[ipol][Q_IDX] += value_q_mean_diff/static_cast<float>(pol_samples[ipol]);
 
             storage->variance_frequency_avg[ipol][I_IDX] += (
               (value_i - storage->mean_frequency_avg[ipol][I_IDX]) * value_i_mean_diff
@@ -386,14 +372,11 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
               (value_q - storage->mean_frequency_avg[ipol][Q_IDX]) * value_q_mean_diff
             );
 
-            auto prev_chan_mean_i = storage->mean_spectrum[ipol][I_IDX][ochan];
-            auto prev_chan_mean_q = storage->mean_spectrum[ipol][Q_IDX][ochan];
+            auto value_i_mean_chan_diff = value_i - storage->mean_spectrum[ipol][I_IDX][ochan];
+            auto value_q_mean_chan_diff = value_q - storage->mean_spectrum[ipol][Q_IDX][ochan];
 
-            auto value_i_mean_chan_diff = value_i - prev_chan_mean_i;
-            auto value_q_mean_chan_diff = value_q - prev_chan_mean_q;
-
-            storage->mean_spectrum[ipol][I_IDX][ochan] += value_i_mean_chan_diff/static_cast<float>(n_curr_channel);
-            storage->mean_spectrum[ipol][Q_IDX][ochan] += value_q_mean_chan_diff/static_cast<float>(n_curr_channel);
+            storage->mean_spectrum[ipol][I_IDX][ochan] += value_i_mean_chan_diff/static_cast<float>(osamp + 1);
+            storage->mean_spectrum[ipol][Q_IDX][ochan] += value_q_mean_chan_diff/static_cast<float>(osamp + 1);
             storage->variance_spectrum[ipol][I_IDX][ochan] += (
               (value_i - storage->mean_spectrum[ipol][I_IDX][ochan]) * value_i_mean_chan_diff
             );
@@ -401,8 +384,8 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
               (value_q - storage->mean_spectrum[ipol][Q_IDX][ochan]) * value_q_mean_chan_diff
             );
 
-            // mean spectral power
-            storage->mean_spectral_power[ipol][ochan] += power/static_cast<float>(nheaps * nsamp_per_packet);
+            // mean spectral power - will be normalised after unpacking as an optimisation
+            storage->mean_spectral_power[ipol][ochan] += power;
 
             // max spectral power
             storage->max_spectral_power[ipol][ochan] = std::max(storage->max_spectral_power[ipol][ochan], power);
@@ -432,14 +415,11 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
             if (!channel_masked) {
               timeseries_counts_masked[ipol][temporal_bin] += 1;
 
-              auto prev_mean_i_masked = storage->mean_frequency_avg_masked[ipol][I_IDX];
-              auto prev_mean_q_masked = storage->mean_frequency_avg_masked[ipol][Q_IDX];
+              auto value_i_mean_diff_masked = value_i - storage->mean_frequency_avg_masked[ipol][I_IDX];
+              auto value_q_mean_diff_masked = value_q - storage->mean_frequency_avg_masked[ipol][Q_IDX];
 
-              auto value_i_mean_diff_masked = value_i - prev_mean_i_masked;
-              auto value_q_mean_diff_masked = value_q - prev_mean_q_masked;
-
-              storage->mean_frequency_avg_masked[ipol][I_IDX] += value_i_mean_diff_masked/static_cast<float>(n_masked);
-              storage->mean_frequency_avg_masked[ipol][Q_IDX] += value_q_mean_diff_masked/static_cast<float>(n_masked);
+              storage->mean_frequency_avg_masked[ipol][I_IDX] += value_i_mean_diff_masked/static_cast<float>(pol_samples_masked[ipol]);
+              storage->mean_frequency_avg_masked[ipol][Q_IDX] += value_q_mean_diff_masked/static_cast<float>(pol_samples_masked[ipol]);
               storage->variance_frequency_avg_masked[ipol][I_IDX] += (
                 (value_i - storage->mean_frequency_avg_masked[ipol][I_IDX]) * value_i_mean_diff_masked
               );
@@ -463,6 +443,8 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
           }
         }
       }
+
+      base_ochan += nchan_per_packet;
       packet_number++;
     }
   }
@@ -471,26 +453,32 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
   // a comman private method
 
   uint32_t total_sample_per_chan = nheaps * nsamp_per_packet;
-  uint32_t total_samples = pola_samples;
-  uint32_t total_samples_masked = pola_samples_masked;
 
+  // pola and polb should have the same number of samples
+  uint32_t total_samples = pol_samples[0];
+  uint32_t total_samples_masked = pol_samples_masked[0];
   SPDLOG_DEBUG("total_samples={}, total_samples_masked={}, total_sample_per_chan={}",
     total_samples, total_samples_masked, total_sample_per_chan
   );
 
+  float var_freq_factor = 1 / static_cast<float>(total_samples - 1);
+  float mean_spectrum_factor = 1 / static_cast<float>(total_sample_per_chan);
+  float var_freq_factor_masked = 1 / static_cast<float>(total_samples_masked - 1);
+  float var_spectrum_factor = 1 / static_cast<float>(total_sample_per_chan - 1);
+
   for (auto ipol=0; ipol < npol; ipol++)
   {
     SPDLOG_DEBUG("storage->variance_frequency_avg[ipol][I_IDX] before norm = {}", storage->variance_frequency_avg[ipol][I_IDX]);
-    storage->variance_frequency_avg[ipol][I_IDX] /= static_cast<float>(total_samples - 1);
-    storage->variance_frequency_avg[ipol][Q_IDX] /= static_cast<float>(total_samples - 1);
+    storage->variance_frequency_avg[ipol][I_IDX] *= var_freq_factor;
+    storage->variance_frequency_avg[ipol][Q_IDX] *= var_freq_factor;
 
     SPDLOG_DEBUG("ipol={}, mean_i={}, mean_q={}, var_i={}, var_q={}", ipol,
       storage->mean_frequency_avg[ipol][I_IDX], storage->mean_frequency_avg[ipol][Q_IDX],
       storage->variance_frequency_avg[ipol][I_IDX], storage->variance_frequency_avg[ipol][Q_IDX]
     );
 
-    storage->variance_frequency_avg_masked[ipol][I_IDX] /= static_cast<float>(total_samples_masked - 1);
-    storage->variance_frequency_avg_masked[ipol][Q_IDX] /= static_cast<float>(total_samples_masked - 1);
+    storage->variance_frequency_avg_masked[ipol][I_IDX] *= var_freq_factor_masked;
+    storage->variance_frequency_avg_masked[ipol][Q_IDX] *= var_freq_factor_masked;
 
     SPDLOG_DEBUG("ipol={}, mean_i_masked={}, mean_q_masked={}, var_i_masked={}, var_q_masked={}",
       ipol,
@@ -500,21 +488,22 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
 
     for (auto ichan=0; ichan < nchan; ichan++)
     {
-      storage->variance_spectrum[ipol][I_IDX][ichan] /= static_cast<float>(total_sample_per_chan - 1);
-      storage->variance_spectrum[ipol][Q_IDX][ichan] /= static_cast<float>(total_sample_per_chan - 1);
+      storage->mean_spectral_power[ipol][ichan] *= mean_spectrum_factor;
+      storage->variance_spectrum[ipol][I_IDX][ichan] *= var_spectrum_factor;
+      storage->variance_spectrum[ipol][Q_IDX][ichan] *= var_spectrum_factor;
     }
   }
 
 }
 
-auto ska::pst::stat::StatComputer::get_weights(char * weights, uint32_t packet_number) -> float
+auto ska::pst::stat::StatComputer::get_scale_factor(char * weights, uint32_t packet_number) -> float
 {
   auto * weights_ptr = reinterpret_cast<float *>(weights + (packet_number * weights_packet_stride)); // NOLINT
   // return the scale factor, ignoring invalid value of 0
   if (*weights_ptr == 0) {
-    return 1;
+    return 1.0;
   } else {
-    return *weights_ptr;
+    return 1 / *weights_ptr;
   }
 }
 
