@@ -40,11 +40,16 @@ ska::pst::stat::FileProcessor::FileProcessor(
         const ska::pst::common::AsciiHeader& _config,
         const std::string& data_file_path,
         const std::string& weights_file_path)
-        : processor(new StatProcessor(_config)),
+        : 
 	  config(_config),
 	  block_loader(new ska::pst::common::DataWeightsFileBlockLoader(data_file_path, weights_file_path))
 {
   SPDLOG_DEBUG("ska::pst::stat::FileProcessor::FileProcessor");
+
+  auto data_config = block_loader->get_data_header();
+  auto weights_config = block_loader->get_weights_header();
+
+  processor = std::make_shared<StatProcessor>(data_config, weights_config);
 }
 
 ska::pst::stat::FileProcessor::~FileProcessor()
@@ -60,11 +65,3 @@ void ska::pst::stat::FileProcessor::process()
   processor->process (block.data.block, block.data.size, block.weights.block, block.weights.size);
 }
 
-
-// stubs to fake compilation until at3-516-develop-statprocessor is merged
-
-#include "ska/pst/stat/StatPublisher.h"
-
-ska::pst::stat::StatProcessor::StatProcessor(ska::pst::common::AsciiHeader const&) {}
-ska::pst::stat::StatProcessor::~StatProcessor() {}
-void ska::pst::stat::StatProcessor::process(char*, unsigned long, char*, unsigned long) {}
