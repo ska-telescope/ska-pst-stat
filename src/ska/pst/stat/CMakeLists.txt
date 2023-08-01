@@ -7,18 +7,23 @@ configure_file(config.h.in config.h)
 set(public_headers
   version.h
   ${CMAKE_CURRENT_BINARY_DIR}/config.h
+  FileProcessor.h
   StatStorage.h
   StatPublisher.h
   StatHdf5FileWriter.h
-  FileProcessor.h
+  StatComputer.h
+  StatProcessor.h
 )
 
 set(sources
+  src/FileProcessor.cpp
   src/version.cpp
   src/StatStorage.cpp
   src/StatPublisher.cpp
   src/StatHdf5FileWriter.cpp
-  src/FileProcessor.cpp
+  src/StatComputer.cpp
+  src/StatStorage.cpp
+  src/StatProcessor.cpp
 )
 
 set(private_headers
