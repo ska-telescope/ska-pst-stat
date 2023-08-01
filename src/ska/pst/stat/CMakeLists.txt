@@ -19,6 +19,8 @@ set(sources
   src/StatPublisher.cpp
   src/StatHdf5FileWriter.cpp
   src/StatComputer.cpp
+  src/StatStorage.cpp
+  src/StatProcessor.cpp
 )
 
 set(private_headers

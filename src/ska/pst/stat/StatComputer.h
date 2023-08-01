@@ -53,13 +53,17 @@ namespace ska::pst::stat {
        * @param config the configuration current voltage data stream.
        * @param storage a shared pointer to the in memory storage of the computed statistics.
        */
-      StatComputer(const ska::pst::common::AsciiHeader& config, const std::shared_ptr<StatStorage>& storage);
+      StatComputer(
+        const ska::pst::common::AsciiHeader& data_config,
+        const ska::pst::common::AsciiHeader& weights_config,
+        const std::shared_ptr<StatStorage>& storage
+      );
 
       /**
        * @brief Destroy the Stat Computer object.
        *
        */
-      virtual ~StatComputer() = default;
+      virtual ~StatComputer();
 
       /**
        * @brief compute the statistics for block of data.
@@ -71,9 +75,27 @@ namespace ska::pst::stat {
        */
       void compute(char * data_block, size_t block_length, char * weights, size_t weights_length);
 
+
+      /**
+       * @brief initialise the StatComputer class in readiness for computing data.
+       *
+       * This method needs to be called after there has been a resize of the StatStorage, otherwise
+       * there the size of data may not be as expected.
+       */
+      void initialise();
+
     private:
       //! shared pointer a statistics storage, shared between the processor and publisher
       std::shared_ptr<StatStorage> storage;
+
+      //! the configuration for the current stream of voltage data.
+      ska::pst::common::AsciiHeader data_config;
+
+      //! the configuration for the current stream of voltage weights.
+      ska::pst::common::AsciiHeader weights_config;
+
+      //! used to check state if the instance has been initialised
+      bool initialised{false};
 
       template <typename T>
       void compute_samples(T* data, char* weights, uint32_t nheaps);

@@ -39,7 +39,7 @@ class FileReader {
 }
 
 class StatProcessor {
-  + StatProcessor(config: AsciiHeader)
+  + StatProcessor(data_config: AsciiHeader, weights_config: AsciiHeader)
   + ~StatProcessor()
   + process(block_ptr: char*, block_length: usize_t, weights_ptr: char*, weights_length: usize_t)
   - storage: std::shared_ptr<StatStorage>

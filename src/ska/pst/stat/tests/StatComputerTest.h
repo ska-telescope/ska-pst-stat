@@ -60,11 +60,12 @@ class StatComputerTest : public ::testing::Test
 
     ~StatComputerTest() = default;
 
-    void configure(const ska::pst::common::AsciiHeader& config, bool use_generator = true);
+    void configure(bool use_generator = true);
 
     void generate_packets(const uint32_t num_packets);
 
   protected:
+    ska::pst::common::AsciiHeader config;
     std::shared_ptr<ska::pst::stat::StatStorage> storage{nullptr};
     std::shared_ptr<TestDataLayout> layout{nullptr};
     std::shared_ptr<ska::pst::common::DataGenerator> generator{nullptr};

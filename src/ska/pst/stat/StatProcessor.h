@@ -30,9 +30,10 @@
 
 #include <memory>
 
-#include "ska/pst/common/utils/AsciiHeader.h"
+#include "ska/pst/common/definitions.h"
 #include "ska/pst/stat/StatStorage.h"
 #include "ska/pst/stat/StatComputer.h"
+#include "ska/pst/stat/StatHdf5FileWriter.h"
 
 #ifndef __SKA_PST_STAT_StatProcessor_h
 #define __SKA_PST_STAT_StatProcessor_h
@@ -49,9 +50,10 @@ namespace ska::pst::stat {
       /**
        * @brief Create instance of a Stat Processor object.
        *
-       * @param config the configuration current voltage data stream.
+       * @param data_config the configuration current data stream involving the data block.
+       * @param weights_config the configuration current data stream involving the weights block.
        */
-      StatProcessor(const ska::pst::common::AsciiHeader& config);
+      StatProcessor(const ska::pst::common::AsciiHeader& data_config, const ska::pst::common::AsciiHeader& weights_config);
 
       /**
        * @brief Destroy the Stat Processor object.
@@ -66,10 +68,11 @@ namespace ska::pst::stat {
        *
        * @param data_block a pointer to the start of the data block to compute statistics for.
        * @param block_length the size, in bytes, of the data block to process.
-       * @param weights a pointer to the start of the weights block to use in computing statistics.
+       * @param weights_block a pointer to the start of the weights block to use in computing statistics.
        * @param weights_length the size, in bytes, of the weights to process.
        */
-      void process(char * data_block, size_t block_length, char * weights, size_t weights_length);
+      void process(char * data_block, size_t block_length, char * weights_block, size_t weights_length);
+
 
     protected:
       //! shared pointer a statistics storage, shared also with the computer and publisher
@@ -82,9 +85,40 @@ namespace ska::pst::stat {
       std::unique_ptr<StatPublisher> publisher;
 
       //! the configuration for the current stream of voltage data.
-      ska::pst::common::AsciiHeader config;
+      ska::pst::common::AsciiHeader data_config;
 
-  }
+      //! the configuration for the current stream of voltage weights.
+      ska::pst::common::AsciiHeader weights_config;
+
+      //! minimum resolution of the input data stream involving the data block
+      uint32_t data_resolution;
+
+      //! minimum resolution of the input data stream involving the weights block
+      uint32_t weights_resolution;
+
+      uint32_t nchan{0};
+
+      uint32_t req_time_bins{0};
+
+      uint32_t req_freq_bins{0};
+
+      //! default number of time bins in spectrogram
+      static constexpr uint32_t default_ntime_bins = 1024;
+
+      //! default number of frequency bins in spectrogram
+      static constexpr uint32_t default_nfreq_bins = 1024;
+
+      //! maximum allowed number of frequency bins in spectrogram
+      static constexpr uint32_t max_freq_bins = 2048;
+
+      //! maximum allowed number of time bins in spectrogram
+      static constexpr uint32_t max_time_bins = 32768;
+
+    private:
+      //! calculate correct number of bins based on block length and estimated number of bins
+      auto calc_bins(uint32_t block_length, uint32_t req_bins) -> uint32_t;
+
+  };
 
 } // namespace ska::pst::stat
 

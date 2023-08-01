@@ -53,34 +53,97 @@ static constexpr uint32_t TS_MEAN_IDX = 2;
 static constexpr float half = 1.0/2.0;
 
 ska::pst::stat::StatComputer::StatComputer(
-  const ska::pst::common::AsciiHeader& config,
-  const std::shared_ptr<StatStorage>&  storage
-) : storage(storage) {
-  ndim = config.get_uint32("NDIM");
-  npol = config.get_uint32("NPOL");
-  nbit = config.get_uint32("NBIT");
-  nchan = config.get_uint32("NCHAN");
-  // tsamp = config.get_double("TSAMP");
-  if (config.has("NMASK")) {
-    nmask = config.get_uint32("NMASK");
+  const ska::pst::common::AsciiHeader& _data_config,
+  const ska::pst::common::AsciiHeader& _weights_config,
+  std::shared_ptr<StatStorage> storage
+) : data_config(_data_config), weights_config(_weights_config), storage(std::move(storage)) {
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer");
+
+  ndim = data_config.get_uint32("NDIM");
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - ndim={}", ndim);
+  if (ndim == 0)
+  {
+    SPDLOG_ERROR("ska::pst::stat::StatComputer::StatComputer ndim not greater than 0");
+    throw std::runtime_error("ska::pst::stat::StatComputer::StatComputer ndim not greater than 0");
   }
 
-  nsamp_per_packet = config.get_uint32("UDP_NSAMP");
-  nchan_per_packet = config.get_uint32("UDP_NCHAN");
-  nsamp_per_weight = config.get_uint32("WT_NSAMP");
+  npol = data_config.get_uint32("NPOL");
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - npol={}", npol);
+  if (npol == 0)
+  {
+    SPDLOG_ERROR("ska::pst::stat::StatComputer::StatComputer npol not greater than 0");
+    throw std::runtime_error("ska::pst::stat::StatComputer::StatComputer npol not greater than 0");
+  }
 
-  weights_packet_stride = config.get_uint32("PACKET_WEIGHTS_SIZE") + config.get_uint32("PACKET_SCALES_SIZE");
+  nbit = data_config.get_uint32("NBIT");
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - nbit={}", nbit);
+  if (nbit == 0)
+  {
+    SPDLOG_ERROR("ska::pst::stat::StatComputer::StatComputer nbit not greater than 0");
+    throw std::runtime_error("ska::pst::stat::StatComputer::StatComputer nbit not greater than 0");
+  }
+
+  nchan = data_config.get_uint32("NCHAN");
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - nchan={}", nchan);
+  if (nchan == 0)
+  {
+    SPDLOG_ERROR("ska::pst::stat::StatComputer::StatComputer nchan not greater than 0");
+    throw std::runtime_error("ska::pst::stat::StatComputer::StatComputer nchan not greater than 0");
+  }
+
+  // tsamp = data_config.get_double("TSAMP");
+  if (data_config.has("NMASK")) {
+    nmask = data_config.get_uint32("NMASK");
+  }
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - nmask={}", nmask);
+
+  nsamp_per_packet = data_config.get_uint32("UDP_NSAMP");
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - nsamp_per_packet={}", nsamp_per_packet);
+
+  nchan_per_packet = data_config.get_uint32("UDP_NCHAN");
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - nchan_per_packet={}", nchan_per_packet);
+
+  nsamp_per_weight = data_config.get_uint32("WT_NSAMP");
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - nsamp_per_weight={}", nsamp_per_weight);
+
+  weights_packet_stride = weights_config.get_uint32("PACKET_WEIGHTS_SIZE") + weights_config.get_uint32("PACKET_SCALES_SIZE");
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - weights_packet_stride={}", weights_packet_stride);
+
+  packet_resolution = nsamp_per_packet * nchan_per_packet * npol * ndim * nbit / ska::pst::common::bits_per_byte;
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - packet_resolution={}", packet_resolution);
+
+  heap_resolution = nsamp_per_packet * nchan * npol * ndim * nbit / ska::pst::common::bits_per_byte;
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - heap_resolution={}", heap_resolution);
+
+  packets_per_heap = heap_resolution / packet_resolution;
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - packets_per_heap={}", packets_per_heap);
+}
+
+ska::pst::stat::StatComputer::~StatComputer()
+{
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::~StatComputer()");
+}
+
+void ska::pst::stat::StatComputer::initialise()
+{
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::initialise()");
 
   // calculate the channel_centre_frequencies
-  auto bandwidth = config.get_double("BW");
-  auto centre_freq = config.get_double("FREQ");
+  auto bandwidth = data_config.get_double("BW");
+  auto centre_freq = data_config.get_double("FREQ");
   auto channel_bandwidth = bandwidth / static_cast<double>(nchan);
   auto start_freq = centre_freq - bandwidth * half;
   auto start_chan_centre_freq =  start_freq + channel_bandwidth * half;
 
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::initialise() - bandwidth={}", bandwidth);
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::initialise() - centre_freq={}", centre_freq);
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::initialise() - channel_bandwidth={}", channel_bandwidth);
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::initialise() - start_freq={}", start_freq);
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::initialise() - start_chan_centre_freq={}", start_chan_centre_freq);
+
   std::vector<std::pair<double,double>> rfi_masks;
-  if (config.has("FREQ_MASK")) {
-    rfi_masks = get_rfi_masks(config.get_val("FREQ_MASK"));
+  if (data_config.has("FREQ_MASK")) {
+    rfi_masks = get_rfi_masks(data_config.get_val("FREQ_MASK"));
     if (rfi_masks.size() != nmask) {
       SPDLOG_WARN("Expected {} RFI masks but found {}", nmask, rfi_masks.size());
     }
@@ -89,6 +152,7 @@ ska::pst::stat::StatComputer::StatComputer(
   uint32_t num_masked = 0;
   for (auto ichan = 0; ichan<nchan; ichan++)
   {
+    SPDLOG_TRACE("ska::pst::stat::StatComputer::StatComputer - setting centre frequency for channel {}", ichan);
     auto channel_start_freq = start_freq + static_cast<double>(ichan) * channel_bandwidth;
     auto channel_end_freq = channel_start_freq + channel_bandwidth;
 
@@ -127,11 +191,9 @@ ska::pst::stat::StatComputer::StatComputer(
     }
   }
 
-  packet_resolution = nsamp_per_packet * nchan_per_packet * npol * ndim * nbit / ska::pst::common::bits_per_byte;
-  heap_resolution = nsamp_per_packet * nchan * npol * ndim * nbit / ska::pst::common::bits_per_byte;
-  packets_per_heap = heap_resolution / packet_resolution;
+  initialised = true;
 
-  SPDLOG_DEBUG("Number of masked channels = {}", num_masked);
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::initialise() - Number of masked channels = {}", num_masked);
 }
 
 void ska::pst::stat::StatComputer::compute(
@@ -141,7 +203,11 @@ void ska::pst::stat::StatComputer::compute(
   size_t weights_length
 )
 {
-  SPDLOG_DEBUG("ska::pst::stat::StatComputer::compute - start");
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::compute()");
+  if (!initialised) {
+    throw std::runtime_error("ska::pst::stat::StatComputer::compute - has not been initialised. StatComputer::initialised has not been called.");
+  }
+
   SPDLOG_DEBUG("ska::pst::stat::StatComputer::compute - block_length={}, weights_length={}", block_length, weights_length);
 
   if (block_length == 0)

@@ -51,16 +51,14 @@ StatComputerTest::StatComputerTest()
 
 void StatComputerTest::SetUp()
 {
-  ska::pst::common::AsciiHeader config;
   config.load_from_file(test_data_file("stat_computer_config.txt"));
-  configure(config);
 }
 
 void StatComputerTest::TearDown()
 {
 }
 
-void StatComputerTest::configure(const ska::pst::common::AsciiHeader& config, bool use_generator)
+void StatComputerTest::configure(bool use_generator)
 {
   storage = std::make_shared<StatStorage>(config);
   // this should come from config
@@ -80,7 +78,8 @@ void StatComputerTest::configure(const ska::pst::common::AsciiHeader& config, bo
     generator = ska::pst::common::DataGeneratorFactory("GaussianNoise", layout);
     generator->configure(config);
   }
-  computer = std::make_unique<ska::pst::stat::StatComputer>(config, storage);
+  computer = std::make_unique<ska::pst::stat::StatComputer>(config, config, storage);
+  computer->initialise();
 
   ndim = config.get_uint32("NDIM");
   npol = config.get_uint32("NPOL");
@@ -134,6 +133,8 @@ void StatComputerTest::generate_packets(const uint32_t num_packets)
 TEST_F(StatComputerTest, test_compute) // NOLINT
 {
   SPDLOG_DEBUG("StatComputerTest::test_compute - start");
+  configure(true);
+
   SPDLOG_DEBUG("StatComputerTest::test_compute - generating packets");
   uint32_t num_heaps = 1;
   uint32_t num_packets = num_heaps * packets_per_heap;
@@ -189,10 +190,9 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
   auto data_length = data.size() * sizeof(int16_t);
   float scale{1.0};
 
-  ska::pst::common::AsciiHeader config;
+  config.reset();
   config.load_from_file(test_data_file("stat_computer_1chan_32nsamp_config.txt"));
-
-  configure(config, false);
+  configure(false);
 
   computer->compute(data_block, data_length, reinterpret_cast<char *>(&scale), 4);
 
@@ -306,10 +306,9 @@ TEST_F(StatComputerTest, test_masked_channels) // NOLINT
   char * data_block = reinterpret_cast<char *>(data.data());
   float scale{1.0};
 
-  ska::pst::common::AsciiHeader config;
+  config.reset();
   config.load_from_file(test_data_file("stat_computer_4chan_8nsamp_masked_config.txt"));
-
-  configure(config, false);
+  configure(false);
 
   computer->compute(data_block, data_length, reinterpret_cast<char *>(&scale), 4);
 
@@ -560,10 +559,9 @@ TEST_F(StatComputerTest, test_clipped_channels) // NOLINT
   char * data_block = reinterpret_cast<char *>(data.data());
   float scale{1.0};
 
-  ska::pst::common::AsciiHeader config;
+  config.reset();
   config.load_from_file(test_data_file("stat_computer_4chan_8nsamp_config.txt"));
-
-  configure(config, false);
+  configure(false);
 
   computer->compute(data_block, data_length, reinterpret_cast<char *>(&scale), 4);
 
@@ -595,6 +593,42 @@ TEST_F(StatComputerTest, test_clipped_channels) // NOLINT
   ASSERT_EQ(storage->num_clipped_samples_spectrum[0][1][3], 1);
   ASSERT_EQ(storage->num_clipped_samples_spectrum[1][0][3], 0);
   ASSERT_EQ(storage->num_clipped_samples_spectrum[1][1][3], 1);
+}
+
+TEST_F(StatComputerTest, test_nchan_cannot_be_zero) // NOLINT
+{
+  ska::pst::common::AsciiHeader config;
+  config.load_from_file(test_data_file("stat_computer_1chan_32nsamp_config.txt"));
+  config.set("NCHAN", 0);
+
+  auto storage = std::make_shared<StatStorage>(config);
+  EXPECT_ANY_THROW(
+    StatComputer(config, config, storage);
+  );
+}
+
+TEST_F(StatComputerTest, test_nbit_cannot_be_zero) // NOLINT
+{
+  ska::pst::common::AsciiHeader config;
+  config.load_from_file(test_data_file("stat_computer_1chan_32nsamp_config.txt"));
+  config.set("NBIT", 0);
+
+  auto storage = std::make_shared<StatStorage>(config);
+  EXPECT_ANY_THROW(
+    StatComputer(config, config, storage);
+  );
+}
+
+TEST_F(StatComputerTest, test_npol_cannot_be_zero) // NOLINT
+{
+  ska::pst::common::AsciiHeader config;
+  config.load_from_file(test_data_file("stat_computer_1chan_32nsamp_config.txt"));
+  config.set("NPOL", 0);
+
+  auto storage = std::make_shared<StatStorage>(config);
+  EXPECT_ANY_THROW(
+    StatComputer(config, config, storage);
+  );
 }
 
 } // namespace ska::pst::stat::test
