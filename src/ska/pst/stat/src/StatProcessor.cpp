@@ -39,20 +39,11 @@ ska::pst::stat::StatProcessor::StatProcessor(
 ) : data_config(_data_config), weights_config(_weights_config)
 
 {
-  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor create new shared StatStorage object");
-  storage=std::make_shared<ska::pst::stat::StatStorage>(data_config);
-
-  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor create new unique StatComputer object");
-  computer=std::make_unique<ska::pst::stat::StatComputer>(data_config, storage);
-
-  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor create new unique StatHdf5FileWriter object");
-  const std::string& file_path = data_config.get_val("STAT_OUTPUT_BASEPATH");
-  publisher=std::make_unique<ska::pst::stat::StatHdf5FileWriter>(data_config, storage, file_path);
-
   data_resolution = data_config.get_uint32("RESOLUTION");
   weights_resolution = weights_config.get_uint32("RESOLUTION");
   req_time_bins = data_config.get_uint32("STAT_REQ_TIME_BINS");
   req_freq_bins = data_config.get_uint32("STAT_REQ_FREQ_BINS");
+  nchan = data_config.get_uint32("NCHAN");
 
   if (req_time_bins <= 0 || req_time_bins > max_time_bins)
   {
@@ -67,6 +58,17 @@ ska::pst::stat::StatProcessor::StatProcessor(
     req_freq_bins = default_nfreq_bins;
     SPDLOG_INFO("ska::pst::stat::StatProcessor::StatProcessor req_freq_bins set to {}", req_freq_bins);
   }
+
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor create new shared StatStorage object");
+  storage = std::make_shared<ska::pst::stat::StatStorage>(data_config);
+
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor create new unique StatComputer object");
+  computer = std::make_unique<ska::pst::stat::StatComputer>(data_config, weights_config, storage);
+
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor create new unique StatHdf5FileWriter object");
+  const std::string& file_path = data_config.get_val("STAT_OUTPUT_BASEPATH");
+  publisher = std::make_unique<ska::pst::stat::StatHdf5FileWriter>(data_config, storage, file_path);
+
 }
 
 ska::pst::stat::StatProcessor::~StatProcessor()
@@ -95,12 +97,10 @@ void ska::pst::stat::StatProcessor::process(
     throw std::runtime_error("ska::pst::stat::StatProcessor::process weights_block pointer is null");
   }
 
-  // need to determine a few parameters in the storage.  
+  // need to determine a few parameters in the storage.
   uint32_t nbytes_per_sample = data_config.compute_bits_per_sample() / ska::pst::common::bits_per_byte;
-  uint32_t nchan = data_config.get_uint32("NCHAN");
-  
+
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process nbytes_per_sample={}", nbytes_per_sample);
-  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process nchan={}", nchan);
   if (nbytes_per_sample <= 0)
   {
     SPDLOG_ERROR("ska::pst::stat::StatProcessor::process nbytes_per_sample not greater than 0");
@@ -131,20 +131,45 @@ void ska::pst::stat::StatProcessor::process(
     throw std::runtime_error("ska::pst::stat::StatProcessor::process block length not a multiple of weights_resolution");
   }
 
-  uint32_t ntime_factor = std::max(nsamp_block / req_time_bins, static_cast<uint32_t>(1));
-  uint32_t ntime_bins = nsamp_block / ntime_factor;
+  uint32_t ntime_bins = calc_bins(nsamp_block, req_time_bins);
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process ntime_bins={}", ntime_bins);
 
-  uint32_t nfreq_factor = std::max(nchan / req_freq_bins, static_cast<uint32_t>(1));
-  uint32_t nfreq_bins = nchan / nfreq_factor;
+  uint32_t nfreq_bins = calc_bins(nchan, req_freq_bins);
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process nfreq_bins={}", nfreq_bins);
 
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process storage->resize({}, {})", ntime_bins, nfreq_bins);
   storage->resize(ntime_bins, nfreq_bins);
+
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process computer->initialise()");
+  computer->initialise();
 
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process computer->process()");
   computer->compute(data_block, data_length, weights_block, weights_length);
 
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process publisher->publish()");
   publisher->publish();
+}
+
+auto ska::pst::stat::StatProcessor::calc_bins(uint32_t block_length, uint32_t req_bins) -> uint32_t
+{
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::calc_bins block_length={}, req_bins={}", block_length, req_bins);
+  if (block_length % req_bins == 0) {
+    SPDLOG_DEBUG("ska::pst::stat::StatProcessor::calc_bins block_length is factor of req_bins. Using {} bins", req_bins);
+    return req_bins;
+  }
+
+  uint32_t estimate_nbin_factor = std::max(block_length / req_bins, static_cast<uint32_t>(1));
+  for (uint32_t nbin_factor = estimate_nbin_factor; nbin_factor > 1; nbin_factor--)
+  {
+    if (block_length % nbin_factor == 0)
+    {
+      uint32_t nbins = block_length / nbin_factor;
+      SPDLOG_DEBUG("ska::pst::stat::StatProcessor::calc_bins nbins={}", nbins);
+      return nbins;
+    }
+  }
+
+  // at worse use the number of channels.  This has a nbin_factor of 1
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::calc_bins unable to find a factor close to {} using {} bins", req_bins, block_length);
+  return block_length;
 }

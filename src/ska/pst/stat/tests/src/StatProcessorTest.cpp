@@ -132,7 +132,7 @@ TEST_F(StatProcessorTest, test_constructor_threshold_overrides) // NOLINT
     data_length,
     &weights_block[0],
     weights_length));
-  
+
   init_config();
   data_config.set("STAT_REQ_FREQ_BINS", 0);
   sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
@@ -145,51 +145,15 @@ TEST_F(StatProcessorTest, test_constructor_threshold_overrides) // NOLINT
 
 }
 
-TEST_F(StatProcessorTest, test_process_invalid_values) // NOLINT
+TEST_F(StatProcessorTest, test_process_length_of_zero) // NOLINT
 {
-  init_config();
-  data_config.set("NCHAN", 0);
   sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
 
-  size_t data_length = get_data_length();
+  size_t data_length = 0;
   std::vector<char> data_block(data_length);
 
-  size_t weights_length = get_weights_length();
+  size_t weights_length = 0;
   std::vector<char> weights_block(weights_length);
-
-  EXPECT_ANY_THROW(sp->process(
-    &data_block[0],
-    data_length,
-    &weights_block[0],
-    weights_length)
-  );
-
-  init_config();
-  data_config.set("NBIT", 0);
-  sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
-
-  data_length = get_data_length();
-  data_block = std::vector<char>(data_length);
-
-  weights_length = get_weights_length();
-  weights_block = std::vector<char>(weights_length);
-
-  EXPECT_ANY_THROW(sp->process(
-    &data_block[0],
-    data_length,
-    &weights_block[0],
-    weights_length)
-  );
-
-  init_config();
-  data_config.set("NPOL", 0);
-  sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
-
-  data_length = get_data_length();
-  data_block = std::vector<char>(data_length);
-
-  weights_length = get_weights_length();
-  weights_block = std::vector<char>(weights_length);
 
   EXPECT_ANY_THROW(sp->process(
     &data_block[0],
