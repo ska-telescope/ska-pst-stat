@@ -97,26 +97,15 @@ ska::pst::stat::StatComputer::StatComputer(
   }
   SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - nmask={}", nmask);
 
-  nsamp_per_packet = data_config.get_uint32("UDP_NSAMP");
-  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - nsamp_per_packet={}", nsamp_per_packet);
+  heap_layout.configure(data_config, weights_config);
 
-  nchan_per_packet = data_config.get_uint32("UDP_NCHAN");
-  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - nchan_per_packet={}", nchan_per_packet);
-
-  nsamp_per_weight = data_config.get_uint32("WT_NSAMP");
-  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - nsamp_per_weight={}", nsamp_per_weight);
-
-  weights_packet_stride = weights_config.get_uint32("PACKET_WEIGHTS_SIZE") + weights_config.get_uint32("PACKET_SCALES_SIZE");
-  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - weights_packet_stride={}", weights_packet_stride);
-
-  packet_resolution = nsamp_per_packet * nchan_per_packet * npol * ndim * nbit / ska::pst::common::bits_per_byte;
-  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - packet_resolution={}", packet_resolution);
-
-  heap_resolution = nsamp_per_packet * nchan * npol * ndim * nbit / ska::pst::common::bits_per_byte;
-  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - heap_resolution={}", heap_resolution);
-
-  packets_per_heap = heap_resolution / packet_resolution;
-  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - packets_per_heap={}", packets_per_heap);
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - nsamp_per_packet={}", heap_layout.get_packet_layout().get_samples_per_packet());
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - nchan_per_packet={}", heap_layout.get_packet_layout().get_nchan_per_packet());
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - nsamp_per_weight={}", heap_layout.get_packet_layout().get_nsamp_per_weight());
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - weights_packet_stride={}", heap_layout.get_weights_packet_stride());
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - packet_resolution={}", heap_layout.get_data_packet_stride());
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - data_heap_stride={}", heap_layout.get_data_heap_stride());
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - packets_per_heap={}", heap_layout.get_packets_per_heap());
 }
 
 ska::pst::stat::StatComputer::~StatComputer()
@@ -216,22 +205,22 @@ void ska::pst::stat::StatComputer::compute(
     return;
   }
 
-  // assert block_length is a heap_resolution
+  // assert block_length is a multiple of data_heap_stride
   // might be at the end of the file - may not have a full heap
-  if (block_length % heap_resolution != 0)
+  if (block_length % heap_layout.get_data_heap_stride() != 0)
   {
     std::stringstream error_msg;
     error_msg << "ska::pst::stat::StatComputer::compute - expected block_length " << block_length <<
-      " to be a multiple of heap_resolution " << heap_resolution;
+      " to be a multiple of data_heap_stride " << heap_layout.get_data_heap_stride();
 
     SPDLOG_ERROR(error_msg.str());
     throw std::runtime_error(error_msg.str());
   }
-  const uint32_t nheaps = block_length / heap_resolution;
-  auto expected_num_packets = nheaps * packets_per_heap;
+  const uint32_t nheaps = block_length / heap_layout.get_data_heap_stride();
+  auto expected_num_packets = nheaps * heap_layout.get_packets_per_heap();
 
   // assert weights_length is a multiple weights_packet_stride - do we have enough weights?
-  auto expected_weights_length = expected_num_packets * weights_packet_stride;
+  auto expected_weights_length = expected_num_packets * heap_layout.get_weights_packet_stride();
   if (weights_length != expected_weights_length) {
     std::stringstream error_msg;
     error_msg << "ska::pst::stat::StatComputer::compute - expected weights_length to be " << expected_weights_length;
@@ -262,7 +251,7 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
   std::vector<uint32_t> pol_samples(npol,  0);
   std::vector<uint32_t> pol_samples_masked(npol,  0);
 
-  auto total_samples_per_channel = nheaps * nsamp_per_packet;
+  auto total_samples_per_channel = nheaps * heap_layout.get_packet_layout().get_samples_per_packet();
   if (total_samples_per_channel % storage->get_ntime_bins() != 0)
   {
     std::stringstream error_msg;
@@ -314,6 +303,10 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
     }
     storage->frequency_bins[freq_bin] = centre_freq;
   }
+
+  const uint32_t nsamp_per_packet = heap_layout.get_packet_layout().get_samples_per_packet();
+  const uint32_t nchan_per_packet = heap_layout.get_packet_layout().get_nchan_per_packet();
+  const uint32_t packets_per_heap = heap_layout.get_packets_per_heap();
 
   for (uint32_t iheap=0; iheap<nheaps; iheap++)
   {
@@ -498,7 +491,7 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
 
 auto ska::pst::stat::StatComputer::get_scale_factor(char * weights, uint32_t packet_number) -> float
 {
-  auto * weights_ptr = reinterpret_cast<float *>(weights + (packet_number * weights_packet_stride)); // NOLINT
+  auto * weights_ptr = reinterpret_cast<float *>(weights + (packet_number * heap_layout.get_weights_packet_stride())); // NOLINT
   // return the scale factor, ignoring invalid value of 0
   if (*weights_ptr == 0) {
     return 1.0;

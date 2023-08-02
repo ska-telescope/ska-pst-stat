@@ -32,7 +32,7 @@
 #include <utility>
 #include <vector>
 
-#include "ska/pst/common/utils/AsciiHeader.h"
+#include "ska/pst/common/utils/HeapLayout.h"
 #include "ska/pst/stat/StatStorage.h"
 
 #ifndef __SKA_PST_STAT_StatComputer_h
@@ -94,6 +94,9 @@ namespace ska::pst::stat {
       //! the configuration for the current stream of voltage weights.
       ska::pst::common::AsciiHeader weights_config;
 
+      //! the layout of each heap from the data and weights streams
+      ska::pst::common::HeapLayout heap_layout;
+
       //! used to check state if the instance has been initialised
       bool initialised{false};
 
@@ -123,31 +126,6 @@ namespace ska::pst::stat {
 
       //! Number of RFI channels that will be masked
       uint32_t nmask{0};
-
-      //! Number of bits per sample in the weights stream
-      uint32_t weights_nbit{0};
-
-      //! Number of samples per UDP packet in the data stream
-      uint32_t nsamp_per_packet{0};
-
-      //! Number of channels per UDP packet in the data stream
-      uint32_t nchan_per_packet{0};
-
-      //! Number of samples per relative weight in the weights stream
-      uint32_t nsamp_per_weight{0};
-
-      //! Number of bytes per packet in the weights stream
-      uint32_t weights_packet_stride{0};
-
-      //! Size of a complete heap of data in the data stream, in bytes
-      uint32_t heap_resolution{0};
-
-      //! Size of the complex packet of data in the data stream, in bytes
-      uint32_t packet_resolution{0};
-
-      //! Number of UDP packets per heap in the data stream
-      uint32_t packets_per_heap{0};
-
   };
 
 } // namespace ska::pst::stat
