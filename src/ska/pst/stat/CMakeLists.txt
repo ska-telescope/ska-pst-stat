@@ -1,17 +1,16 @@
-# if ((gRPC_FOUND) AND (PROTOBUF_FOUND) AND (SkaPstLmc_FOUND))
-#   set(HAVE_PROTOBUF_gRPC_SKAPSTLMC "ON")
-# endif((gRPC_FOUND) AND (PROTOBUF_FOUND) AND (SkaPstLmc_FOUND))
-
 configure_file(config.h.in config.h)
 
 set(public_headers
   version.h
   ${CMAKE_CURRENT_BINARY_DIR}/config.h
-  StatStorage.h
-  StatPublisher.h
-  StatHdf5FileWriter.h
+  FileProcessor.h
+  FileReader.h
+  StatApplicationManager.h
   StatComputer.h
+  StatHdf5FileWriter.h
   StatProcessor.h
+  StatPublisher.h
+  StatStorage.h
 )
 
 set(sources
@@ -28,8 +27,8 @@ set(private_headers
 )
 
 if (BUILD_TESTING)
-add_subdirectory(testutils)
-add_subdirectory(tests)
+  add_subdirectory(testutils)
+  add_subdirectory(tests)
 endif()
 
 add_library(ska_pst_stat

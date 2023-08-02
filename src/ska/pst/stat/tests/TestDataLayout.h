@@ -28,16 +28,44 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <string>
+#include <gtest/gtest.h>
+#include <vector>
 
-#ifndef SKA_PST_STAT_version_h
-#define SKA_PST_STAT_version_h
+#include "ska/pst/common/definitions.h"
+#include "ska/pst/common/utils/AsciiHeader.h"
+#include "ska/pst/common/utils/DataGenerator.h"
 
-namespace ska::pst::stat
-{
-  //! return the version string of the library in form major:minor:patch
-  std::string get_version_string();
+#ifndef SKA_PST_STAT_TESTS_TestDataLayout_h
+#define SKA_PST_STAT_TESTS_TestDataLayout_h
 
-} // namespace ska::pst::stat
+namespace ska::pst::stat::test {
 
-#endif // SKA_PST_STAT_version_h
+  class TestDataLayout : public ska::pst::common::DataLayout
+  {
+    public:
+    TestDataLayout (const ska::pst::common::AsciiHeader& config)
+    {
+      uint32_t ndim = config.get_uint32("NDIM");
+      uint32_t npol = config.get_uint32("NPOL");
+      uint32_t nbit = config.get_uint32("NBIT");
+
+      nsamp_per_packet = config.get_uint32("UDP_NSAMP");
+      nchan_per_packet = config.get_uint32("UDP_NCHAN");
+
+      // test will have 2 buffers (scales+weights) and packet data
+      packet_scales_size = config.get_uint32("PACKET_SCALES_SIZE"); // NOLINT
+      packet_scales_offset = 0;
+
+      packet_weights_size = config.get_uint32("PACKET_WEIGHTS_SIZE");
+      packet_weights_offset = packet_scales_size;
+
+      packet_data_size = nsamp_per_packet * nchan_per_packet * ndim * npol * nbit / ska::pst::common::bits_per_byte;
+      packet_data_offset = 0;
+
+      packet_size = packet_data_size;
+    }
+  };
+
+} // namespace ska::pst::stat::test
+
+#endif // SKA_PST_STAT_TESTS_TestDataLayout_h

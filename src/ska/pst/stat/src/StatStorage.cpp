@@ -79,7 +79,7 @@ void ska::pst::stat::StatStorage::resize(uint32_t _ntime_bins, uint32_t _nfreq_b
   resize_3d(rebinned_histogram_2d_freq_avg, npol, nrebin, nrebin);
   resize_3d(rebinned_histogram_2d_freq_avg_masked, npol, nrebin, nrebin);
 
-  resize_3d(rebinned_histogram_1d_freq_avg, ndim, nrebin, nrebin);
+  resize_3d(rebinned_histogram_1d_freq_avg, npol, ndim, nrebin);
   resize_3d(rebinned_histogram_1d_freq_avg_masked, npol, ndim, nrebin);
 
   resize_3d(num_clipped_samples_spectrum, npol, ndim, nchan);

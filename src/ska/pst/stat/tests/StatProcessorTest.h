@@ -44,11 +44,11 @@ namespace ska::pst::stat::test {
   {
     public:
       TestStatProcessor(const ska::pst::common::AsciiHeader data_config, const ska::pst::common::AsciiHeader weights_config) :
-      StatProcessor(data_config, weights_config) 
+      StatProcessor(data_config, weights_config)
       {
         this->data_config=data_config;this->weights_config=weights_config;
       };
-  
+
       ~TestStatProcessor() = default;
 
       ska::pst::common::AsciiHeader get_data_config() { return data_config; }
@@ -67,26 +67,30 @@ namespace ska::pst::stat::test {
   {
     protected:
       void SetUp() override;
-  
+
       void TearDown() override;
-  
+
     public:
       StatProcessorTest();
-  
+
       ~StatProcessorTest() = default;
 
       void init_config();
       void clear_config();
-  
+
       ska::pst::common::AsciiHeader data_config;
       ska::pst::common::AsciiHeader weights_config;
-  
+
       std::shared_ptr<TestStatProcessor> sp;
-      size_t get_data_length() { return sp->get_data_config().get_uint32("UDP_NSAMP") * sp->get_data_config().get_uint32("NCHAN") * sp->get_data_config().get_uint32("NDIM") * sp->get_data_config().get_uint32("NPOL") * (sp->get_data_config().get_uint32("NBIT")/ska::pst::common::bits_per_byte); };
-      size_t get_weights_length() { return sp->get_weights_config().get_uint32("UDP_NSAMP") * sp->get_weights_config().get_uint32("NCHAN") * sp->get_weights_config().get_uint32("NDIM") * sp->get_weights_config().get_uint32("NPOL") * (sp->get_weights_config().get_uint32("NBIT")/ska::pst::common::bits_per_byte); };
-  
+      size_t get_data_length() {
+        return sp->get_data_config().get_uint32("RESOLUTION");
+      };
+      size_t get_weights_length() {
+        return sp->get_weights_config().get_uint32("RESOLUTION");
+      };
+
     private:
-  
+
   };
 } // namespace ska::pst::stat::test
 

@@ -108,7 +108,7 @@ TEST_F(StatStorageTest, test_resize) // NOLINT
   ASSERT_TRUE(check_storage_3d_dims(storage.rebinned_histogram_2d_freq_avg, npol, nrebin, nrebin)); // NOLINT
   ASSERT_TRUE(check_storage_3d_dims(storage.rebinned_histogram_2d_freq_avg_masked, npol, nrebin, nrebin)); // NOLINT
 
-  ASSERT_TRUE(check_storage_3d_dims(storage.rebinned_histogram_1d_freq_avg, ndim, nrebin, nrebin)); // NOLINT
+  ASSERT_TRUE(check_storage_3d_dims(storage.rebinned_histogram_1d_freq_avg, npol, ndim, nrebin)); // NOLINT
   ASSERT_TRUE(check_storage_3d_dims(storage.rebinned_histogram_1d_freq_avg_masked, npol, ndim, nrebin)); // NOLINT
 
   ASSERT_TRUE(check_storage_3d_dims(storage.num_clipped_samples_spectrum, npol, ndim, nchan)); // NOLINT

@@ -100,7 +100,7 @@ namespace ska::pst::stat {
       std::vector<std::vector<float>> mean_frequency_avg_masked;
 
       /**
-       * @brief the variance of the data for each polarisation and dimension, averaged over all channel.
+       * @brief the variance of the data for each polarisation and dimension, averaged over all channels.
        *
        * First dimension is polarisation (2 dimensions)
        * Second dimension is the real and imaginary components (I and Q).
@@ -233,12 +233,12 @@ namespace ska::pst::stat {
        * @brief the timestamp offsets for each temporal bin.
        *
        * Each temporal bin used in timeseries, timeseries_masked and
-       * spectrogram reuse this vector.
+       * spectrogram reuse this vector. In MJD
        */
       std::vector<float> timeseries_bins;
 
       /**
-       * @brief the frequncy bins used for the spectrogram attribute.
+       * @brief the frequency bins used for the spectrogram attribute (MHz).
        *
        */
       std::vector<float> frequency_bins;

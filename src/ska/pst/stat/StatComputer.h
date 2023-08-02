@@ -29,6 +29,8 @@
  */
 
 #include <memory>
+#include <utility>
+#include <vector>
 
 #include "ska/pst/common/utils/AsciiHeader.h"
 #include "ska/pst/stat/StatStorage.h"
@@ -51,7 +53,11 @@ namespace ska::pst::stat {
        * @param config the configuration current voltage data stream.
        * @param storage a shared pointer to the in memory storage of the computed statistics.
        */
-      StatComputer(const ska::pst::common::AsciiHeader& config, std::shared_ptr<StatStorage> storage);
+      StatComputer(
+        const ska::pst::common::AsciiHeader& data_config,
+        const ska::pst::common::AsciiHeader& weights_config,
+        std::shared_ptr<StatStorage> storage
+      );
 
       /**
        * @brief Destroy the Stat Computer object.
@@ -69,12 +75,78 @@ namespace ska::pst::stat {
        */
       void compute(char * data_block, size_t block_length, char * weights, size_t weights_length);
 
+
+      /**
+       * @brief initialise the StatComputer class in readiness for computing data.
+       *
+       * This method needs to be called after there has been a resize of the StatStorage, otherwise
+       * there the size of data may not be as expected.
+       */
+      void initialise();
+
     private:
       //! shared pointer a statistics storage, shared between the processor and publisher
       std::shared_ptr<StatStorage> storage;
 
       //! the configuration for the current stream of voltage data.
-      ska::pst::common::AsciiHeader config;
+      ska::pst::common::AsciiHeader data_config;
+
+      //! the configuration for the current stream of voltage weights.
+      ska::pst::common::AsciiHeader weights_config;
+
+      //! used to check state if the instance has been initialised
+      bool initialised{false};
+
+      template <typename T>
+      void compute_samples(T* data, char* weights, uint32_t nheaps);
+
+      //! get scale factor for current packet
+      auto get_scale_factor(char * weights, uint32_t packet_number) -> float;
+
+      //! get RFI masks
+      auto get_rfi_masks(const std::string& rfi_mask) -> std::vector<std::pair<double, double>>;
+
+      //! Time per sample (in microsecs), used for populating time timeseries_bins
+      double tsamp{0.0};
+
+      //! Number of polarisations in the data stream
+      uint32_t npol{0};
+
+      //! Number of dimensions in the data stream
+      uint32_t ndim{0};
+
+      //! Number of channels in the data stream
+      uint32_t nchan{0};
+
+      //! Number of bits per sample in the data stream
+      uint32_t nbit{0};
+
+      //! Number of RFI channels that will be masked
+      uint32_t nmask{0};
+
+      //! Number of bits per sample in the weights stream
+      uint32_t weights_nbit{0};
+
+      //! Number of samples per UDP packet in the data stream
+      uint32_t nsamp_per_packet{0};
+
+      //! Number of channels per UDP packet in the data stream
+      uint32_t nchan_per_packet{0};
+
+      //! Number of samples per relative weight in the weights stream
+      uint32_t nsamp_per_weight{0};
+
+      //! Number of bytes per packet in the weights stream
+      uint32_t weights_packet_stride{0};
+
+      //! Size of a complete heap of data in the data stream, in bytes
+      uint32_t heap_resolution{0};
+
+      //! Size of the complex packet of data in the data stream, in bytes
+      uint32_t packet_resolution{0};
+
+      //! Number of UDP packets per heap in the data stream
+      uint32_t packets_per_heap{0};
 
   };
 
