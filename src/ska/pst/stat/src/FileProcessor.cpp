@@ -28,28 +28,27 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "ska/pst/stat/FileProcessor.h"
+
 #include <iostream>
 #include <spdlog/spdlog.h>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
-#include "ska/pst/stat/FileProcessor.h"
-
 ska::pst::stat::FileProcessor::FileProcessor(
         const ska::pst::common::AsciiHeader& _config,
         const std::string& data_file_path,
         const std::string& weights_file_path)
-        : 
-	  config(_config),
-	  block_loader(new ska::pst::common::DataWeightsFileBlockLoader(data_file_path, weights_file_path))
+        : config(_config)
 {
   SPDLOG_DEBUG("ska::pst::stat::FileProcessor::FileProcessor");
 
-  auto data_config = block_loader->get_data_header();
-  auto weights_config = block_loader->get_weights_header();
+  segment_producer = std::make_unique<ska::pst::common::FileSegmentProducer>(data_file_path, weights_file_path);
+  auto data_config = segment_producer->get_data_header();
+  auto weights_config = segment_producer->get_weights_header();
 
-  processor = std::make_shared<StatProcessor>(data_config, weights_config);
+  processor = std::make_unique<StatProcessor>(data_config, weights_config);
 }
 
 ska::pst::stat::FileProcessor::~FileProcessor()
@@ -61,7 +60,7 @@ void ska::pst::stat::FileProcessor::process()
 {
   SPDLOG_DEBUG("ska::pst::stat::FileProcessor::process");
 
-  auto block = block_loader->next_block();
-  processor->process (block.data.block, block.data.size, block.weights.block, block.weights.size);
+  auto segment = segment_producer->next_segment();
+  processor->process (segment.data.block, segment.data.size, segment.weights.block, segment.weights.size);
 }
 

@@ -32,7 +32,7 @@
 #include <memory>
 
 #include "ska/pst/common/utils/AsciiHeader.h"
-#include "ska/pst/common/utils/DataGenerator.h"
+#include "ska/pst/common/utils/PacketGenerator.h"
 #include "ska/pst/stat/StatComputer.h"
 #include "ska/pst/stat/StatStorage.h"
 #include "ska/pst/stat/tests/TestDataLayout.h"
@@ -68,7 +68,7 @@ class StatComputerTest : public ::testing::Test
     ska::pst::common::AsciiHeader config;
     std::shared_ptr<ska::pst::stat::StatStorage> storage{nullptr};
     std::shared_ptr<TestDataLayout> layout{nullptr};
-    std::shared_ptr<ska::pst::common::DataGenerator> generator{nullptr};
+    std::shared_ptr<ska::pst::common::PacketGenerator> generator{nullptr};
     std::unique_ptr<ska::pst::stat::StatComputer> computer{nullptr};
 
     std::vector<char> data_buffer;

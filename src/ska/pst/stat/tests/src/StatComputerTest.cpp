@@ -32,7 +32,7 @@
 #include <vector>
 #include <spdlog/spdlog.h>
 
-#include "ska/pst/common/utils/DataGeneratorFactory.h"
+#include "ska/pst/common/utils/PacketGeneratorFactory.h"
 #include "ska/pst/stat/tests/StatComputerTest.h"
 #include "ska/pst/stat/testutils/GtestMain.h"
 
@@ -80,7 +80,7 @@ void StatComputerTest::configure(bool use_generator)
 
   layout = std::make_shared<TestDataLayout>(config);
   if (use_generator) {
-    generator = ska::pst::common::DataGeneratorFactory("GaussianNoise", layout);
+    generator = ska::pst::common::PacketGeneratorFactory("GaussianNoise", layout);
     generator->configure(config);
   }
   computer = std::make_unique<ska::pst::stat::StatComputer>(config, config, storage);
