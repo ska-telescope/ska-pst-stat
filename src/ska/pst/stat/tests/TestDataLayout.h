@@ -40,7 +40,7 @@
 
 namespace ska::pst::stat::test {
 
-  class TestDataLayout : public ska::pst::common::DataLayout
+  class TestDataLayout : public ska::pst::common::PacketLayout
   {
     public:
     TestDataLayout (const ska::pst::common::AsciiHeader& config)
