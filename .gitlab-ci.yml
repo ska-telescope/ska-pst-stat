@@ -13,7 +13,7 @@ variables:
   PST_SMRB_OCI_REGISTRY: ""
   PST_SMRB_OCI_BUILDER: ska-pst-smrb-builder
   PST_SMRB_OCI_RUNTIME: ska-pst-smrb
-  PST_SMRB_OCI_COMMON_TAG: "0.8.7"
+  PST_SMRB_OCI_COMMON_TAG: "0.9.0"
   STAT_RUNTIME_IMAGE: library/ubuntu:22.04
 
 stages:
@@ -39,7 +39,7 @@ include:
 
   # Umbrella include for all Raw life cycle stages
   - project: 'ska-telescope/templates-repository'
-    file: gitlab-ci/includes/release.gitlab-ci.yml
+    file: 'gitlab-ci/includes/release.gitlab-ci.yml'
 
   # Common CPP jobs
   - local: '.gitlab/ci/cpp.gitlab-ci.yml'
