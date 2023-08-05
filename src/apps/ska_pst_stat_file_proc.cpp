@@ -76,7 +76,7 @@ auto main(int argc, char *argv[]) -> int
         break;
 
       default:
-        std::cerr << "ERROR: unrecognised option: -" << char(optopt) << std::endl;
+        std::cerr << "ERROR: unrecognised option: -" << static_cast<char>(optopt) << std::endl;
         usage();
         return EXIT_FAILURE;
         break;
@@ -116,7 +116,6 @@ auto main(int argc, char *argv[]) -> int
 
   int return_code = 0;
 
-
   try
   {
     // prepare the config and header
@@ -127,7 +126,7 @@ auto main(int argc, char *argv[]) -> int
     config.load_from_file(config_filename);
 
     SPDLOG_DEBUG("constructing FileProcessor from data filename={} and weights filename={}", data_filename, weights_filename);
-    ska::pst::stat::FileProcessor file_processor (config, data_filename, weights_filename);
+    ska::pst::stat::FileProcessor file_processor(config, data_filename, weights_filename);
 
     SPDLOG_DEBUG("constructing calling FileProcessor::process");
     file_processor.process();
