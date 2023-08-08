@@ -10,7 +10,7 @@ UDP_NSAMP               32
 WT_NSAMP                32
 UDP_NCHAN               24
 
-STAT_OUTPUT_BASEPATH    /tmp
+STAT_OUTPUT_FILENAME    /tmp/stat.h5
 STAT_REQ_TIME_BINS      4
 STAT_REQ_FREQ_BINS      4
 
