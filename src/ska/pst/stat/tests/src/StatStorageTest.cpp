@@ -166,8 +166,8 @@ TEST_F(StatStorageTest, test_reset) // NOLINT
   fill_storage_3d(storage.num_clipped_samples_spectrum, u32_val);
   fill_storage_2d(storage.num_clipped_samples, u32_val);
 
-  fill_storage_1d(storage.timeseries_bins, float_val);
-  fill_storage_1d(storage.frequency_bins, float_val);
+  fill_storage_1d(storage.timeseries_bins, static_cast<double>(float_val));
+  fill_storage_1d(storage.frequency_bins, static_cast<double>(float_val));
 
   fill_storage_3d(storage.spectrogram, float_val);
   fill_storage_3d(storage.timeseries, float_val);
@@ -181,7 +181,7 @@ TEST_F(StatStorageTest, test_reset) // NOLINT
   u32_val = 0;
 
   // check the vectors have all been zeroed
-  ASSERT_TRUE(check_storage_1d_vals(storage.channel_centre_frequencies, float_val)); // NOLINT
+  ASSERT_TRUE(check_storage_1d_vals(storage.channel_centre_frequencies, static_cast<double>(float_val))); // NOLINT
 
   ASSERT_TRUE(check_storage_2d_vals(storage.mean_frequency_avg, float_val)); // NOLINT
   ASSERT_TRUE(check_storage_2d_vals(storage.mean_frequency_avg_masked, float_val)); // NOLINT
@@ -206,8 +206,8 @@ TEST_F(StatStorageTest, test_reset) // NOLINT
   ASSERT_TRUE(check_storage_3d_vals(storage.num_clipped_samples_spectrum, u32_val)); // NOLINT
   ASSERT_TRUE(check_storage_2d_vals(storage.num_clipped_samples, u32_val)); // NOLINT
 
-  ASSERT_TRUE(check_storage_1d_vals(storage.timeseries_bins, float_val)); // NOLINT
-  ASSERT_TRUE(check_storage_1d_vals(storage.frequency_bins, float_val)); // NOLINT
+  ASSERT_TRUE(check_storage_1d_vals(storage.timeseries_bins, static_cast<double>(float_val))); // NOLINT
+  ASSERT_TRUE(check_storage_1d_vals(storage.frequency_bins, static_cast<double>(float_val))); // NOLINT
 
   ASSERT_TRUE(check_storage_3d_vals(storage.spectrogram, float_val)); // NOLINT
   ASSERT_TRUE(check_storage_3d_vals(storage.timeseries, float_val)); // NOLINT

@@ -35,15 +35,18 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <filesystem>
+#include <algorithm>
 
 #include "ska/pst/stat/StatHdf5FileWriter.h"
+#include "ska/pst/common/definitions.h"
 
 
 ska::pst::stat::StatHdf5FileWriter::StatHdf5FileWriter(
   const ska::pst::common::AsciiHeader& config,
   std::shared_ptr<StatStorage> storage,
-  const std::string& /*file_path*/
-) : StatPublisher(config, storage)
+  std::string file_path
+) : StatPublisher(config, std::move(storage)), file_path(std::move(file_path))
 {
   SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::StatHdf5FileWriter");
 }
@@ -53,7 +56,123 @@ ska::pst::stat::StatHdf5FileWriter::~StatHdf5FileWriter()
   SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::~StatHdf5FileWriter()");
 }
 
+auto ska::pst::stat::StatHdf5FileWriter::get_hdf5_header_datatype() -> H5::CompType
+{
+  H5::StrType str_datatype(H5::PredType::C_S1, H5T_VARIABLE);
+
+  H5::CompType header_datatype(sizeof(stat_hdf5_header_t));
+  header_datatype.insertMember("EB_ID", HOFFSET(stat_hdf5_header_t, eb_id), str_datatype);
+  header_datatype.insertMember("SCAN_ID", HOFFSET(stat_hdf5_header_t, scan_id), H5::PredType::NATIVE_UINT64);
+  header_datatype.insertMember("BEAM_ID", HOFFSET(stat_hdf5_header_t, beam_id), str_datatype);
+  header_datatype.insertMember("UTC_START", HOFFSET(stat_hdf5_header_t, utc_start), str_datatype);
+  header_datatype.insertMember("T_MIN_MJD", HOFFSET(stat_hdf5_header_t, t_min_mjd), H5::PredType::NATIVE_DOUBLE);
+  header_datatype.insertMember("T_MAX_MJD", HOFFSET(stat_hdf5_header_t, t_max_mjd), H5::PredType::NATIVE_DOUBLE);
+  header_datatype.insertMember("FREQ_MHZ", HOFFSET(stat_hdf5_header_t, freq), H5::PredType::NATIVE_DOUBLE);
+  header_datatype.insertMember("BW", HOFFSET(stat_hdf5_header_t, bandwidth), H5::PredType::NATIVE_DOUBLE);
+  header_datatype.insertMember("START_CHAN", HOFFSET(stat_hdf5_header_t, start_chan), H5::PredType::NATIVE_UINT32);
+  header_datatype.insertMember("NPOL", HOFFSET(stat_hdf5_header_t, npol), H5::PredType::NATIVE_UINT32);
+  header_datatype.insertMember("NDIM", HOFFSET(stat_hdf5_header_t, ndim), H5::PredType::NATIVE_UINT32);
+  header_datatype.insertMember("NCHAN", HOFFSET(stat_hdf5_header_t, nchan), H5::PredType::NATIVE_UINT32);
+  header_datatype.insertMember("NCHAN_DS", HOFFSET(stat_hdf5_header_t, nfreq_bins), H5::PredType::NATIVE_UINT32);
+  header_datatype.insertMember("NDAT_DS", HOFFSET(stat_hdf5_header_t, ntime_bins), H5::PredType::NATIVE_UINT32);
+  header_datatype.insertMember("NBIN_HIST", HOFFSET(stat_hdf5_header_t, nbin), H5::PredType::NATIVE_UINT32);
+  header_datatype.insertMember("NREBIN", HOFFSET(stat_hdf5_header_t, nrebin), H5::PredType::NATIVE_UINT32);
+
+  // header binning data
+  header_datatype.insertMember("CHAN_FREQ", HOFFSET(stat_hdf5_header_t, chan_freq), H5::VarLenType(H5::PredType::NATIVE_DOUBLE));
+  header_datatype.insertMember("FREQUENCY_BINS", HOFFSET(stat_hdf5_header_t, frequency_bins), H5::VarLenType(H5::PredType::NATIVE_DOUBLE));
+  header_datatype.insertMember("TIMESERIES_BINS", HOFFSET(stat_hdf5_header_t, timeseries_bins), H5::VarLenType(H5::PredType::NATIVE_DOUBLE));
+
+  return header_datatype;
+}
+
 void ska::pst::stat::StatHdf5FileWriter::publish()
 {
   SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::publish()");
+  SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::publish() - config\n{}", config.raw());
+
+  auto npol = storage->get_npol();
+  auto ndim = storage->get_ndim();
+  auto nchan = storage->get_nchan();
+  auto nbin = storage->get_nbin();
+  auto nfreq_bins = storage->get_nfreq_bins();
+  auto ntime_bins = storage->get_ntime_bins();
+  auto nrebin = storage->get_nrebin();
+
+  stat_hdf5_header_t header;
+
+  auto picoseconds = config.get_uint64("PICOSECONDS");
+  auto t_min_mjd = static_cast<double>(ska::pst::common::attoseconds_per_microsecond) /
+    static_cast<double>(ska::pst::common::attoseconds_per_second) *
+    static_cast<double>(picoseconds);
+
+  std::string eb_id = config.get_val("EB_ID");
+  std::string beam_id = config.get_val("BEAM_ID");
+  std::string utc_start = config.get_val("UTC_START");
+
+  header.eb_id = &eb_id[0]; // NOLINT
+  header.scan_id = config.get_uint64("SCAN_ID");
+  header.beam_id = &beam_id[0]; // NOLINT
+  header.utc_start = &utc_start[0]; // NOLINT
+  header.t_max_mjd = t_min_mjd + storage->get_total_sample_time();
+  header.t_min_mjd = t_min_mjd;
+  header.freq = config.get_double("FREQ");
+  header.bandwidth = config.get_double("BW");
+  header.start_chan = config.get_uint32("START_CHAN");
+  header.npol = npol;
+  header.ndim = ndim;
+  header.nchan = nchan;
+  header.nbin = nbin;
+  header.nfreq_bins = nfreq_bins;
+  header.ntime_bins = ntime_bins;
+  header.nrebin = nrebin;
+
+  write_1d_vec_header(storage->channel_centre_frequencies, header.chan_freq);
+  write_1d_vec_header(storage->frequency_bins, header.frequency_bins);
+  write_1d_vec_header(storage->timeseries_bins, header.timeseries_bins);
+
+  std::vector<char> temp_data;
+
+  std::filesystem::path curr_file_path = std::filesystem::path(file_path) / "stat.h5";
+  file = std::make_shared<H5::H5File>(curr_file_path, H5F_ACC_TRUNC);
+
+  auto header_datatype = get_hdf5_header_datatype();
+
+  // Define the dataset dimensions
+  const int rank = 1;
+  std::array<hsize_t, rank> dims = {1};
+
+  H5::DataSpace header_dataspace(rank, &dims[0]);
+  H5::DataSet header_dataset = file->createDataSet("HEADER", header_datatype, header_dataspace);
+  header_dataset.write(&header, header_datatype);
+
+  write_2d_vec<float>(storage->mean_frequency_avg, "MEAN_FREQUENCY_AVG", H5::PredType::NATIVE_FLOAT, temp_data);
+  write_2d_vec<float>(storage->mean_frequency_avg_masked, "MEAN_FREQUENCY_AVG_MASKED", H5::PredType::NATIVE_FLOAT, temp_data);
+  write_2d_vec<float>(storage->variance_frequency_avg, "VARIANCE_FREQUENCY_AVG", H5::PredType::NATIVE_FLOAT, temp_data);
+  write_2d_vec<float>(storage->variance_frequency_avg_masked, "VARIANCE_FREQUENCY_AVG_MASKED", H5::PredType::NATIVE_FLOAT, temp_data);
+  write_3d_vec<float>(storage->mean_spectrum, "MEAN_SPECTRUM", H5::PredType::NATIVE_FLOAT, temp_data);
+  write_3d_vec<float>(storage->variance_spectrum, "VARIANCE_SPECTRUM", H5::PredType::NATIVE_FLOAT, temp_data);
+  write_2d_vec<float>(storage->mean_spectral_power, "MEAN_SPECTRAL_POWER", H5::PredType::NATIVE_FLOAT, temp_data);
+  write_2d_vec<float>(storage->max_spectral_power, "MAX_SPECTRAL_POWER", H5::PredType::NATIVE_FLOAT, temp_data);
+  write_3d_vec<uint32_t>(storage->histogram_1d_freq_avg, "HISTOGRAM_1D_FREQ_AVG", H5::PredType::NATIVE_UINT32, temp_data);
+  write_3d_vec<uint32_t>(storage->histogram_1d_freq_avg_masked, "HISTOGRAM_1D_FREQ_AVG_MASKED", H5::PredType::NATIVE_UINT32, temp_data);
+  write_3d_vec<uint32_t>(storage->num_clipped_samples_spectrum, "NUM_CLIPPED_SAMPLES_SPECTRUM", H5::PredType::NATIVE_UINT32, temp_data);
+  write_2d_vec<uint32_t>(storage->num_clipped_samples, "NUM_CLIPPED_SAMPLES", H5::PredType::NATIVE_UINT32, temp_data);
+  write_3d_vec<float>(storage->spectrogram, "SPECTROGRAM", H5::PredType::NATIVE_FLOAT, temp_data);
+  write_3d_vec<float>(storage->timeseries, "TIMESERIES", H5::PredType::NATIVE_FLOAT, temp_data);
+  write_3d_vec<float>(storage->timeseries_masked, "TIMESERIES_MASKED", H5::PredType::NATIVE_FLOAT, temp_data);
+
+  file->close();
+}
+
+void ska::pst::stat::StatHdf5FileWriter::write_array(
+  const std::vector<char>& data,
+  const std::string& field_name,
+  const H5::PredType& datatype,
+  H5::DataSpace& dataspace
+)
+{
+  H5::DataSet dataset = file->createDataSet(field_name, datatype, dataspace);
+  dataset.write(data.data(), datatype);
+  dataset.close();
 }
