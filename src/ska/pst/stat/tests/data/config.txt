@@ -10,3 +10,10 @@ UDP_NSAMP               32
 STAT_OUTPUT_BASEPATH    /tmp
 STAT_REQ_TIME_BINS      4
 STAT_REQ_FREQ_BINS      4
+
+EB_ID               eb-m001-20240804-0123456
+SCAN_ID             1138
+BEAM_ID             1
+UTC_START           2023-08-07-15:41:00
+PICOSECONDS         1234
+TSAMP               207.36
