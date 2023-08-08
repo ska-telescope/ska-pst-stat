@@ -44,9 +44,8 @@
 
 ska::pst::stat::StatHdf5FileWriter::StatHdf5FileWriter(
   const ska::pst::common::AsciiHeader& config,
-  std::shared_ptr<StatStorage> storage,
-  std::string file_path
-) : StatPublisher(config, std::move(storage)), file_path(std::move(file_path))
+  std::shared_ptr<StatStorage> storage
+) : StatPublisher(config, std::move(storage))
 {
   SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::StatHdf5FileWriter");
 }
@@ -65,9 +64,9 @@ auto ska::pst::stat::StatHdf5FileWriter::get_hdf5_header_datatype() -> H5::CompT
   header_datatype.insertMember("SCAN_ID", HOFFSET(stat_hdf5_header_t, scan_id), H5::PredType::NATIVE_UINT64);
   header_datatype.insertMember("BEAM_ID", HOFFSET(stat_hdf5_header_t, beam_id), str_datatype);
   header_datatype.insertMember("UTC_START", HOFFSET(stat_hdf5_header_t, utc_start), str_datatype);
-  header_datatype.insertMember("T_MIN_MJD", HOFFSET(stat_hdf5_header_t, t_min_mjd), H5::PredType::NATIVE_DOUBLE);
-  header_datatype.insertMember("T_MAX_MJD", HOFFSET(stat_hdf5_header_t, t_max_mjd), H5::PredType::NATIVE_DOUBLE);
-  header_datatype.insertMember("FREQ_MHZ", HOFFSET(stat_hdf5_header_t, freq), H5::PredType::NATIVE_DOUBLE);
+  header_datatype.insertMember("T_MIN", HOFFSET(stat_hdf5_header_t, t_min), H5::PredType::NATIVE_DOUBLE);
+  header_datatype.insertMember("T_MAX", HOFFSET(stat_hdf5_header_t, t_max), H5::PredType::NATIVE_DOUBLE);
+  header_datatype.insertMember("FREQ", HOFFSET(stat_hdf5_header_t, freq), H5::PredType::NATIVE_DOUBLE);
   header_datatype.insertMember("BW", HOFFSET(stat_hdf5_header_t, bandwidth), H5::PredType::NATIVE_DOUBLE);
   header_datatype.insertMember("START_CHAN", HOFFSET(stat_hdf5_header_t, start_chan), H5::PredType::NATIVE_UINT32);
   header_datatype.insertMember("NPOL", HOFFSET(stat_hdf5_header_t, npol), H5::PredType::NATIVE_UINT32);
@@ -102,7 +101,7 @@ void ska::pst::stat::StatHdf5FileWriter::publish()
   stat_hdf5_header_t header;
 
   auto picoseconds = config.get_uint64("PICOSECONDS");
-  auto t_min_mjd = static_cast<double>(ska::pst::common::attoseconds_per_microsecond) /
+  auto t_min = static_cast<double>(ska::pst::common::attoseconds_per_microsecond) /
     static_cast<double>(ska::pst::common::attoseconds_per_second) *
     static_cast<double>(picoseconds);
 
@@ -110,12 +109,12 @@ void ska::pst::stat::StatHdf5FileWriter::publish()
   std::string beam_id = config.get_val("BEAM_ID");
   std::string utc_start = config.get_val("UTC_START");
 
-  header.eb_id = &eb_id[0]; // NOLINT
+  header.eb_id = const_cast<char *>(eb_id.c_str()); // NOLINT
   header.scan_id = config.get_uint64("SCAN_ID");
-  header.beam_id = &beam_id[0]; // NOLINT
-  header.utc_start = &utc_start[0]; // NOLINT
-  header.t_max_mjd = t_min_mjd + storage->get_total_sample_time();
-  header.t_min_mjd = t_min_mjd;
+  header.beam_id = const_cast<char *>(beam_id.c_str()); // NOLINT
+  header.utc_start = const_cast<char *>(utc_start.c_str()); // NOLINT
+  header.t_max = t_min + storage->get_total_sample_time();
+  header.t_min = t_min;
   header.freq = config.get_double("FREQ");
   header.bandwidth = config.get_double("BW");
   header.start_chan = config.get_uint32("START_CHAN");
@@ -133,8 +132,7 @@ void ska::pst::stat::StatHdf5FileWriter::publish()
 
   std::vector<char> temp_data;
 
-  std::filesystem::path curr_file_path = std::filesystem::path(file_path) / "stat.h5";
-  file = std::make_shared<H5::H5File>(curr_file_path, H5F_ACC_TRUNC);
+  file = std::make_shared<H5::H5File>(config.get_val("STAT_OUTPUT_FILENAME"), H5F_ACC_TRUNC);
 
   auto header_datatype = get_hdf5_header_datatype();
 

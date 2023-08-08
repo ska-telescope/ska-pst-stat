@@ -80,7 +80,7 @@ void StatHdf5FileWriterTest::initialise(const std::string& config_file)
   auto nfreq_bins = config.get_uint32("STAT_REQ_FREQ_BINS");
   storage->resize(ntime_bins, nfreq_bins);
 
-  writer = std::make_shared<StatHdf5FileWriter>(config, storage, "/tmp");
+  writer = std::make_shared<StatHdf5FileWriter>(config, storage);
 
   populate_storage();
 }
@@ -130,7 +130,7 @@ void StatHdf5FileWriterTest::validate_hdf5_file(const std::shared_ptr<H5::H5File
   dataset.read(&header, header_datatype);
 
   auto picoseconds = config.get_uint64("PICOSECONDS");
-  auto t_min_mjd = static_cast<double>(ska::pst::common::attoseconds_per_microsecond) /
+  auto t_min = static_cast<double>(ska::pst::common::attoseconds_per_microsecond) /
     static_cast<double>(ska::pst::common::attoseconds_per_second) *
     static_cast<double>(picoseconds);
 
@@ -138,8 +138,8 @@ void StatHdf5FileWriterTest::validate_hdf5_file(const std::shared_ptr<H5::H5File
   ASSERT_EQ(header.scan_id, config.get_uint64("SCAN_ID"));
   ASSERT_EQ(std::string(header.beam_id), config.get_val("BEAM_ID"));
   ASSERT_EQ(std::string(header.utc_start), config.get_val("UTC_START"));
-  ASSERT_EQ(header.t_min_mjd, t_min_mjd);
-  ASSERT_EQ(header.t_max_mjd, t_min_mjd + storage->get_total_sample_time());
+  ASSERT_EQ(header.t_min, t_min);
+  ASSERT_EQ(header.t_max, t_min + storage->get_total_sample_time());
   ASSERT_EQ(header.freq, config.get_double("FREQ"));
   ASSERT_EQ(header.bandwidth, config.get_double("BW"));
   ASSERT_EQ(header.start_chan, config.get_uint32("START_CHAN"));
@@ -180,7 +180,7 @@ TEST_F(StatHdf5FileWriterTest, test_generates_correct_data) // NOLINT
   initialise();
   writer->publish();
 
-  std::shared_ptr<H5::H5File> file = std::make_shared<H5::H5File>("/tmp/stat.h5", H5F_ACC_RDONLY);
+  std::shared_ptr<H5::H5File> file = std::make_shared<H5::H5File>(config.get_val("STAT_OUTPUT_FILENAME"), H5F_ACC_RDONLY);
 
   validate_hdf5_file(file);
 }

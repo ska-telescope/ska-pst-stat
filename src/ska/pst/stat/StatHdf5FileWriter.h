@@ -42,28 +42,28 @@
 namespace ska::pst::stat {
 
   typedef struct stat_hdf5_header {
-    //! the execution id that the data relates to
+    //! the execution block that the data relates to
     char* eb_id;
 
     //! the scan that the data relates to
     uint64_t scan_id;
 
-    //! the beam id used to capture the data
+    //! the beam used to capture the data
     char* beam_id;
 
     //! the UTC start time of the scan in ISO 8601 format
     char* utc_start;
 
     //! the offset the UTC start time starting at the fractional offset
-    double t_min_mjd;
+    double t_min;
 
-    //! the end of the sample time. This is equivalent to t_min_mjd + total sample time
-    double t_max_mjd;
+    //! the end of the sample time. This is equivalent to t_min + total sample time
+    double t_max;
 
-    //! the centre frequency of the data
+    //! the centre frequency of the data in MHz
     double freq;
 
-    //! the bandwidth of the data
+    //! the bandwidth of the data in MHz
     double bandwidth;
 
     //! the start channel number
@@ -113,12 +113,10 @@ namespace ska::pst::stat {
        *
        * @param config the configuration current voltage data stream.
        * @param storage a shared pointer to the in memory storage of the computed statistics.
-       * @param file_path path of where to write data out to.
        */
       StatHdf5FileWriter(
         const ska::pst::common::AsciiHeader& config,
-        std::shared_ptr<StatStorage> storage,
-        std::string file_path
+        std::shared_ptr<StatStorage> storage
       );
 
       /**
@@ -139,9 +137,6 @@ namespace ska::pst::stat {
       auto get_hdf5_header_datatype() -> H5::CompType;
 
     private:
-      //! file path to output file
-      std::string file_path;
-
       //! write array out to a HDF5 DataSpace
       void write_array(const std::vector<char>& data, const std::string& field_name, const H5::PredType& datatype, H5::DataSpace& dataspace);
 

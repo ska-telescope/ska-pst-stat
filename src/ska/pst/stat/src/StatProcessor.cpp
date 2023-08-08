@@ -67,10 +67,7 @@ ska::pst::stat::StatProcessor::StatProcessor(
   computer = std::make_unique<ska::pst::stat::StatComputer>(data_config, weights_config, storage);
 
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor create new unique StatHdf5FileWriter object");
-  const std::filesystem::path& base_file_path = data_config.get_val("STAT_OUTPUT_BASEPATH");
-  // EB_ID work should
-
-  publisher = std::make_unique<ska::pst::stat::StatHdf5FileWriter>(data_config, storage, base_file_path);
+  publisher = std::make_unique<ska::pst::stat::StatHdf5FileWriter>(data_config, storage);
 
 }
 
