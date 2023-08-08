@@ -32,6 +32,7 @@
 #include <thread>
 #include <spdlog/spdlog.h>
 
+#include "ska/pst/common/definitions.h"
 #include "ska/pst/common/utils/AsciiHeader.h"
 #include "ska/pst/common/utils/Timer.h"
 #include "ska/pst/common/definitions.h"
@@ -115,29 +116,7 @@ void StatHdf5FileWriterTest::populate_storage()
 
 void StatHdf5FileWriterTest::validate_hdf5_file(const std::shared_ptr<H5::H5File>& file)
 {
-  H5::StrType str_datatype(H5::PredType::C_S1, H5T_VARIABLE);
-
-  H5::CompType header_datatype(sizeof(stat_hdf5_header_t));
-  header_datatype.insertMember("EB_ID", HOFFSET(stat_hdf5_header_t, eb_id), str_datatype);
-  header_datatype.insertMember("SCAN_ID", HOFFSET(stat_hdf5_header_t, scan_id), H5::PredType::NATIVE_UINT64);
-  header_datatype.insertMember("BEAM_ID", HOFFSET(stat_hdf5_header_t, beam_id), str_datatype);
-  header_datatype.insertMember("UTC_START", HOFFSET(stat_hdf5_header_t, utc_start), str_datatype);
-  header_datatype.insertMember("T_MIN_MJD", HOFFSET(stat_hdf5_header_t, t_min_mjd), H5::PredType::NATIVE_DOUBLE);
-  header_datatype.insertMember("T_MAX_MJD", HOFFSET(stat_hdf5_header_t, t_max_mjd), H5::PredType::NATIVE_DOUBLE);
-  header_datatype.insertMember("FREQ_MHZ", HOFFSET(stat_hdf5_header_t, freq), H5::PredType::NATIVE_DOUBLE);
-  header_datatype.insertMember("BW", HOFFSET(stat_hdf5_header_t, bandwidth), H5::PredType::NATIVE_DOUBLE);
-  header_datatype.insertMember("START_CHAN", HOFFSET(stat_hdf5_header_t, start_chan), H5::PredType::NATIVE_UINT32);
-  header_datatype.insertMember("NPOL", HOFFSET(stat_hdf5_header_t, npol), H5::PredType::NATIVE_UINT32);
-  header_datatype.insertMember("NDIM", HOFFSET(stat_hdf5_header_t, ndim), H5::PredType::NATIVE_UINT32);
-  header_datatype.insertMember("NCHAN", HOFFSET(stat_hdf5_header_t, nchan), H5::PredType::NATIVE_UINT32);
-  header_datatype.insertMember("NCHAN_DS", HOFFSET(stat_hdf5_header_t, nfreq_bins), H5::PredType::NATIVE_UINT32);
-  header_datatype.insertMember("NDAT_DS", HOFFSET(stat_hdf5_header_t, ntime_bins), H5::PredType::NATIVE_UINT32);
-  header_datatype.insertMember("NBIN_HIST", HOFFSET(stat_hdf5_header_t, nbin), H5::PredType::NATIVE_UINT32);
-  header_datatype.insertMember("NREBIN", HOFFSET(stat_hdf5_header_t, nrebin), H5::PredType::NATIVE_UINT32);
-
-  header_datatype.insertMember("CHAN_FREQ", HOFFSET(stat_hdf5_header_t, chan_freq), H5::VarLenType(H5::PredType::NATIVE_DOUBLE));
-  header_datatype.insertMember("FREQUENCY_BINS", HOFFSET(stat_hdf5_header_t, frequency_bins), H5::VarLenType(H5::PredType::NATIVE_DOUBLE));
-  header_datatype.insertMember("TIMESERIES_BINS", HOFFSET(stat_hdf5_header_t, timeseries_bins), H5::VarLenType(H5::PredType::NATIVE_DOUBLE));
+  auto header_datatype = writer->get_hdf5_header_datatype();
 
   H5::DataSet dataset = file->openDataSet("HEADER");
   H5::DataSpace dataspace = dataset.getSpace();
@@ -150,12 +129,17 @@ void StatHdf5FileWriterTest::validate_hdf5_file(const std::shared_ptr<H5::H5File
   stat_hdf5_header_t header;
   dataset.read(&header, header_datatype);
 
+  auto picoseconds = config.get_uint64("PICOSECONDS");
+  auto t_min_mjd = static_cast<double>(ska::pst::common::attoseconds_per_microsecond) /
+    static_cast<double>(ska::pst::common::attoseconds_per_second) *
+    static_cast<double>(picoseconds);
+
   ASSERT_EQ(std::string(header.eb_id), config.get_val("EB_ID"));
   ASSERT_EQ(header.scan_id, config.get_uint64("SCAN_ID"));
   ASSERT_EQ(std::string(header.beam_id), config.get_val("BEAM_ID"));
   ASSERT_EQ(std::string(header.utc_start), config.get_val("UTC_START"));
-  // ASSERT_EQ(header.t_min_mjd, config.get_double("FREQ"));
-  // ASSERT_EQ(header.t_max_mjd, config.get_double("BW"));
+  ASSERT_EQ(header.t_min_mjd, t_min_mjd);
+  ASSERT_EQ(header.t_max_mjd, t_min_mjd + storage->get_total_sample_time());
   ASSERT_EQ(header.freq, config.get_double("FREQ"));
   ASSERT_EQ(header.bandwidth, config.get_double("BW"));
   ASSERT_EQ(header.start_chan, config.get_uint32("START_CHAN"));

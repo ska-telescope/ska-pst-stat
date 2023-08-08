@@ -132,11 +132,20 @@ namespace ska::pst::stat {
        */
       void publish() override;
 
+      /**
+       * @brief get the HDF5 compound data type for STAT.
+       *
+       */
+      auto get_hdf5_header_datatype() -> H5::CompType;
+
     private:
+      //! file path to output file
       std::string file_path;
 
-      void write_array(const std::vector<char>& data, const std::string& field_name, const H5::PredType& data_type, H5::DataSpace& data_space);
+      //! write array out to a HDF5 DataSpace
+      void write_array(const std::vector<char>& data, const std::string& field_name, const H5::PredType& datatype, H5::DataSpace& dataspace);
 
+      //! write a 1D vector to a header variable length value
       template<typename T>
       void write_1d_vec_header(std::vector<T>& data, hvl_t& header_value)
       {
@@ -144,34 +153,38 @@ namespace ska::pst::stat {
         header_value.p = reinterpret_cast<void *>(&data.front());
       }
 
+      //! write a 1D vector to the HDF5 with a given data type
       template<typename T>
-      void write_1d_vec(const std::vector<T>& data, std::string field_name, const H5::PredType& data_type, std::vector<char>& temp_data) {
+      void write_1d_vec(const std::vector<T>& data, std::string field_name, const H5::PredType& datatype, std::vector<char>& temp_data) {
         SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::write_1d_vec - writing {}", field_name);
         flatten_1d_vec(data, temp_data);
         hsize_t dimssf[1] = { data.size() };
-        H5::DataSpace data_space(1, dimssf);
-        write_array(temp_data, field_name, data_type, data_space);
+        H5::DataSpace dataspace(1, dimssf);
+        write_array(temp_data, field_name, datatype, dataspace);
       }
 
+      //! write a 2D vector to the HDF5 with a given data type
       template<typename T>
-      void write_2d_vec(const std::vector<std::vector<T>>& data, std::string field_name, const H5::PredType& data_type, std::vector<char>& temp_data) {
+      void write_2d_vec(const std::vector<std::vector<T>>& data, std::string field_name, const H5::PredType& datatype, std::vector<char>& temp_data) {
         SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::write_2d_vec - writing {}", field_name);
         flatten_2d_vec(data, temp_data);
         // create HDF5 dims
         hsize_t dimssf[2] = { data.size(), data[0].size() };
-        H5::DataSpace data_space(2, dimssf);
-        write_array(temp_data, field_name, data_type, data_space);
+        H5::DataSpace dataspace(2, dimssf);
+        write_array(temp_data, field_name, datatype, dataspace);
       }
 
+      //! write a 3D vector to the HDF5 with a given data type
       template<typename T>
-      void write_3d_vec(const std::vector<std::vector<std::vector<T>>>& data, std::string field_name, const H5::PredType& data_type, std::vector<char>& temp_data) {
+      void write_3d_vec(const std::vector<std::vector<std::vector<T>>>& data, std::string field_name, const H5::PredType& datatype, std::vector<char>& temp_data) {
         SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::write_3d_vec - writing {}", field_name);
         flatten_3d_vec(data, temp_data);
         hsize_t dimssf[3] = { data.size(), data[0].size(), data[0][0].size() };
-        H5::DataSpace data_space(3, dimssf);
-        write_array(temp_data, field_name, data_type, data_space);
+        H5::DataSpace dataspace(3, dimssf);
+        write_array(temp_data, field_name, datatype, dataspace);
       }
 
+      //! flatten and copy 1D vector to output data vector
       template<typename T>
       static size_t flatten_1d_vec(const std::vector<T>& vec, std::vector<char>& data)
       {
@@ -183,6 +196,7 @@ namespace ska::pst::stat {
         return dim1;
       }
 
+      //! flatten and copy 2D vector to output data vector
       template<typename T>
       static size_t flatten_2d_vec(const std::vector<std::vector<T>>& vec, std::vector<char>& data)
       {
@@ -203,6 +217,7 @@ namespace ska::pst::stat {
         return num_elements;
       }
 
+      //! flatten and copy 3D vector to output data vector
       template<typename T>
       static size_t flatten_3d_vec(const std::vector<std::vector<std::vector<T>>>& vec, std::vector<char>& data)
       {
