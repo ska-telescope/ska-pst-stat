@@ -28,26 +28,36 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <iostream>
+#include "ska/pst/stat/FileProcessor.h"
 #include <spdlog/spdlog.h>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
-
-#include "ska/pst/stat/FileProcessor.h"
+#include <filesystem>
 
 ska::pst::stat::FileProcessor::FileProcessor(
-        const ska::pst::common::AsciiHeader& _config,
         const std::string& data_file_path,
         const std::string& weights_file_path)
         : 
-	  config(_config),
 	  block_loader(new ska::pst::common::DataWeightsFileBlockLoader(data_file_path, weights_file_path))
 {
-  SPDLOG_DEBUG("ska::pst::stat::FileProcessor::FileProcessor");
+  SPDLOG_DEBUG("ska::pst::stat::FileProcessor::ctor");
 
   auto data_config = block_loader->get_data_header();
   auto weights_config = block_loader->get_weights_header();
+
+  // create stat/ output folder
+  std::filesystem::path stat_output_path("stat");
+  std::filesystem::create_directory(stat_output_path);
+
+  // create stat output filename using the stem of the data filename
+  std::filesystem::path data_output_filename(data_file_path);
+  std::filesystem::path stat_output_filename = stat_output_path / data_output_filename.stem();
+
+  SPDLOG_DEBUG("ska::pst::stat::FileProcessor::ctor stat output filename={}", stat_output_filename.generic_string());
+
+  data_config.set("STAT_OUTPUT_FILENAME",stat_output_filename.generic_string());
 
   processor = std::make_shared<StatProcessor>(data_config, weights_config);
 }

@@ -42,7 +42,6 @@ auto main(int argc, char *argv[]) -> int
 {
   ska::pst::common::setup_spdlog();
 
-  std::string config_filename;
   std::string data_filename;
   std::string weights_filename;
 
@@ -50,17 +49,13 @@ auto main(int argc, char *argv[]) -> int
   opterr = 0;
   int c = 0;
 
-  while ((c = getopt(argc, argv, "hc:d:w:v")) != EOF)
+  while ((c = getopt(argc, argv, "hd:w:v")) != EOF)
   {
     switch(c)
     {
       case 'h':
         usage();
         exit(EXIT_SUCCESS);
-        break;
-
-      case 'c':
-        config_filename = optarg;
         break;
 
       case 'd':
@@ -93,13 +88,6 @@ auto main(int argc, char *argv[]) -> int
   }
 
   // Check arguments
-  if (config_filename.empty())
-  {
-    SPDLOG_ERROR("ERROR: config filename not specified");
-    usage();
-    return EXIT_FAILURE;
-  }
-
   if (data_filename.empty())
   {
     SPDLOG_ERROR("ERROR: data filename not specified");
@@ -118,19 +106,11 @@ auto main(int argc, char *argv[]) -> int
 
   try
   {
-    // prepare the config and header
-    ska::pst::common::AsciiHeader config;
-
-    // load FileProcessor configuration
-    SPDLOG_DEBUG("loading configuration from {}", config_filename);
-    config.load_from_file(config_filename);
-
     SPDLOG_DEBUG("constructing FileProcessor from data filename={} and weights filename={}", data_filename, weights_filename);
-    ska::pst::stat::FileProcessor file_processor(config, data_filename, weights_filename);
+    ska::pst::stat::FileProcessor file_processor(data_filename, weights_filename);
 
     SPDLOG_DEBUG("constructing calling FileProcessor::process");
     file_processor.process();
-
   }
   catch (std::exception& exc)
   {
@@ -144,9 +124,8 @@ auto main(int argc, char *argv[]) -> int
 
 void usage()
 {
-  std::cout << "Usage: ska_pst_stat_file_proc -c config -d data -w weights" << std::endl;
+  std::cout << "Usage: ska_pst_stat_file_proc -d data -w weights" << std::endl;
   std::cout << std::endl;
-  std::cout << "  -c config   name of file processor configuration file" << std::endl;
   std::cout << "  -d data     name of data file" << std::endl;
   std::cout << "  -w weights  name of weights file" << std::endl;
   std::cout << "  -h          print this help text" << std::endl;

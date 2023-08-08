@@ -51,12 +51,10 @@ namespace ska::pst::stat {
       /**
        * @brief Create instance of a File Processor object.
        *
-       * @param config the configuration for the file processing job.
        * @param data_file_path path to the data file to process.
        * @param weights_file_path the path to the weights file for the data file.
        */
       FileProcessor(
-        const ska::pst::common::AsciiHeader& config,
         const std::string& data_file_path,
         const std::string& weights_file_path
       );
@@ -75,9 +73,6 @@ namespace ska::pst::stat {
     private:
       //! shared pointer a statistics processor
       std::shared_ptr<StatProcessor> processor;
-
-      //! the configuration for the current file processing
-      ska::pst::common::AsciiHeader config;
 
       //! the block loader that us used to mmap the data and weights files
       std::shared_ptr<ska::pst::common::DataWeightsBlockLoader> block_loader;
