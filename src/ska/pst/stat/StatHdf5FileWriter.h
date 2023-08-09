@@ -28,13 +28,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "ska/pst/common/utils/AsciiHeader.h"
+#include "ska/pst/stat/StatPublisher.h"
+
+#include <spdlog/spdlog.h>
+#include <H5Cpp.h>
 #include <memory>
 #include <string>
 #include <cstring>
-#include <H5Cpp.h>
-
-#include "ska/pst/common/utils/AsciiHeader.h"
-#include "ska/pst/stat/StatPublisher.h"
 
 #ifndef __SKA_PST_STAT_StatHdf5FileWriter_h
 #define __SKA_PST_STAT_StatHdf5FileWriter_h

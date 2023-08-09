@@ -3,18 +3,18 @@
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *
+ * 
  * 1. Redistributions of source code must retain the above copyright notice,
  * this list of conditions and the following disclaimer.
- *
+ * 
  * 2. Redistributions in binary form must reproduce the above copyright
  * notice, this list of conditions and the following disclaimer in the
  * documentation and/or other materials provided with the distribution.
- *
+ * 
  * 3. Neither the name of the copyright holder nor the names of its
  * contributors may be used to endorse or promote products derived from this
  * software without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,56 +28,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <memory>
+#include <iostream>
 #include <string>
 
-#include "ska/pst/common/utils/AsciiHeader.h"
-#include "ska/pst/common/utils/DataWeightsFileBlockLoader.h"
+#include "ska/pst/stat/version.h"
 
-#include "ska/pst/stat/StatProcessor.h"
-
-#ifndef __SKA_PST_STAT_FileProcessor_h
-#define __SKA_PST_STAT_FileProcessor_h
-
-namespace ska::pst::stat {
-
-  /**
-   * @brief Class used for processing input voltage data files to
-   * calculate the output statistics.
-   */
-  class FileProcessor
-  {
-    public:
-      /**
-       * @brief Create instance of a File Processor object.
-       *
-       * @param data_file_path path to the data file to process.
-       * @param weights_file_path the path to the weights file for the data file.
-       */
-      FileProcessor(
-        const std::string& data_file_path,
-        const std::string& weights_file_path
-      );
-
-      /**
-       * @brief Destroy the File Processor object.
-       *
-       */
-      virtual ~FileProcessor();
-
-      /**
-       * @brief Process the file based on the configuration passed in the constructor.
-       */
-      void process();
-
-    private:
-      //! shared pointer a statistics processor
-      std::shared_ptr<StatProcessor> processor;
-
-      //! the block loader that us used to mmap the data and weights files
-      std::shared_ptr<ska::pst::common::DataWeightsBlockLoader> block_loader;
-  };
-
-} // namespace ska::pst::stat
-
-#endif // __SKA_PST_STAT_FileProcessor_h
+auto main() -> int
+{
+  std::cout << "ska-pst-stat version: " << ska::pst::stat::get_version_string() << std::endl;
+  return 0;
+}

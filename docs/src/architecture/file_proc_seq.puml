@@ -5,36 +5,36 @@ activate FileProcessor
 FileProcessor -> StatProcessor: StatProcessor(config)
 activate StatProcessor
 Client -> FileProcessor: process(data_file_path, weights_file_path)
-FileProcessor -> FileReader: FileReader(file)
-activate FileReader
-FileReader -> "Data File": mmap
+FileProcessor -> DataWeightFileBlockLoader: DataWeightFileBlockLoader(file)
+activate DataWeightFileBlockLoader
+DataWeightFileBlockLoader -> "Data File": mmap
 activate "Data File"
-FileReader -> "Weights File": mmap
+DataWeightFileBlockLoader -> "Weights File": mmap
 activate "Weights File"
 
 loop for configured number of blocks or EOF
-  FileProcessor -> FileReader: next_block()
-  FileReader --> "Data File": seek to block
-  FileReader --> "Weights File": seek to weights block
-  FileProcessor <-- FileReader: (block_ptr, weights_ptr)
+  FileProcessor -> DataWeightFileBlockLoader: next_block()
+  DataWeightFileBlockLoader --> "Data File": seek to block
+  DataWeightFileBlockLoader --> "Weights File": seek to weights block
+  FileProcessor <-- DataWeightFileBlockLoader: (block_ptr, weights_ptr)
   FileProcessor -> StatProcessor: process(block_ptr, block_length, weights_ptr, weights_length)
   FileProcessor <-- StatProcessor
 end
 
-FileProcessor --> FileReader: drop
-FileReader --> "Data File": release
+FileProcessor --> DataWeightFileBlockLoader: drop
+DataWeightFileBlockLoader --> "Data File": release
 deactivate "Data File"
-FileReader --> "Weights File": release
+DataWeightFileBlockLoader --> "Weights File": release
 deactivate "Weights File"
-deactivate FileReader
+deactivate DataWeightFileBlockLoader
 
-' FileProcessor -> FileReader: create
-' activate FileReader
-' FileReader -> File: mmap
+' FileProcessor -> DataWeightFileBlockLoader: create
+' activate DataWeightFileBlockLoader
+' DataWeightFileBlockLoader -> File: mmap
 ' activate File
 ' loop while data present
-'   FileProcessor -> FileReader: read next
-'   FileProcessor <-- FileReader: return next block ptr or null
+'   FileProcessor -> DataWeightFileBlockLoader: read next
+'   FileProcessor <-- DataWeightFileBlockLoader: return next block ptr or null
 '   alt data present
 '     FileProcessor -> StatProcessor: process(block_ptr, block_length)
 '   else no data preset

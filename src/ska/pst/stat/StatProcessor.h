@@ -40,6 +40,8 @@
 
 namespace ska::pst::stat {
 
+  class StatPublisher;
+  
   /**
    * @brief A class that does the core computation of statistics per block of data.
    *

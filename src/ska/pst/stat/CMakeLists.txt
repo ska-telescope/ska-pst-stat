@@ -4,7 +4,6 @@ set(public_headers
   version.h
   ${CMAKE_CURRENT_BINARY_DIR}/config.h
   FileProcessor.h
-  FileReader.h
   StatApplicationManager.h
   StatComputer.h
   StatHdf5FileWriter.h
@@ -14,6 +13,7 @@ set(public_headers
 )
 
 set(sources
+  src/FileProcessor.cpp
   src/version.cpp
   src/StatStorage.cpp
   src/StatPublisher.cpp
@@ -55,4 +55,22 @@ target_link_libraries(ska_pst_stat
     ska_pst_common
     ${PSRDADA_LIBRARIES}
     ${HDF5_CXX_LIBRARIES}
+)
+
+install(
+  TARGETS
+    ska_pst_stat
+  EXPORT
+    ska_pst_stat-targets
+  LIBRARY DESTINATION
+    lib
+  ARCHIVE DESTINATION
+    lib
+)
+
+install(
+  FILES
+    ${public_headers}
+  DESTINATION
+    include/ska/pst/stat
 )
