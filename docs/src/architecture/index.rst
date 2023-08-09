@@ -53,21 +53,21 @@ structured file format.
 HDF5 Data Structure
 *******************
 
-The output HDF5 file includes a HEADER section and each computed data structures as
+The output HDF5 file includes a HEADER section and each computed data structures is
 a separate HDF5 dataset.
 
-The header of the HDF5 includes the following fields:
+The header of the HDF5 file includes the following fields:
 
   * EB_ID - the execution block that the output statistics file is for.
   * SCAN_ID - the scan that the output statistics file is for.
   * BEAM_ID - the beam used to capture the voltage data used in computing the statistics.
   * UTC_START - the start time of the observation as an ISO 8601 string.
   * T_MIN - the fractional offset of a second from UTC_START.
-  * T_MAX - the difference between T_MAX and T_MIN is the length of time, in seconds, for ???
+  * T_MAX - the difference between T_MAX and T_MIN is the length of time, in seconds, for of the voltage timeseries for which statistics are computed
   * FREQ - the centre frequency, in MHz, for the voltage data.
   * BW - the bandwidth of data, in MHz, for the voltage data.
   * START_CHAN - the starting channel number for the voltage data.  This allows subbands of data to be processed.
-  * NPOL - the number of polarisations of that voltage data. For SKA this is always 2.
+  * NPOL - the number of polarisations of the voltage data. For SKA this is always 2.
   * NDIM - the number of dimensions of the voltage data. For SKA this is 2 as the system is recording complex voltage data.
   * NCHAN - the number of channels that is in the voltage data.
   * NCHAN_DS - the number of frequency bins used in the spectrogram output.
@@ -81,13 +81,13 @@ The header of the HDF5 includes the following fields:
 The output data of the HDF5 includes the following datasets:
 
   * MEAN_FREQUENCY_AVG - the mean of the data for each polarisation and dimension, averaged over all channels.
-  * MEAN_FREQUENCY_AVG_MASKED -the mean of the data for each polarisation and dimension, averaged over all channels, expect those flagged for RFI.
+  * MEAN_FREQUENCY_AVG_MASKED - the mean of the data for each polarisation and dimension, averaged over all channels, expect those flagged for RFI.
   * VARIANCE_FREQUENCY_AVG - the variance of the data for each polarisation and dimension, averaged over all channels.
-  * VARIANCE_FREQUENCY_AVG_MASKED -the variance of the data for each polarisation and dimension, averaged over all channels, expect those flagged for RFI.
+  * VARIANCE_FREQUENCY_AVG_MASKED - the variance of the data for each polarisation and dimension, averaged over all channels, expect those flagged for RFI.
   * MEAN_SPECTRUM - the mean of the data for each polarisation, dimension and channel.
   * VARIANCE_SPECTRUM - the variance of the data for each polarisation, dimension and channel.
-  * MEAN_SPECTRAL_POWER - mean power spectra of the data for each polarisation and channel.
-  * MAX_SPECTRAL_POWER - maximum power spectra of the data for each polarisation and channel.
+  * MEAN_SPECTRAL_POWER - mean power of the data for each polarisation and channel.
+  * MAX_SPECTRAL_POWER - maximum power of the data for each polarisation and channel.
   * HISTOGRAM_1D_FREQ_AVG - histogram of the input data integer states for each polarisation and dimension, averaged over all channels.
   * HISTOGRAM_1D_FREQ_AVG_MASKED - histogram of the input data integer states for each polarisation and dimension, averaged over all channels, expect those flagged for RFI.
   * NUM_CLIPPED_SAMPLES_SPECTRUM - number of clipped input samples (maximum level) for each polarisation, dimension and channel.
