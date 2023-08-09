@@ -86,7 +86,7 @@ TEST_F(StatProcessorTest, test_construct_delete) // NOLINT
   ASSERT_EQ(sp->get_data_config().get_uint32("NBIT"), data_config.get_uint32("NBIT"));
   ASSERT_EQ(sp->get_data_config().get_uint32("NPOL"), data_config.get_uint32("NPOL"));
   ASSERT_EQ(sp->get_data_config().get_uint32("UDP_NSAMP"), data_config.get_uint32("UDP_NSAMP"));
-  ASSERT_EQ(sp->get_data_config().get_val("STAT_OUTPUT_BASEPATH"), data_config.get_val("STAT_OUTPUT_BASEPATH"));
+  ASSERT_EQ(sp->get_data_config().get_val("STAT_OUTPUT_FILENAME"), data_config.get_val("STAT_OUTPUT_FILENAME"));
   ASSERT_EQ(sp->get_data_config().get_uint32("STAT_REQ_TIME_BINS"), data_config.get_uint32("STAT_REQ_TIME_BINS"));
   ASSERT_EQ(sp->get_data_config().get_uint32("STAT_REQ_FREQ_BINS"), data_config.get_uint32("STAT_REQ_FREQ_BINS"));
   SPDLOG_INFO("weights_config:\n{}", sp->get_weights_config().raw());
@@ -96,7 +96,7 @@ TEST_F(StatProcessorTest, test_construct_delete) // NOLINT
   ASSERT_EQ(sp->get_weights_config().get_uint32("NBIT"), weights_config.get_uint32("NBIT"));
   ASSERT_EQ(sp->get_weights_config().get_uint32("NPOL"), weights_config.get_uint32("NPOL"));
   ASSERT_EQ(sp->get_weights_config().get_uint32("UDP_NSAMP"), weights_config.get_uint32("UDP_NSAMP"));
-  ASSERT_EQ(sp->get_weights_config().get_val("STAT_OUTPUT_BASEPATH"), weights_config.get_val("STAT_OUTPUT_BASEPATH"));
+  ASSERT_EQ(sp->get_weights_config().get_val("STAT_OUTPUT_FILENAME"), weights_config.get_val("STAT_OUTPUT_FILENAME"));
   ASSERT_EQ(sp->get_weights_config().get_uint32("STAT_REQ_TIME_BINS"), weights_config.get_uint32("STAT_REQ_TIME_BINS"));
   ASSERT_EQ(sp->get_weights_config().get_uint32("STAT_REQ_FREQ_BINS"), weights_config.get_uint32("STAT_REQ_FREQ_BINS"));
 }

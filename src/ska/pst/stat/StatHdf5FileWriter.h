@@ -30,6 +30,8 @@
 
 #include <memory>
 #include <string>
+#include <cstring>
+#include <H5Cpp.h>
 
 #include "ska/pst/common/utils/AsciiHeader.h"
 #include "ska/pst/stat/StatPublisher.h"
@@ -38,6 +40,66 @@
 #define __SKA_PST_STAT_StatHdf5FileWriter_h
 
 namespace ska::pst::stat {
+
+  typedef struct stat_hdf5_header {
+    //! the execution block that the data relates to
+    char* eb_id;
+
+    //! the scan that the data relates to
+    uint64_t scan_id;
+
+    //! the beam used to capture the data
+    char* beam_id;
+
+    //! the UTC start time of the scan in ISO 8601 format
+    char* utc_start;
+
+    //! the offset the UTC start time starting at the fractional offset
+    double t_min;
+
+    //! the end of the sample time. This is equivalent to t_min + total sample time
+    double t_max;
+
+    //! the centre frequency of the data in MHz
+    double freq;
+
+    //! the bandwidth of the data in MHz
+    double bandwidth;
+
+    //! the start channel number
+    uint32_t start_chan;
+
+    //! number of polarisations represented in storage vectors
+    uint32_t npol;
+
+    //! number of dimensions represented in storage vectors
+    uint32_t ndim;
+
+    //! number of channels representated in storage vectors
+    uint32_t nchan;
+
+    //! number of bins represented in storage vectors
+    uint32_t nbin;
+
+    //! number of spectral bins in the spectrogram
+    uint32_t nfreq_bins;
+
+    //! number of temporal bins in the timeseries, timeseries_masked and spectrogram attributes
+    uint32_t ntime_bins;
+
+    //! number of rebinned bins represented in storage vectors
+    uint32_t nrebin;
+
+    //! channel centre frequencies
+    hvl_t chan_freq;
+
+    //! frequency bins
+    hvl_t frequency_bins;
+
+    //! frequency bins
+    hvl_t timeseries_bins;
+
+  } stat_hdf5_header_t;
 
   /**
    * @brief An implementation of the StatPublisher that dumps the data to a HDF5 file.
@@ -51,12 +113,10 @@ namespace ska::pst::stat {
        *
        * @param config the configuration current voltage data stream.
        * @param storage a shared pointer to the in memory storage of the computed statistics.
-       * @param file_path path of where to write data out to.
        */
       StatHdf5FileWriter(
         const ska::pst::common::AsciiHeader& config,
-        std::shared_ptr<StatStorage> storage,
-        const std::string& file_path
+        std::shared_ptr<StatStorage> storage
       );
 
       /**
@@ -70,6 +130,115 @@ namespace ska::pst::stat {
        */
       void publish() override;
 
+      /**
+       * @brief get the HDF5 compound data type for STAT.
+       *
+       */
+      auto get_hdf5_header_datatype() -> H5::CompType;
+
+    private:
+      //! write array out to a HDF5 DataSpace
+      void write_array(const std::vector<char>& data, const std::string& field_name, const H5::PredType& datatype, H5::DataSpace& dataspace);
+
+      //! write a 1D vector to a header variable length value
+      template<typename T>
+      void write_1d_vec_header(std::vector<T>& data, hvl_t& header_value)
+      {
+        header_value.len = data.size();
+        header_value.p = reinterpret_cast<void *>(&data.front());
+      }
+
+      //! write a 1D vector to the HDF5 with a given data type
+      template<typename T>
+      void write_1d_vec(const std::vector<T>& data, std::string field_name, const H5::PredType& datatype, std::vector<char>& temp_data) {
+        SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::write_1d_vec - writing {}", field_name);
+        flatten_1d_vec(data, temp_data);
+        hsize_t dimssf[1] = { data.size() };
+        H5::DataSpace dataspace(1, dimssf);
+        write_array(temp_data, field_name, datatype, dataspace);
+      }
+
+      //! write a 2D vector to the HDF5 with a given data type
+      template<typename T>
+      void write_2d_vec(const std::vector<std::vector<T>>& data, std::string field_name, const H5::PredType& datatype, std::vector<char>& temp_data) {
+        SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::write_2d_vec - writing {}", field_name);
+        flatten_2d_vec(data, temp_data);
+        // create HDF5 dims
+        hsize_t dimssf[2] = { data.size(), data[0].size() };
+        H5::DataSpace dataspace(2, dimssf);
+        write_array(temp_data, field_name, datatype, dataspace);
+      }
+
+      //! write a 3D vector to the HDF5 with a given data type
+      template<typename T>
+      void write_3d_vec(const std::vector<std::vector<std::vector<T>>>& data, std::string field_name, const H5::PredType& datatype, std::vector<char>& temp_data) {
+        SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::write_3d_vec - writing {}", field_name);
+        flatten_3d_vec(data, temp_data);
+        hsize_t dimssf[3] = { data.size(), data[0].size(), data[0][0].size() };
+        H5::DataSpace dataspace(3, dimssf);
+        write_array(temp_data, field_name, datatype, dataspace);
+      }
+
+      //! flatten and copy 1D vector to output data vector
+      template<typename T>
+      static size_t flatten_1d_vec(const std::vector<T>& vec, std::vector<char>& data)
+      {
+        size_t dim1 = vec.size();
+
+        data.resize(dim1 * sizeof(T));
+        std::memcpy(data.data(), vec.data(), dim1 * sizeof(T));
+
+        return dim1;
+      }
+
+      //! flatten and copy 2D vector to output data vector
+      template<typename T>
+      static size_t flatten_2d_vec(const std::vector<std::vector<T>>& vec, std::vector<char>& data)
+      {
+        size_t dim1 = vec.size();
+        size_t dim2 = vec[0].size();
+
+        size_t num_elements = dim1 * dim2;
+        size_t stride = dim2 * sizeof(T);
+
+        data.resize(num_elements * sizeof(T));
+        size_t offset{0};
+        for (auto i=0; i<dim1; i++)
+        {
+          std::memcpy(data.data() + offset, vec[i].data(), stride);
+          offset += stride;
+        }
+
+        return num_elements;
+      }
+
+      //! flatten and copy 3D vector to output data vector
+      template<typename T>
+      static size_t flatten_3d_vec(const std::vector<std::vector<std::vector<T>>>& vec, std::vector<char>& data)
+      {
+        size_t dim1 = vec.size();
+        size_t dim2 = vec[0].size();
+        size_t dim3 = vec[0][0].size();
+
+        size_t num_elements = dim1 * dim2 * dim3;
+        size_t stride = dim3 * sizeof(T);
+
+        data.resize(num_elements * sizeof(T));
+
+        size_t offset{0};
+        for (auto i=0; i<dim1; i++)
+        {
+          for (auto j=0; j<dim2; j++)
+          {
+            std::memcpy(data.data() + offset, vec[i][j].data(), stride);
+            offset += stride;
+          }
+        }
+
+        return num_elements;
+      }
+
+      std::shared_ptr<H5::H5File> file{nullptr};
   };
 
 } // namespace ska::pst::stat

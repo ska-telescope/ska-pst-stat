@@ -80,7 +80,7 @@ namespace ska::pst::stat {
       /**
        * @brief the centre frequencies of each channel.
        */
-      std::vector<float> channel_centre_frequencies;
+      std::vector<double> channel_centre_frequencies;
 
       /**
        * @brief the mean of the data for each polarisation and dimension, averaged over all channels.
@@ -235,13 +235,13 @@ namespace ska::pst::stat {
        * Each temporal bin used in timeseries, timeseries_masked and
        * spectrogram reuse this vector. In MJD
        */
-      std::vector<float> timeseries_bins;
+      std::vector<double> timeseries_bins;
 
       /**
        * @brief the frequency bins used for the spectrogram attribute (MHz).
        *
        */
-      std::vector<float> frequency_bins;
+      std::vector<double> frequency_bins;
 
       /**
        * @brief spectrogram of the data for each polarisation, averaged a
@@ -335,6 +335,16 @@ namespace ska::pst::stat {
        * @return uint32_t number of temporal bins dimensions
        */
       uint32_t get_ntime_vals() { return ntime_vals; };
+
+      /**
+       * @brief Get the length, in seconds, of the total time used to calculate statistics.
+       */
+      double get_total_sample_time() { return total_sample_time; };
+
+      /**
+       * @brief Set the length, in seconds, of the total time used to calculate statistics.
+       */
+      void set_total_sample_time(double _total_sample_time) { total_sample_time = _total_sample_time; };
 
       /**
        * @brief Get flag for whether the storage has been resized
@@ -526,6 +536,9 @@ namespace ska::pst::stat {
 
       //! number of rebinned bins represented in storage vectors
       uint32_t nrebin{256};
+
+      //! total time, in seconds, for sample of data the statistics are for
+      double total_sample_time{0.0};
   };
 
 } // namespace ska::pst::stat

@@ -40,9 +40,9 @@
 
 
 ska::pst::stat::StatPublisher::StatPublisher(
-  const ska::pst::common::AsciiHeader& /*config*/,
-  std::shared_ptr<StatStorage> /*storage*/
-)
+  const ska::pst::common::AsciiHeader& config,
+  std::shared_ptr<StatStorage> storage
+) : config(config), storage(std::move(storage))
 {
   SPDLOG_DEBUG("ska::pst::stat::StatPublisher::StatPublisher");
 }
