@@ -63,7 +63,7 @@ The header of the HDF5 file includes the following fields:
   * BEAM_ID - the beam used to capture the voltage data used in computing the statistics.
   * UTC_START - the start time of the observation as an ISO 8601 string.
   * T_MIN - the fractional offset of a second from UTC_START.
-  * T_MAX - the difference between T_MAX and T_MIN is the length of time, in seconds, for of the voltage timeseries for which statistics are computed
+  * T_MAX - the difference between T_MAX and T_MIN is the length of time, in seconds, of the voltage timeseries for which statistics are computed
   * FREQ - the centre frequency, in MHz, for the voltage data.
   * BW - the bandwidth of data, in MHz, for the voltage data.
   * START_CHAN - the starting channel number for the voltage data.  This allows subbands of data to be processed.
