@@ -50,7 +50,51 @@ serialise the *StatStorage* to a new HDF5 file.
 HDF5 was chosen given it is an open standard, rather than creating new
 structured file format.
 
-TODO - document the structure of the file
+HDF5 Data Structure
+*******************
+
+The output HDF5 file includes a HEADER section and each computed data structures as
+a separate HDF5 dataset.
+
+The header of the HDF5 includes the following fields:
+
+  * EB_ID - the execution block that the output statistics file is for.
+  * SCAN_ID - the scan that the output statistics file is for.
+  * BEAM_ID - the beam used to capture the voltage data used in computing the statistics.
+  * UTC_START - the start time of the observation as an ISO 8601 string.
+  * T_MIN - the fractional offset of a second from UTC_START.
+  * T_MAX - the difference between T_MAX and T_MIN is the length of time, in seconds, for ???
+  * FREQ - the centre frequency, in MHz, for the voltage data.
+  * BW - the bandwidth of data, in MHz, for the voltage data.
+  * START_CHAN - the starting channel number for the voltage data.  This allows subbands of data to be processed.
+  * NPOL - the number of polarisations of that voltage data. For SKA this is always 2.
+  * NDIM - the number of dimensions of the voltage data. For SKA this is 2 as the system is recording complex voltage data.
+  * NCHAN - the number of channels that is in the voltage data.
+  * NCHAN_DS - the number of frequency bins used in the spectrogram output.
+  * NDAT_DS - the number of tempral bins used in the spectrogram and timeseries outputs.
+  * NBIN_HIST - the number of bins that are used in the 1-dimensional histogram.
+  * NREBIN - the number of channel bins used in the re-binned histograms.
+  * CHAN_FREQ - an array of centre frequency for each of the channels.
+  * FREQUENCY_BINS - the centre frequency, in MHz, for each frequency bin used in the spectrogram.
+  * TIMESERIES_BINS - the observation offset, measured in seconds, for each of the tempral bins used in timeseries and spectrograms
+
+The output data of the HDF5 includes the following datasets:
+
+  * MEAN_FREQUENCY_AVG - the mean of the data for each polarisation and dimension, averaged over all channels.
+  * MEAN_FREQUENCY_AVG_MASKED -the mean of the data for each polarisation and dimension, averaged over all channels, expect those flagged for RFI.
+  * VARIANCE_FREQUENCY_AVG - the variance of the data for each polarisation and dimension, averaged over all channels.
+  * VARIANCE_FREQUENCY_AVG_MASKED -the variance of the data for each polarisation and dimension, averaged over all channels, expect those flagged for RFI.
+  * MEAN_SPECTRUM - the mean of the data for each polarisation, dimension and channel.
+  * VARIANCE_SPECTRUM - the variance of the data for each polarisation, dimension and channel.
+  * MEAN_SPECTRAL_POWER - mean power spectra of the data for each polarisation and channel.
+  * MAX_SPECTRAL_POWER - maximum power spectra of the data for each polarisation and channel.
+  * HISTOGRAM_1D_FREQ_AVG - histogram of the input data integer states for each polarisation and dimension, averaged over all channels.
+  * HISTOGRAM_1D_FREQ_AVG_MASKED - histogram of the input data integer states for each polarisation and dimension, averaged over all channels, expect those flagged for RFI.
+  * NUM_CLIPPED_SAMPLES_SPECTRUM - number of clipped input samples (maximum level) for each polarisation, dimension and channel.
+  * NUM_CLIPPED_SAMPLES - number of clipped input samples (maximum level) for each polarisation, dimension.
+  * SPECTROGRAM - spectrogram of the data for each polarisation, rebinned in frequency to NCHAN_DS bins and in time to NDAT_DS bins.
+  * TIMESERIES - time series of the data for each polarisation, rebinned in time to NDAT_DS bins, averaged over all frequency channels. This includes max, min, and mean of the power in each bin.
+  * TIMESERIES_MASKED - time series of the data for each polarisation, rebinned in time to NDAT_DS bins, averaged over all frequency channels, expect those flagged by RFI. This includes max, min, and mean of the power in each bin.
 
 StatStorage
 ^^^^^^^^^^^
