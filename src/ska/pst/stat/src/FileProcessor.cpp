@@ -53,7 +53,10 @@ ska::pst::stat::FileProcessor::FileProcessor(
 
   // create stat output filename using the stem of the data filename
   std::filesystem::path data_output_filename(data_file_path);
-  std::filesystem::path stat_output_filename = stat_output_path / data_output_filename.stem();
+
+  std::filesystem::path stat_output_filename(data_output_filename.stem());
+  stat_output_filename.replace_extension("h5");
+  stat_output_filename = stat_output_path / stat_output_filename;
 
   SPDLOG_DEBUG("ska::pst::stat::FileProcessor::ctor stat output filename={}", stat_output_filename.generic_string());
 
