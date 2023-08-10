@@ -230,20 +230,7 @@ TEST_F(StatProcessorTest, test_resolution_multiple_of_bytes_per_sample) // NOLIN
 {
   init_config();
   data_config.set("RESOLUTION", 3);
-  sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
-
-  size_t data_length = get_data_length();
-  std::vector<char> data_block(data_length);
-
-  size_t weights_length = get_weights_length();
-  std::vector<char> weights_block(weights_length);
-
-  EXPECT_ANY_THROW(sp->process(
-    &data_block[0],
-    data_length,
-    &weights_block[0],
-    weights_length)
-  );
+  EXPECT_ANY_THROW(sp = std::make_shared<TestStatProcessor>(data_config, weights_config));
 }
 
 } // namespace ska::pst::stat::test
