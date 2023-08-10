@@ -64,8 +64,13 @@ class StatComputerTest : public ::testing::Test
 
     void generate_packets(const uint32_t num_packets);
 
+    //! returns a valid weights configuration that matches the valid data configuration
+    ska::pst::common::AsciiHeader get_weights_config(const ska::pst::common::AsciiHeader& data_config);
+
   protected:
-    ska::pst::common::AsciiHeader config;
+    ska::pst::common::AsciiHeader data_config;
+    ska::pst::common::AsciiHeader weights_config;
+
     std::shared_ptr<ska::pst::stat::StatStorage> storage{nullptr};
     std::shared_ptr<TestDataLayout> layout{nullptr};
     std::shared_ptr<ska::pst::common::PacketGenerator> generator{nullptr};

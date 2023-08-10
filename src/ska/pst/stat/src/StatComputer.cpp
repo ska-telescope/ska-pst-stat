@@ -229,7 +229,8 @@ void ska::pst::stat::StatComputer::compute(
   auto expected_weights_length = expected_num_packets * heap_layout.get_weights_packet_stride();
   if (weights_length != expected_weights_length) {
     std::stringstream error_msg;
-    error_msg << "ska::pst::stat::StatComputer::compute - expected weights_length to be " << expected_weights_length;
+    error_msg << "ska::pst::stat::StatComputer::compute - expected weights_length " << weights_length << " to be equal to " << expected_weights_length;
+    SPDLOG_ERROR(error_msg.str());
     throw std::runtime_error(error_msg.str());
   }
 
