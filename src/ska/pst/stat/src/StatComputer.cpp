@@ -91,7 +91,13 @@ ska::pst::stat::StatComputer::StatComputer(
     throw std::runtime_error("ska::pst::stat::StatComputer::StatComputer nchan not greater than 0");
   }
 
-  // tsamp = data_config.get_double("TSAMP");
+  tsamp = data_config.get_double("TSAMP");
+  if (tsamp == 0.0)
+  {
+    SPDLOG_ERROR("ska::pst::stat::StatComputer::StatComputer tsamp not greater than 0");
+    throw std::runtime_error("ska::pst::stat::StatComputer::StatComputer tsamp not greater than 0");
+  }
+
   if (data_config.has("NMASK")) {
     nmask = data_config.get_uint32("NMASK");
   }
@@ -148,7 +154,7 @@ void ska::pst::stat::StatComputer::initialise()
     // this is mathematically the same as the average of channel_start_freq and channel_end_freq
     auto channel_centre_freq = start_chan_centre_freq + static_cast<double>(ichan) * channel_bandwidth;
 
-    storage->channel_centre_frequencies[ichan] = static_cast<float>(channel_centre_freq);
+    storage->channel_centre_frequencies[ichan] = channel_centre_freq;
     storage->rfi_mask_lut[ichan] = false;
     SPDLOG_TRACE("chan {} centre frequency is {:.4f} MHz, frequncy band is {:.4f} MHz to {:.4f} MHz", ichan,
       channel_centre_freq, channel_start_freq, channel_end_freq
@@ -261,10 +267,17 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
   }
   uint32_t temporal_binning_factor = total_samples_per_channel / storage->get_ntime_bins();
 
-  // need to set initial min value for timeseries to a very large value.
-  for (auto i=0; i<npol; i++)
+  double total_sample_time = tsamp * ska::pst::common::seconds_per_microseconds * static_cast<double>(total_samples_per_channel);
+  storage->set_total_sample_time(total_sample_time);
+
+  double temporal_bin_secs = total_sample_time / static_cast<double>(storage->get_ntime_bins());
+
+  for (auto time_bin=0; time_bin < storage->get_ntime_bins(); time_bin++)
   {
-    for (auto time_bin=0; time_bin < storage->get_ntime_bins(); time_bin++)
+    storage->timeseries_bins[time_bin] = temporal_bin_secs * static_cast<double>(2 * time_bin + 1) / 2.0;  // NOLINT
+
+    // need to set initial min value for timeseries to a very large value.
+    for (auto i=0; i<npol; i++)
     {
       storage->timeseries[i][time_bin][TS_MIN_IDX] = std::numeric_limits<float>::max();
       storage->timeseries_masked[i][time_bin][TS_MIN_IDX] = std::numeric_limits<float>::max();
@@ -296,10 +309,10 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
   for (uint32_t ichan = 0; ichan<nchan; ichan += freq_binning_factor)
   {
     auto freq_bin = ichan / freq_binning_factor;
-    float centre_freq{0.0};
+    double centre_freq{0.0};
     for (uint32_t offset = 0; offset < freq_binning_factor; offset++)
     {
-      centre_freq += (storage->channel_centre_frequencies[ichan + offset]) / static_cast<float>(freq_binning_factor);
+      centre_freq += (storage->channel_centre_frequencies[ichan + offset]) / static_cast<double>(freq_binning_factor);
     }
     storage->frequency_bins[freq_bin] = centre_freq;
   }

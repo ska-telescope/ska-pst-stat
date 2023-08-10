@@ -29,26 +29,39 @@
  */
 
 #include "ska/pst/stat/FileProcessor.h"
-
-#include <iostream>
 #include <spdlog/spdlog.h>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <filesystem>
 
 ska::pst::stat::FileProcessor::FileProcessor(
-        const ska::pst::common::AsciiHeader& _config,
         const std::string& data_file_path,
         const std::string& weights_file_path)
-        : config(_config)
 {
-  SPDLOG_DEBUG("ska::pst::stat::FileProcessor::FileProcessor");
+  SPDLOG_DEBUG("ska::pst::stat::FileProcessor::ctor");
 
   segment_producer = std::make_unique<ska::pst::common::FileSegmentProducer>(data_file_path, weights_file_path);
   auto data_config = segment_producer->get_data_header();
   auto weights_config = segment_producer->get_weights_header();
 
-  processor = std::make_unique<StatProcessor>(data_config, weights_config);
+  // create stat/ output folder
+  std::filesystem::path stat_output_path("stat");
+  std::filesystem::create_directory(stat_output_path);
+
+  // create stat output filename using the stem of the data filename
+  std::filesystem::path data_output_filename(data_file_path);
+
+  std::filesystem::path stat_output_filename(data_output_filename.stem());
+  stat_output_filename.replace_extension("h5");
+  stat_output_filename = stat_output_path / stat_output_filename;
+
+  SPDLOG_DEBUG("ska::pst::stat::FileProcessor::ctor stat output filename={}", stat_output_filename.generic_string());
+
+  data_config.set("STAT_OUTPUT_FILENAME",stat_output_filename.generic_string());
+
+  processor = std::make_shared<StatProcessor>(data_config, weights_config);
 }
 
 ska::pst::stat::FileProcessor::~FileProcessor()

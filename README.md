@@ -25,7 +25,7 @@ To simulate the build that will be performed in the Gitlab CI, a C++ builder ima
 
 After verifying the current builder image version, pull it with a command like the following
 
-    docker pull registry.gitlab.com/ska-telescope/pst/ska-pst-smrb/ska-pst-smrb-builder:0.8.7
+    docker pull registry.gitlab.com/ska-telescope/pst/ska-pst-smrb/ska-pst-smrb-builder:0.9.1
 
 Now launch this builder image as a container. Note the current working directory will be mounted into the container as /mnt/ska-pst-stat.
 

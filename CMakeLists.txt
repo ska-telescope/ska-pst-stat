@@ -37,6 +37,7 @@ find_package(HDF5 REQUIRED CXX)
 find_dependencies()
 
 add_subdirectory(src/ska/pst/stat)
+add_subdirectory(src/apps)
 
 # Install cmake config + version + target files
 include(CMakePackageConfigHelpers)

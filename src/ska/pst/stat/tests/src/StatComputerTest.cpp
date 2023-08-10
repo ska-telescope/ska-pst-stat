@@ -146,8 +146,8 @@ TEST_F(StatComputerTest, test_compute) // NOLINT
   configure(true);
 
   SPDLOG_DEBUG("StatComputerTest::test_compute - generating packets");
-  uint32_t num_heaps = 1;
-  uint32_t num_packets = num_heaps * packets_per_heap;
+  uint32_t nheaps = 1;
+  uint32_t num_packets = nheaps * packets_per_heap;
 
   generate_packets(num_packets);
   SPDLOG_DEBUG("StatComputerTest::test_compute - finished generating packets");
@@ -171,6 +171,34 @@ TEST_F(StatComputerTest, test_compute) // NOLINT
       SPDLOG_TRACE("StatComputerTest::test_compute - storage->mean_spectral_power[{}][{}]={}", ipol, ichan, storage->mean_spectral_power[ipol][ichan]);
       SPDLOG_TRACE("StatComputerTest::test_compute - storage->max_spectral_power[{}][{}]={}", ipol, ichan, storage->max_spectral_power[ipol][ichan]);
     }
+  }
+
+  // assert frequency_bins and timeseries_bins
+  auto nfreq_bins = storage->get_nfreq_bins();
+  auto centre_freq = config.get_double("FREQ");
+  auto bandwidth = config.get_double("BW");
+  auto bandwidth_per_bin = bandwidth / static_cast<double>(nfreq_bins);
+  auto start_freq = centre_freq - bandwidth / 2.0; // NOLINT
+  SPDLOG_DEBUG("centre_freq={}, bandwidth={}, nfreq_bins={}, bandwidth_per_bin={}, start_freq={}", centre_freq, bandwidth, nfreq_bins, bandwidth_per_bin, start_freq);
+
+  for (auto freq_bin = 0; freq_bin < nfreq_bins; freq_bin++)
+  {
+    double expected_freq_bin = start_freq + bandwidth_per_bin * static_cast<double>(2 * freq_bin + 1) / 2.0; // NOLINT
+    EXPECT_DOUBLE_EQ(storage->frequency_bins[freq_bin], expected_freq_bin);
+  }
+
+  auto ntime_bins = storage->get_ntime_bins();
+  auto total_sample_time = storage->get_total_sample_time();
+  auto sample_time_per_bin = total_sample_time / ntime_bins;
+  auto tsamp = config.get_double("TSAMP");
+  auto nsamp_per_packet = config.get_double("UDP_NSAMP");
+  EXPECT_DOUBLE_EQ(total_sample_time, tsamp * static_cast<double>(nsamp_per_packet * nheaps) * static_cast<double>(ska::pst::common::seconds_per_microseconds));
+
+  double expected_time = sample_time_per_bin / 2.0; // NOLINT
+  for (auto time_bin = 0; time_bin < ntime_bins; time_bin++)
+  {
+    EXPECT_DOUBLE_EQ(storage->timeseries_bins[time_bin], expected_time);
+    expected_time += sample_time_per_bin;
   }
 }
 

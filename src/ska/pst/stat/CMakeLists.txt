@@ -56,3 +56,21 @@ target_link_libraries(ska_pst_stat
     ${PSRDADA_LIBRARIES}
     ${HDF5_CXX_LIBRARIES}
 )
+
+install(
+  TARGETS
+    ska_pst_stat
+  EXPORT
+    ska_pst_stat-targets
+  LIBRARY DESTINATION
+    lib
+  ARCHIVE DESTINATION
+    lib
+)
+
+install(
+  FILES
+    ${public_headers}
+  DESTINATION
+    include/ska/pst/stat
+)
