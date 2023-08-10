@@ -28,14 +28,8 @@ class FileProcessor {
   + FileProcessor(config: AsciiHeader)
   + ~FileProcessor()
   + process()
-  - reader: DataWeightFileBlockLoader
+  - reader: common::FileSegmentProducer
   - processor: StatProcessor
-}
-
-class DataWeightFileBlockLoader {
-  + DataWeightFileBlockLoader(data_file, weights_file)
-  + ~DataWeightFileBlockLoader()
-  + next_block(): (block_ptr: char*, weights_ptr: char*)
 }
 
 class StatProcessor {
@@ -117,7 +111,6 @@ ApplicationManager <|-- StatApplicationManager
 StatApplicationManager o-- DataBlockView
 StatApplicationManager *-- StatProcessor
 
-FileProcessor *-- DataWeightFileBlockLoader
 FileProcessor *-- StatProcessor
 
 component ska_pst_stat_core

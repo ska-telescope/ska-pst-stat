@@ -5,36 +5,36 @@ activate FileProcessor
 FileProcessor -> StatProcessor: StatProcessor(config)
 activate StatProcessor
 Client -> FileProcessor: process(data_file_path, weights_file_path)
-FileProcessor -> DataWeightFileBlockLoader: DataWeightFileBlockLoader(file)
-activate DataWeightFileBlockLoader
-DataWeightFileBlockLoader -> "Data File": mmap
+FileProcessor -> FileSegmentProducer: FileSegmentProducer(file)
+activate FileSegmentProducer
+FileSegmentProducer -> "Data File": mmap
 activate "Data File"
-DataWeightFileBlockLoader -> "Weights File": mmap
+FileSegmentProducer -> "Weights File": mmap
 activate "Weights File"
 
 loop for configured number of blocks or EOF
-  FileProcessor -> DataWeightFileBlockLoader: next_block()
-  DataWeightFileBlockLoader --> "Data File": seek to block
-  DataWeightFileBlockLoader --> "Weights File": seek to weights block
-  FileProcessor <-- DataWeightFileBlockLoader: (block_ptr, weights_ptr)
+  FileProcessor -> FileSegmentProducer: next_segment()
+  FileSegmentProducer --> "Data File": next_block
+  FileSegmentProducer --> "Weights File": next_block
+  FileProcessor <-- FileSegmentProducer: (block_ptr, weights_ptr)
   FileProcessor -> StatProcessor: process(block_ptr, block_length, weights_ptr, weights_length)
   FileProcessor <-- StatProcessor
 end
 
-FileProcessor --> DataWeightFileBlockLoader: drop
-DataWeightFileBlockLoader --> "Data File": release
+FileProcessor --> FileSegmentProducer: drop
+FileSegmentProducer --> "Data File": release
 deactivate "Data File"
-DataWeightFileBlockLoader --> "Weights File": release
+FileSegmentProducer --> "Weights File": release
 deactivate "Weights File"
-deactivate DataWeightFileBlockLoader
+deactivate FileSegmentProducer
 
-' FileProcessor -> DataWeightFileBlockLoader: create
-' activate DataWeightFileBlockLoader
-' DataWeightFileBlockLoader -> File: mmap
+' FileProcessor -> FileSegmentProducer: create
+' activate FileSegmentProducer
+' FileSegmentProducer -> File: mmap
 ' activate File
 ' loop while data present
-'   FileProcessor -> DataWeightFileBlockLoader: read next
-'   FileProcessor <-- DataWeightFileBlockLoader: return next block ptr or null
+'   FileProcessor -> FileSegmentProducer: read next
+'   FileProcessor <-- FileSegmentProducer: return next block ptr or null
 '   alt data present
 '     FileProcessor -> StatProcessor: process(block_ptr, block_length)
 '   else no data preset
