@@ -85,6 +85,22 @@ auto ska::pst::stat::StatHdf5FileWriter::get_hdf5_header_datatype() -> H5::CompT
   return header_datatype;
 }
 
+template<typename T>
+T get_val_if_has (const ska::pst::common::AsciiHeader& config, const char* key, T default_value)
+{
+  if (config.has(key))
+  {
+    T value;
+    config.get(key,&value); // NOLINT
+    return value;
+  }
+  else
+  {
+    SPDLOG_WARN("ska::pst::stat::StatHdf5FileWriter::publish {} not specified in data header set to default value of {}", key, default_value);
+    return default_value;
+  }
+}
+
 void ska::pst::stat::StatHdf5FileWriter::publish()
 {
   SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::publish()");
@@ -105,12 +121,13 @@ void ska::pst::stat::StatHdf5FileWriter::publish()
     static_cast<double>(ska::pst::common::attoseconds_per_second) *
     static_cast<double>(picoseconds);
 
-  std::string eb_id = config.get_val("EB_ID");
-  std::string beam_id = config.get_val("BEAM_ID");
-  std::string utc_start = config.get_val("UTC_START");
+  std::string unknown = "unknown";
+  std::string eb_id = get_val_if_has(config, "EB_ID", unknown);
+  std::string beam_id = get_val_if_has(config, "BEAM_ID", unknown);
+  std::string utc_start = get_val_if_has(config, "UTC_START", unknown);
 
   header.eb_id = const_cast<char *>(eb_id.c_str()); // NOLINT
-  header.scan_id = config.get_uint64("SCAN_ID");
+  header.scan_id = get_val_if_has(config, "SCAN_ID", 0);
   header.beam_id = const_cast<char *>(beam_id.c_str()); // NOLINT
   header.utc_start = const_cast<char *>(utc_start.c_str()); // NOLINT
   header.t_max = t_min + storage->get_total_sample_time();

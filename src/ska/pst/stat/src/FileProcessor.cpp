@@ -71,12 +71,12 @@ ska::pst::stat::FileProcessor::~FileProcessor()
   SPDLOG_DEBUG("ska::pst::stat::FileProcessor::~FileProcessor");
 }
 
-static void set_default(ska::pst::common::AsciiHeader& config, const char* name, unsigned default_value)
+static void set_default(ska::pst::common::AsciiHeader& config, const char* key, unsigned default_value)
 {
-  if (!config.has(name))
+  if (!config.has(key))
   {
-    SPDLOG_WARN("ska::pst::stat::FileProcessor::set_defaults {} not specified in data header set to default value of {}", name, default_value);
-    config.set(name, default_value);
+    SPDLOG_WARN("ska::pst::stat::FileProcessor::set_defaults {} not specified in data header set to default value of {}", key, default_value);
+    config.set(key, default_value);
   }
 }
 
