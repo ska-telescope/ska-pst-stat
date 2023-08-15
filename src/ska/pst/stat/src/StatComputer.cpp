@@ -105,6 +105,9 @@ ska::pst::stat::StatComputer::StatComputer(
 
   heap_layout.configure(data_config, weights_config);
 
+  // optimization: avoid calling HeapLayout::get_weights_packet_stride in StatComputer::get_scale_factor
+  weights_packet_stride = heap_layout.get_weights_packet_stride();
+
   SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - nsamp_per_packet={}", heap_layout.get_packet_layout().get_samples_per_packet());
   SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - nchan_per_packet={}", heap_layout.get_packet_layout().get_nchan_per_packet());
   SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - nsamp_per_weight={}", heap_layout.get_packet_layout().get_nsamp_per_weight());
@@ -500,7 +503,7 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
 
 auto ska::pst::stat::StatComputer::get_scale_factor(char * weights, uint32_t packet_number) -> float
 {
-  auto * weights_ptr = reinterpret_cast<float *>(weights + (packet_number * heap_layout.get_weights_packet_stride())); // NOLINT
+  auto * weights_ptr = reinterpret_cast<float *>(weights + (packet_number * weights_packet_stride)); // NOLINT
   // return the scale factor, ignoring invalid value of 0
   if (*weights_ptr == 0) {
     return 1.0;

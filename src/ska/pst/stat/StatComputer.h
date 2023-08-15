@@ -124,6 +124,9 @@ namespace ska::pst::stat {
 
       //! Number of RFI channels that will be masked
       uint32_t nmask{0};
+
+      //! optimization: internal storage of stride avoids repeated function call in tight loop
+      uint32_t weights_packet_stride{0};
   };
 
 } // namespace ska::pst::stat
