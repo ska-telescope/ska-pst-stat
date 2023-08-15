@@ -191,45 +191,40 @@ void ska::pst::stat::StatComputer::initialise()
   SPDLOG_DEBUG("ska::pst::stat::StatComputer::initialise() - Number of masked channels = {}", num_masked);
 }
 
-void ska::pst::stat::StatComputer::compute(
-  char * data_block,
-  size_t block_length,
-  char * weights,
-  size_t weights_length
-)
+void ska::pst::stat::StatComputer::compute(const ska::pst::common::SegmentProducer::Segment& segment)
 {
   SPDLOG_DEBUG("ska::pst::stat::StatComputer::compute()");
   if (!initialised) {
     throw std::runtime_error("ska::pst::stat::StatComputer::compute - has not been initialised. StatComputer::initialised has not been called.");
   }
 
-  SPDLOG_DEBUG("ska::pst::stat::StatComputer::compute - block_length={}, weights_length={}", block_length, weights_length);
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::compute - segment.data.size={}, segment.weights.size={}", segment.data.size, segment.weights.size);
 
-  if (block_length == 0)
+  if (segment.data.size == 0)
   {
-    SPDLOG_WARN("ska::pst::stat::StatComputer::compute - block_length is zero. No computation necessary");
+    SPDLOG_WARN("ska::pst::stat::StatComputer::compute - segment.data.size is zero. No computation necessary");
     return;
   }
 
-  // assert block_length is a multiple of data_heap_stride
+  // assert segment.data.size is a multiple of data_heap_stride
   // might be at the end of the file - may not have a full heap
-  if (block_length % heap_layout.get_data_heap_stride() != 0)
+  if (segment.data.size % heap_layout.get_data_heap_stride() != 0)
   {
     std::stringstream error_msg;
-    error_msg << "ska::pst::stat::StatComputer::compute - expected block_length " << block_length <<
+    error_msg << "ska::pst::stat::StatComputer::compute - expected segment.data.size " << segment.data.size <<
       " to be a multiple of data_heap_stride " << heap_layout.get_data_heap_stride();
 
     SPDLOG_ERROR(error_msg.str());
     throw std::runtime_error(error_msg.str());
   }
-  const uint32_t nheaps = block_length / heap_layout.get_data_heap_stride();
+  const uint32_t nheaps = segment.data.size / heap_layout.get_data_heap_stride();
   auto expected_num_packets = nheaps * heap_layout.get_packets_per_heap();
 
-  // assert weights_length is a multiple weights_packet_stride - do we have enough weights?
-  auto expected_weights_length = expected_num_packets * heap_layout.get_weights_packet_stride();
-  if (weights_length != expected_weights_length) {
+  // assert segment.weights.size is a multiple weights_packet_stride - do we have enough weights?
+  auto expected_weights_size = expected_num_packets * heap_layout.get_weights_packet_stride();
+  if (segment.weights.size != expected_weights_size) {
     std::stringstream error_msg;
-    error_msg << "ska::pst::stat::StatComputer::compute - expected weights_length " << weights_length << " to be equal to " << expected_weights_length;
+    error_msg << "ska::pst::stat::StatComputer::compute - expected segment.weights.size " << segment.weights.size << " to be equal to " << expected_weights_size;
     SPDLOG_ERROR(error_msg.str());
     throw std::runtime_error(error_msg.str());
   }
@@ -237,11 +232,11 @@ void ska::pst::stat::StatComputer::compute(
   // unpack the 8 or 16 bit signed integers
   if (nbit == 8) // NOLINT
   {
-    compute_samples(reinterpret_cast<int8_t*>(data_block), weights, nheaps);
+    compute_samples(reinterpret_cast<int8_t*>(segment.data.block), segment.weights.block, nheaps);
   }
   else if (nbit == 16) // NOLINT
   {
-    compute_samples(reinterpret_cast<int16_t*>(data_block), weights, nheaps);
+    compute_samples(reinterpret_cast<int16_t*>(segment.data.block), segment.weights.block, nheaps);
   }
 }
 

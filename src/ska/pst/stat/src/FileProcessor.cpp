@@ -74,6 +74,6 @@ void ska::pst::stat::FileProcessor::process()
   SPDLOG_DEBUG("ska::pst::stat::FileProcessor::process");
 
   auto segment = segment_producer->next_segment();
-  processor->process (segment.data.block, segment.data.size, segment.weights.block, segment.weights.size);
+  processor->process (segment);
 }
 

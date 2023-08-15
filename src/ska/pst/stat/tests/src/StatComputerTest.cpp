@@ -162,7 +162,13 @@ TEST_F(StatComputerTest, test_compute) // NOLINT
   SPDLOG_DEBUG("StatComputerTest::test_compute - finished generating packets");
 
   SPDLOG_DEBUG("StatComputerTest::test_compute - computing first packet");
-  computer->compute(data_buffer.data(), num_packets * layout->get_packet_data_size(), weights_buffer.data(), num_packets * weights_packet_stride);
+
+  ska::pst::common::SegmentProducer::Segment segment;
+  segment.data.block = data_buffer.data();
+  segment.data.size = num_packets * layout->get_packet_data_size();
+  segment.weights.block = weights_buffer.data();
+  segment.weights.size = num_packets * weights_packet_stride;
+  computer->compute(segment);
 
   for (auto ipol = 0; ipol < storage->get_npol(); ipol++) {
     for (auto idim = 0; idim < storage->get_ndim(); idim++) {
@@ -248,7 +254,12 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
   weights_config = get_weights_config(data_config);
   configure(false);
 
-  computer->compute(data_block, data_length, weights.data(), weights_length);
+  ska::pst::common::SegmentProducer::Segment segment;
+  segment.data.block = data_block;
+  segment.data.size = data_length;
+  segment.weights.block = weights.data();
+  segment.weights.size = weights_length;
+  computer->compute(segment);
 
   // [0,1][0,1] are [pol][dim]
   ASSERT_FLOAT_EQ(storage->mean_frequency_avg[0][0], 2.96875);
@@ -378,7 +389,12 @@ TEST_F(StatComputerTest, test_masked_channels) // NOLINT
 
   configure(false);
 
-  computer->compute(data_block, data_length, weights.data(), weights_length);
+  ska::pst::common::SegmentProducer::Segment segment;
+  segment.data.block = data_block;
+  segment.data.size = data_length;
+  segment.weights.block = weights.data();
+  segment.weights.size = weights_length;
+  computer->compute(segment);
 
   ASSERT_FLOAT_EQ(storage->mean_frequency_avg[0][0], 2.96875);
   ASSERT_FLOAT_EQ(storage->variance_frequency_avg[0][0], 185.0635081);
@@ -649,7 +665,12 @@ TEST_F(StatComputerTest, test_clipped_channels) // NOLINT
 
   configure(false);
 
-  computer->compute(data_block, data_length, weights.data(), weights_length);
+  ska::pst::common::SegmentProducer::Segment segment;
+  segment.data.block = data_block;
+  segment.data.size = data_length;
+  segment.weights.block = weights.data();
+  segment.weights.size = weights_length;
+  computer->compute(segment);
 
   // [0,1][0,1] are [pol][dim]
   ASSERT_EQ(storage->num_clipped_samples[0][0], 2);

@@ -66,15 +66,31 @@ void ska::pst::stat::test::StatProcessorTest::clear_config()
   sp = nullptr;
 }
 
+void ska::pst::stat::test::StatProcessorTest::init_segment ()
+{
+  sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
+
+  data_block.resize(get_data_length());
+  weights_block.resize(get_weights_length());
+
+  segment.data.block = data_block.data();
+  segment.data.size = data_block.size();
+  segment.weights.block = weights_block.data();
+  segment.weights.size = weights_block.size();
+}
+
 void StatProcessorTest::SetUp()
 {
   init_config();
+  init_segment();
 }
 
 void StatProcessorTest::TearDown()
 {
   clear_config();
 }
+
+
 
 TEST_F(StatProcessorTest, test_construct_delete) // NOLINT
 {
@@ -104,45 +120,21 @@ TEST_F(StatProcessorTest, test_construct_delete) // NOLINT
 TEST_F(StatProcessorTest, test_process_valid_values) // NOLINT
 {
   sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
-  size_t data_length = get_data_length();
-  std::vector<char> data_block(data_length);
-
-  size_t weights_length = get_weights_length();
-  std::vector<char> weights_block(weights_length);
-
-  ASSERT_NO_THROW(sp->process(
-    &data_block[0],
-    data_length,
-    &weights_block[0],
-    weights_length));
+  ASSERT_NO_THROW(sp->process(segment));
 }
 
 TEST_F(StatProcessorTest, test_constructor_threshold_overrides) // NOLINT
 {
   data_config.set("STAT_REQ_TIME_BINS", 0);
   sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
-  size_t data_length = get_data_length();
-  std::vector<char> data_block(data_length);
 
-  size_t weights_length = get_weights_length();
-  std::vector<char> weights_block(weights_length);
-
-  ASSERT_NO_THROW(sp->process(
-    &data_block[0],
-    data_length,
-    &weights_block[0],
-    weights_length));
+  ASSERT_NO_THROW(sp->process(segment));
 
   init_config();
   data_config.set("STAT_REQ_FREQ_BINS", 0);
   sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
 
-  ASSERT_NO_THROW(sp->process(
-    &data_block[0],
-    data_length,
-    &weights_block[0],
-    weights_length));
-
+  ASSERT_NO_THROW(sp->process(segment));
 }
 
 TEST_F(StatProcessorTest, test_process_length_of_zero) // NOLINT
@@ -155,75 +147,51 @@ TEST_F(StatProcessorTest, test_process_length_of_zero) // NOLINT
   size_t weights_length = 0;
   std::vector<char> weights_block(weights_length);
 
-  EXPECT_ANY_THROW(sp->process(
-    &data_block[0],
-    data_length,
-    &weights_block[0],
-    weights_length)
-  );
+  ska::pst::common::SegmentProducer::Segment bad_segment;
+  bad_segment.data.block = data_block.data();
+  bad_segment.data.size = data_length;
+  bad_segment.weights.block = weights_block.data();
+  bad_segment.weights.size = weights_length;
+
+  EXPECT_ANY_THROW(sp->process(bad_segment));
 }
 
 TEST_F(StatProcessorTest, test_process_null_pointer_error) // NOLINT
 {
   sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
 
-  size_t data_length = get_data_length();
-  std::vector<char> data_block(data_length);
+  ska::pst::common::SegmentProducer::Segment bad_segment;
 
-  size_t weights_length = get_weights_length();
-  std::vector<char> weights_block(weights_length);
+  bad_segment = segment;
+  bad_segment.data.block = nullptr;
+  EXPECT_ANY_THROW(sp->process(bad_segment));
 
-  EXPECT_ANY_THROW(sp->process(
-    nullptr,
-    data_length,
-    &weights_block[0],
-    weights_length)
-  );
+  bad_segment = segment;
+  bad_segment.weights.block = nullptr;
+  EXPECT_ANY_THROW(sp->process(bad_segment));
 
-  EXPECT_ANY_THROW(sp->process(
-    &data_block[0],
-    data_length,
-    nullptr,
-    weights_length)
-  );
-  EXPECT_ANY_THROW(sp->process(
-    &data_block[0],
-    0,
-    &weights_block[0],
-    weights_length)
-  );
+  bad_segment = segment;
+  bad_segment.data.size = 0;
+  EXPECT_ANY_THROW(sp->process(bad_segment));
 
-  EXPECT_ANY_THROW(sp->process(
-    &data_block[0],
-    data_length,
-    &weights_block[0],
-    0)
-  );
+  bad_segment = segment;
+  bad_segment.weights.size = 0;
+  EXPECT_ANY_THROW(sp->process(bad_segment));
 }
 
 TEST_F(StatProcessorTest, test_length_multiple_of_resolution) // NOLINT
 {
   sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
 
-  size_t data_length = get_data_length();
-  std::vector<char> data_block(data_length);
+  ska::pst::common::SegmentProducer::Segment bad_segment;
 
-  size_t weights_length = get_weights_length();
-  std::vector<char> weights_block(weights_length);
+  bad_segment = segment;
+  bad_segment.data.size = 3;
+  EXPECT_ANY_THROW(sp->process(bad_segment));
 
-  EXPECT_ANY_THROW(sp->process(
-    &data_block[0],
-    3,
-    &weights_block[0],
-    weights_length)
-  );
-
-  EXPECT_ANY_THROW(sp->process(
-    &data_block[0],
-    data_length,
-    &weights_block[0],
-    3)
-  );
+  bad_segment = segment;
+  bad_segment.weights.size = 3;
+  EXPECT_ANY_THROW(sp->process(bad_segment));
 }
 
 TEST_F(StatProcessorTest, test_resolution_multiple_of_bytes_per_sample) // NOLINT

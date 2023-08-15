@@ -89,6 +89,13 @@ namespace ska::pst::stat::test {
         return sp->get_weights_config().get_uint32("RESOLUTION");
       };
 
+      void init_segment();
+      
+      std::vector<char> data_block;
+      std::vector<char> weights_block;
+
+      ska::pst::common::SegmentProducer::Segment segment;
+
     private:
 
   };
