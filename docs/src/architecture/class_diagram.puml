@@ -35,7 +35,7 @@ class FileProcessor {
 class StatProcessor {
   + StatProcessor(data_config: AsciiHeader, weights_config: AsciiHeader)
   + ~StatProcessor()
-  + process(block_ptr: char*, block_length: usize_t, weights_ptr: char*, weights_length: usize_t)
+  + process(segment: common::SegmentProducer::Segment)
   - storage: std::shared_ptr<StatStorage>
   - computer: std::unique_ptr<StatComputer>
   - writer: std::unique_ptr<StatPublisher>
@@ -45,7 +45,7 @@ class StatProcessor {
 class StatComputer {
   + StatComputer(data_config: AsciiHeader, weights_config: AsciiHeader, std::shared_ptr<StatStorage> storage)
   + ~StatComputer()
-  + compute(block_ptr: char*, block_length: usize_t, weights_ptr: char*, weights_length: usize_t)
+  + compute(segment: common::SegmentProducer::Segment)
   + initialise()
   - storage: std::shared_ptr<StatStorage>
   - config: AsciiHeader

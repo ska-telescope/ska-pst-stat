@@ -16,8 +16,8 @@ loop for configured number of blocks or EOF
   FileProcessor -> FileSegmentProducer: next_segment()
   FileSegmentProducer --> "Data File": next_block
   FileSegmentProducer --> "Weights File": next_block
-  FileProcessor <-- FileSegmentProducer: (block_ptr, weights_ptr)
-  FileProcessor -> StatProcessor: process(block_ptr, block_length, weights_ptr, weights_length)
+  FileProcessor <-- FileSegmentProducer: return segment
+  FileProcessor -> StatProcessor: process(segment)
   FileProcessor <-- StatProcessor
 end
 
@@ -36,7 +36,7 @@ deactivate FileSegmentProducer
 '   FileProcessor -> FileSegmentProducer: read next
 '   FileProcessor <-- FileSegmentProducer: return next block ptr or null
 '   alt data present
-'     FileProcessor -> StatProcessor: process(block_ptr, block_length)
+'     FileProcessor -> StatProcessor: process(segment)
 '   else no data preset
 '     Client <-- FileProcessor: process complete
 '   end
