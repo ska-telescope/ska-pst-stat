@@ -219,6 +219,11 @@ TEST_F(StatComputerTest, test_compute) // NOLINT
 
 TEST_F(StatComputerTest, test_expected_values) // NOLINT
 {
+  data_config.reset();
+  data_config.load_from_file(test_data_file("stat_computer_1chan_32nsamp_config.txt"));
+  weights_config = get_weights_config(data_config);
+  configure(false);
+
   // This is gausian data with mean of 3.14, stddev of 10, rounded to nearest int
   // There is only 1 channel, 2 pol, 2 dims, 32 samples each (128 values)
   std::vector<int16_t> data = {
@@ -239,8 +244,9 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
     // Pol B - sample 25 - 23
      -1,   5,  -1,   1,  12,  -3,  -6,  -6,   0,  -5,  15,  12,  20,  13,  -2,  21  // NOLINT
   };
-  char * data_block = reinterpret_cast<char *>(data.data());
+
   auto data_length = data.size() * sizeof(int16_t);
+  auto data_block = reinterpret_cast<char*>(data.data());
 
   unsigned weights_length = sizeof(float) + sizeof(uint16_t);
   std::vector<char> weights(weights_length);
@@ -248,11 +254,6 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
   *scale = 1.0;
   auto wt = reinterpret_cast<uint16_t*>(weights.data() + sizeof(float));
   *wt = 1;
-
-  data_config.reset();
-  data_config.load_from_file(test_data_file("stat_computer_1chan_32nsamp_config.txt"));
-  weights_config = get_weights_config(data_config);
-  configure(false);
 
   ska::pst::common::SegmentProducer::Segment segment;
   segment.data.block = data_block;
@@ -350,6 +351,11 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
 
 TEST_F(StatComputerTest, test_masked_channels) // NOLINT
 {
+  data_config.reset();
+  data_config.load_from_file(test_data_file("stat_computer_4chan_8nsamp_masked_config.txt"));
+  weights_config = get_weights_config(data_config);
+  configure(false);
+
   // This is gausian data with mean of 3.14, stddev of 10, rounded to nearest int
   // There are 4 channels, 2 pols, 2 dims, and 8 samples each (128 values)
   std::vector<int16_t> data = {
@@ -370,24 +376,20 @@ TEST_F(StatComputerTest, test_masked_channels) // NOLINT
     // Pol B - channel 4
      -1,   5,  -1,   1,  12,  -3,  -6,  -6,   0,  -5,  15,  12,  20,  13,  -2,  21  // NOLINT
   };
+
   auto data_length = data.size() * sizeof(int16_t);
-  char * data_block = reinterpret_cast<char *>(data.data());
+  auto data_block = reinterpret_cast<char*>(data.data());
 
   unsigned weights_length = sizeof(float) + nchan * sizeof(uint16_t);
   std::vector<char> weights(weights_length);
   auto scale = reinterpret_cast<float*>(weights.data());
-  *scale = 1.0;
   auto wt = reinterpret_cast<uint16_t*>(weights.data() + sizeof(float));
+
+  *scale = 1.0;
   for (unsigned i=0; i<nchan; i++)
   {
     wt[i] = 1;
   }
-
-  data_config.reset();
-  data_config.load_from_file(test_data_file("stat_computer_4chan_8nsamp_masked_config.txt"));
-  weights_config = get_weights_config(data_config);
-
-  configure(false);
 
   ska::pst::common::SegmentProducer::Segment segment;
   segment.data.block = data_block;
@@ -625,6 +627,11 @@ TEST_F(StatComputerTest, test_masked_channels) // NOLINT
 
 TEST_F(StatComputerTest, test_clipped_channels) // NOLINT
 {
+  data_config.reset();
+  data_config.load_from_file(test_data_file("stat_computer_4chan_8nsamp_config.txt"));
+  weights_config = get_weights_config(data_config);
+  configure(false);
+
   // This is gausian data with mean of 3.14, stddev of 10, rounded to nearest int
   // There are 4 channels, 2 pols, 2 dims, and 8 samples each (128 values).
   // Some values have been put in a bin that should be masked
@@ -646,24 +653,20 @@ TEST_F(StatComputerTest, test_clipped_channels) // NOLINT
     // Pol B - channel 4
      -1,   5,  -1,   1,  12,  -3,  -6,  -32768,   0,  -5,  15,  12,  20,  13,  -2,  21   // NOLINT
   };
+
   auto data_length = data.size() * sizeof(int16_t);
-  char * data_block = reinterpret_cast<char *>(data.data());
+  auto data_block = reinterpret_cast<char*>(data.data());
 
   unsigned weights_length = sizeof(float) + nchan * sizeof(uint16_t);
   std::vector<char> weights(weights_length);
   auto scale = reinterpret_cast<float*>(weights.data());
-  *scale = 1.0;
   auto wt = reinterpret_cast<uint16_t*>(weights.data() + sizeof(float));
+
+  *scale = 1.0;
   for (unsigned i=0; i<nchan; i++)
   {
     wt[i] = 1;
   }
-  
-  data_config.reset();
-  data_config.load_from_file(test_data_file("stat_computer_4chan_8nsamp_config.txt"));
-  weights_config = get_weights_config(data_config);
-
-  configure(false);
 
   ska::pst::common::SegmentProducer::Segment segment;
   segment.data.block = data_block;

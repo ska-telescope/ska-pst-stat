@@ -86,7 +86,7 @@ auto ska::pst::stat::StatHdf5FileWriter::get_hdf5_header_datatype() -> H5::CompT
 }
 
 template<typename T>
-T get_val_if_has (const ska::pst::common::AsciiHeader& config, const char* key, T default_value)
+auto get_val_if_has (const ska::pst::common::AsciiHeader& config, const char* key, T default_value) -> T
 {
   if (config.has(key))
   {
