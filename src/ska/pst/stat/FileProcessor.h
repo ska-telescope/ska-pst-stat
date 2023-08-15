@@ -71,6 +71,12 @@ namespace ska::pst::stat {
       void process();
 
     private:
+
+      /**
+       * @brief If not already speficied, set any parameters required by StatProcessor to safe default values
+       */
+      void set_defaults(ska::pst::common::AsciiHeader& config);
+
       //! shared pointer a statistics processor
       std::shared_ptr<StatProcessor> processor;
 

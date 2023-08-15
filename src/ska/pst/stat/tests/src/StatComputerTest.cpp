@@ -59,7 +59,7 @@ void StatComputerTest::TearDown()
 {
 }
 
-ska::pst::common::AsciiHeader StatComputerTest::get_weights_config(const ska::pst::common::AsciiHeader& _data_config)
+auto StatComputerTest::get_weights_config(const ska::pst::common::AsciiHeader& _data_config) -> ska::pst::common::AsciiHeader
 {
   ska::pst::common::AsciiHeader wts_cfg (_data_config);
   wts_cfg.set("NDIM",1);
@@ -242,7 +242,7 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
   char * data_block = reinterpret_cast<char *>(data.data());
   auto data_length = data.size() * sizeof(int16_t);
 
-  unsigned weights_length = 6;
+  unsigned weights_length = sizeof(float) + sizeof(uint16_t);
   std::vector<char> weights(weights_length);
   auto scale = reinterpret_cast<float*>(weights.data());
   *scale = 1.0;
@@ -373,14 +373,14 @@ TEST_F(StatComputerTest, test_masked_channels) // NOLINT
   auto data_length = data.size() * sizeof(int16_t);
   char * data_block = reinterpret_cast<char *>(data.data());
 
-  unsigned weights_length = 12;
+  unsigned weights_length = sizeof(float) + nchan * sizeof(uint16_t);
   std::vector<char> weights(weights_length);
   auto scale = reinterpret_cast<float*>(weights.data());
   *scale = 1.0;
   auto wt = reinterpret_cast<uint16_t*>(weights.data() + sizeof(float));
   for (unsigned i=0; i<nchan; i++)
   {
-    wt[1] = 1;
+    wt[i] = 1;
   }
 
   data_config.reset();
@@ -649,14 +649,14 @@ TEST_F(StatComputerTest, test_clipped_channels) // NOLINT
   auto data_length = data.size() * sizeof(int16_t);
   char * data_block = reinterpret_cast<char *>(data.data());
 
-  unsigned weights_length = 12;
+  unsigned weights_length = sizeof(float) + nchan * sizeof(uint16_t);
   std::vector<char> weights(weights_length);
   auto scale = reinterpret_cast<float*>(weights.data());
   *scale = 1.0;
   auto wt = reinterpret_cast<uint16_t*>(weights.data() + sizeof(float));
   for (unsigned i=0; i<nchan; i++)
   {
-    wt[1] = 1;
+    wt[i] = 1;
   }
   
   data_config.reset();

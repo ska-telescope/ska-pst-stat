@@ -61,12 +61,30 @@ ska::pst::stat::FileProcessor::FileProcessor(
 
   data_config.set("STAT_OUTPUT_FILENAME",stat_output_filename.generic_string());
 
+  set_defaults(data_config);
+
   processor = std::make_shared<StatProcessor>(data_config, weights_config);
 }
 
 ska::pst::stat::FileProcessor::~FileProcessor()
 {
   SPDLOG_DEBUG("ska::pst::stat::FileProcessor::~FileProcessor");
+}
+
+static void set_default(ska::pst::common::AsciiHeader& config, const char* name, unsigned default_value)
+{
+  if (!config.has(name))
+  {
+    SPDLOG_WARN("ska::pst::stat::FileProcessor::set_defaults {} not specified in data header set to default value of {}", name, default_value);
+    config.set(name, default_value);
+  }
+}
+
+void ska::pst::stat::FileProcessor::set_defaults(ska::pst::common::AsciiHeader& config)
+{
+  set_default (config, "STAT_NREBIN", 256); // NOLINT
+  set_default (config, "STAT_REQ_TIME_BINS", 4); // NOLINT
+  set_default (config, "STAT_REQ_FREQ_BINS", 4); // NOLINT  
 }
 
 void ska::pst::stat::FileProcessor::process()
