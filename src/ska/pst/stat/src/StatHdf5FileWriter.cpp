@@ -134,7 +134,7 @@ void ska::pst::stat::StatHdf5FileWriter::publish()
   header.t_min = t_min;
   header.freq = config.get_double("FREQ");
   header.bandwidth = config.get_double("BW");
-  header.start_chan = config.get_uint32("START_CHAN");
+  header.start_chan = config.get_uint32("START_CHANNEL");
   header.npol = npol;
   header.ndim = ndim;
   header.nchan = nchan;
