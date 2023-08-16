@@ -76,8 +76,19 @@ namespace ska::pst::stat {
 
       /**
        * @brief Returns the filename for the output statistics file
-       * 
+       *
        * @param data_filename the name of the input data file
+       *
+       * @return the output filename, created according to the following rules:
+       *
+       * 1. the output filename has the same stem as the data_filename with the extension replaced by 'h5'; e.g.
+       *    data_filename = something.data -> output_filename = something.h5
+       *
+       * 2. if data_filename has a parent folder, then the output_filename has a parent folder with the stem replaced by 'stat'
+       *    and the stat folder is created; e.g.
+       *    a) data_filename = parent/something.dada -> output_filename = stat/something.h5
+       *    b) data_filename = /absolute/path/to/something.data -> output_stat_filename = /absolute/path/stat/something.h5
+       *
       */
       std::string get_output_filename (const std::string& data_filename) const;
 
