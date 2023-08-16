@@ -36,30 +36,22 @@
 #include <vector>
 #include <filesystem>
 
-ska::pst::stat::FileProcessor::FileProcessor(
-        const std::string& data_file_path,
-        const std::string& weights_file_path)
+ska::pst::stat::FileProcessor::FileProcessor()
 {
-  SPDLOG_DEBUG("ska::pst::stat::FileProcessor::ctor");
+  SPDLOG_DEBUG("ska::pst::stat::FileProcessor::ctor empty");
+}
 
-  segment_producer = std::make_unique<ska::pst::common::FileSegmentProducer>(data_file_path, weights_file_path);
+ska::pst::stat::FileProcessor::FileProcessor(
+        const std::string& data_filename,
+        const std::string& weights_filename)
+{
+  SPDLOG_DEBUG("ska::pst::stat::FileProcessor::ctor data_filename={} weights_filename={}", data_filename, weights_filename);
+
+  segment_producer = std::make_unique<ska::pst::common::FileSegmentProducer>(data_filename, weights_filename);
   auto data_config = segment_producer->get_data_header();
   auto weights_config = segment_producer->get_weights_header();
 
-  // create stat/ output folder
-  std::filesystem::path stat_output_path("stat");
-  std::filesystem::create_directory(stat_output_path);
-
-  // create stat output filename using the stem of the data filename
-  std::filesystem::path data_output_filename(data_file_path);
-
-  std::filesystem::path stat_output_filename(data_output_filename.stem());
-  stat_output_filename.replace_extension("h5");
-  stat_output_filename = stat_output_path / stat_output_filename;
-
-  SPDLOG_DEBUG("ska::pst::stat::FileProcessor::ctor stat output filename={}", stat_output_filename.generic_string());
-
-  data_config.set("STAT_OUTPUT_FILENAME",stat_output_filename.generic_string());
+  data_config.set("STAT_OUTPUT_FILENAME",get_output_filename(data_filename));
 
   set_defaults(data_config);
 
@@ -95,3 +87,35 @@ void ska::pst::stat::FileProcessor::process()
   processor->process (segment);
 }
 
+auto ska::pst::stat::FileProcessor::get_output_filename (const std::string& data_filename) const -> std::string
+{
+  std::filesystem::path data_file_path(data_filename);
+
+  // create stat output filename using the stem of the data filename
+  std::filesystem::path stat_output_filename(data_file_path.stem());
+  stat_output_filename.replace_extension("h5");
+
+  if (data_file_path.has_parent_path())
+  {
+    // create stat/ output folder using the parent_path of the data subfolder
+
+    std::filesystem::path stat_output_folder("stat");
+    std::filesystem::path data_folder = data_file_path.parent_path();
+
+    if (data_file_path.has_parent_path())
+    {
+      std::filesystem::path parent_folder = data_folder.parent_path();
+      SPDLOG_DEBUG("ska::pst::stat::FileProcessor::ctor parent_folder={}", parent_folder.generic_string());
+
+      stat_output_folder = parent_folder / stat_output_folder;
+    }
+
+    std::filesystem::create_directory(stat_output_folder);
+    stat_output_filename = stat_output_folder / stat_output_filename;
+  }
+
+  std::string result = stat_output_filename.generic_string();
+  SPDLOG_DEBUG("ska::pst::stat::FileProcessor::get_output_filename result={}", result);
+
+  return result;
+}

@@ -48,16 +48,20 @@ namespace ska::pst::stat {
   class FileProcessor
   {
     public:
+
       /**
-       * @brief Create instance of a File Processor object.
+       * @brief Create an instance of a File Processor object.
        *
-       * @param data_file_path path to the data file to process.
-       * @param weights_file_path the path to the weights file for the data file.
+       * */
+      FileProcessor();
+
+      /**
+       * @brief Construct and build an instance of a File Processor object.
+       *
+       * @param data_filename path to the data file to process.
+       * @param weights_filename the path to the weights file for the data file.
        */
-      FileProcessor(
-        const std::string& data_file_path,
-        const std::string& weights_file_path
-      );
+      FileProcessor(const std::string& data_filename, const std::string& weights_filename);
 
       /**
        * @brief Destroy the File Processor object.
@@ -69,6 +73,13 @@ namespace ska::pst::stat {
        * @brief Process the file based on the configuration passed in the constructor.
        */
       void process();
+
+      /**
+       * @brief Returns the filename for the output statistics file
+       * 
+       * @param data_filename the name of the input data file
+      */
+      std::string get_output_filename (const std::string& data_filename) const;
 
     private:
 
