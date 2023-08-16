@@ -28,13 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <memory>
-#include <string>
-
-#include "ska/pst/common/utils/AsciiHeader.h"
-#include "ska/pst/common/utils/FileSegmentProducer.h"
-
 #include "ska/pst/stat/StatProcessor.h"
+#include "ska/pst/common/utils/FileSegmentProducer.h"
 
 #ifndef __SKA_PST_STAT_FileProcessor_h
 #define __SKA_PST_STAT_FileProcessor_h
@@ -90,7 +85,18 @@ namespace ska::pst::stat {
        *    b) data_filename = /absolute/path/to/something.data -> output_stat_filename = /absolute/path/stat/something.h5
        *
       */
-      std::string get_output_filename (const std::string& data_filename) const;
+      std::string get_output_filename(const std::string& data_filename) const;
+
+      /**
+       * @brief Throws an exception if the data and weights files do not match each other
+       *
+       * @param data_config the header from the data file
+       * @param weights_config the header from the weights file
+       * 
+       * This test should be migrated to ska::pst::common::HeapLayout (see https://jira.skatelescope.org/browse/AT3-534)
+       *
+      */
+      void match(const ska::pst::common::AsciiHeader& data_config, const ska::pst::common::AsciiHeader& weights_config) const;
 
     private:
 

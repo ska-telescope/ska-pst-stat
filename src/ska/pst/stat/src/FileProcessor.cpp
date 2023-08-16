@@ -51,6 +51,9 @@ ska::pst::stat::FileProcessor::FileProcessor(
   auto data_config = segment_producer->get_data_header();
   auto weights_config = segment_producer->get_weights_header();
 
+  // test that the data and weights files match eachother
+  match(data_config, weights_config);
+
   data_config.set("STAT_OUTPUT_FILENAME",get_output_filename(data_filename));
 
   set_defaults(data_config);
@@ -87,7 +90,7 @@ void ska::pst::stat::FileProcessor::process()
   processor->process (segment);
 }
 
-auto ska::pst::stat::FileProcessor::get_output_filename (const std::string& data_filename) const -> std::string
+auto ska::pst::stat::FileProcessor::get_output_filename(const std::string& data_filename) const -> std::string
 {
   std::filesystem::path data_file_path(data_filename);
 
@@ -118,4 +121,33 @@ auto ska::pst::stat::FileProcessor::get_output_filename (const std::string& data
   SPDLOG_DEBUG("ska::pst::stat::FileProcessor::get_output_filename result={}", result);
 
   return result;
+}
+
+auto get_heap_offset (const std::string& name, const ska::pst::common::AsciiHeader& config, uint64_t heap_stride) -> uint64_t
+{
+  auto byte_offset = config.get_uint64("OBS_OFFSET");
+
+  if (byte_offset % heap_stride != 0)
+  {
+    SPDLOG_ERROR("ska::pst::stat::FileProcessor::match {} OBS_OFFSET={} is not a multiple of heap stride", name, byte_offset, heap_stride);
+    throw std::runtime_error("ska::pst::stat::FileProcessor::match "+name+" OBS_OFFSET is not a multiple of heap stride");
+  }
+
+  return byte_offset / heap_stride;
+}
+
+void ska::pst::stat::FileProcessor::match(const ska::pst::common::AsciiHeader& data_config, const ska::pst::common::AsciiHeader& weights_config) const
+{
+  ska::pst::common::HeapLayout layout;
+  layout.configure(data_config, weights_config);
+
+  // ensure that the data and weights blocks start on the same integer heap
+  auto data_heap_offset = get_heap_offset("data", data_config, layout.get_data_heap_stride());
+  auto weights_heap_offset = get_heap_offset("weights", weights_config, layout.get_weights_heap_stride());
+
+  if (data_heap_offset != weights_heap_offset)
+  {
+    SPDLOG_ERROR("ska::pst::stat::FileProcessor::match data_heap_offset={} does not equal weights_heap_offset={}", data_heap_offset, weights_heap_offset);
+    throw std::runtime_error("ska::pst::stat::FileProcessor::match data_heap_offset does not equal weights_heap_offset");
+  }
 }

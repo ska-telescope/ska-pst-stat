@@ -69,4 +69,39 @@ TEST_F(FileProcessorTest, test_output_filename) // NOLINT
   std::filesystem::remove("/tmp/stat");
 }
 
+TEST_F(FileProcessorTest, test_match) // NOLINT
+{
+  ska::pst::common::AsciiHeader data_config;
+  ska::pst::common::AsciiHeader weights_config;
+
+  data_config.load_from_file(test_data_file("data_config.txt"));
+  weights_config.load_from_file(test_data_file("weights_config.txt"));
+
+  ska::pst::common::HeapLayout layout;
+  layout.configure(data_config, weights_config);
+
+  uint64_t delta_heap = 1024; // NOLINT
+  unsigned ntest = 1024; // NOLINT
+  uint64_t heap_offset = 0;
+
+  for(unsigned i=0; i<ntest; i++)
+  {
+    auto data_byte_offset = heap_offset * layout.get_data_heap_stride();
+    auto weights_byte_offset = heap_offset * layout.get_weights_heap_stride();
+
+    data_config.set("OBS_OFFSET", data_byte_offset);
+    weights_config.set("OBS_OFFSET", weights_byte_offset);
+
+    // should not throw exception
+    processor.match(data_config, weights_config);
+
+    heap_offset += delta_heap;
+  }
+
+  // offset the weights OBS_OFFSET from the data OBS_OFFSET
+  auto weights_byte_offset = heap_offset * layout.get_weights_heap_stride();
+  weights_config.set("OBS_OFFSET", weights_byte_offset);
+  EXPECT_THROW(processor.match(data_config, weights_config),std::runtime_error);
+}
+
 } // namespace ska::pst::stat::test
