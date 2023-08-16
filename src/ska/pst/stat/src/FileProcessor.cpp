@@ -39,13 +39,12 @@
 ska::pst::stat::FileProcessor::FileProcessor(
         const std::string& data_file_path,
         const std::string& weights_file_path)
-        : 
-	  block_loader(new ska::pst::common::DataWeightsFileBlockLoader(data_file_path, weights_file_path))
 {
   SPDLOG_DEBUG("ska::pst::stat::FileProcessor::ctor");
 
-  auto data_config = block_loader->get_data_header();
-  auto weights_config = block_loader->get_weights_header();
+  segment_producer = std::make_unique<ska::pst::common::FileSegmentProducer>(data_file_path, weights_file_path);
+  auto data_config = segment_producer->get_data_header();
+  auto weights_config = segment_producer->get_weights_header();
 
   // create stat/ output folder
   std::filesystem::path stat_output_path("stat");
@@ -62,6 +61,8 @@ ska::pst::stat::FileProcessor::FileProcessor(
 
   data_config.set("STAT_OUTPUT_FILENAME",stat_output_filename.generic_string());
 
+  set_defaults(data_config);
+
   processor = std::make_shared<StatProcessor>(data_config, weights_config);
 }
 
@@ -70,11 +71,27 @@ ska::pst::stat::FileProcessor::~FileProcessor()
   SPDLOG_DEBUG("ska::pst::stat::FileProcessor::~FileProcessor");
 }
 
+static void set_default(ska::pst::common::AsciiHeader& config, const char* key, unsigned default_value)
+{
+  if (!config.has(key))
+  {
+    SPDLOG_WARN("ska::pst::stat::FileProcessor::set_defaults {} not specified in data header set to default value of {}", key, default_value);
+    config.set(key, default_value);
+  }
+}
+
+void ska::pst::stat::FileProcessor::set_defaults(ska::pst::common::AsciiHeader& config)
+{
+  set_default (config, "STAT_NREBIN", 256); // NOLINT
+  set_default (config, "STAT_REQ_TIME_BINS", 4); // NOLINT
+  set_default (config, "STAT_REQ_FREQ_BINS", 4); // NOLINT  
+}
+
 void ska::pst::stat::FileProcessor::process()
 {
   SPDLOG_DEBUG("ska::pst::stat::FileProcessor::process");
 
-  auto block = block_loader->next_block();
-  processor->process (block.data.block, block.data.size, block.weights.block, block.weights.size);
+  auto segment = segment_producer->next_segment();
+  processor->process (segment);
 }
 

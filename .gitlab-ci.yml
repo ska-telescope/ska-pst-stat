@@ -13,7 +13,7 @@ variables:
   PST_SMRB_OCI_REGISTRY: ""
   PST_SMRB_OCI_BUILDER: ska-pst-smrb-builder
   PST_SMRB_OCI_RUNTIME: ska-pst-smrb
-  PST_SMRB_OCI_COMMON_TAG: "0.9.1"
+  PST_SMRB_OCI_COMMON_TAG: "0.10.0"
   STAT_RUNTIME_IMAGE: library/ubuntu:22.04
 
 stages:

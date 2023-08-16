@@ -33,14 +33,14 @@
 
 #include "ska/pst/common/definitions.h"
 #include "ska/pst/common/utils/AsciiHeader.h"
-#include "ska/pst/common/utils/DataGenerator.h"
+#include "ska/pst/common/utils/PacketGenerator.h"
 
 #ifndef SKA_PST_STAT_TESTS_TestDataLayout_h
 #define SKA_PST_STAT_TESTS_TestDataLayout_h
 
 namespace ska::pst::stat::test {
 
-  class TestDataLayout : public ska::pst::common::DataLayout
+  class TestDataLayout : public ska::pst::common::PacketLayout
   {
     public:
     TestDataLayout (const ska::pst::common::AsciiHeader& config)

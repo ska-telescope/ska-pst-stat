@@ -10,10 +10,10 @@ StatProcessor -> StatComputer: StatComputer(config, *storage)
 StatProcessor -> StatPublisher: StatPublisher(config, *storage)
 Client <-- StatProcessor
 loop while has data
-  Client -> StatProcessor: process(block_ptr, block_length, weights_ptr, weights_length)
+  Client -> StatProcessor: process(segment)
   StatProcessor -> StatStorage: reset()
   StatProcessor -> StatComputer: initialise()
-  StatProcessor -> StatComputer: process(block_ptr, block_length, weights_ptr, weights_length)
+  StatProcessor -> StatComputer: process(segment)
   StatComputer --> StatStorage: updates
   StatProcessor <-- StatComputer
   StatProcessor -> StatPublisher: publish()

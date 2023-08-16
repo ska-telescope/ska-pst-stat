@@ -76,25 +76,20 @@ ska::pst::stat::StatProcessor::~StatProcessor()
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::~StatProcessor()");
 }
 
-void ska::pst::stat::StatProcessor::process(
-    char * data_block,
-    size_t data_length,
-    char * weights_block,
-    size_t weights_length
-)
+void ska::pst::stat::StatProcessor::process(const ska::pst::common::SegmentProducer::Segment& segment)
 {
-  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process data_length={}", data_length);
-  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process weights_length={}", weights_length);
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process segment.data.size={}", segment.data.size);
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process segment.weights.size={}", segment.weights.size);
 
-  if ( data_block == nullptr )
+  if ( segment.data.block == nullptr )
   {
-    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process data_block pointer is null");
-    throw std::runtime_error("ska::pst::stat::StatProcessor::process data_block pointer is null");
+    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process segment.data.block pointer is null");
+    throw std::runtime_error("ska::pst::stat::StatProcessor::process segment.data.block pointer is null");
   }
-  if ( weights_block == nullptr )
+  if ( segment.weights.block == nullptr )
   {
-    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process weights_block pointer is null");
-    throw std::runtime_error("ska::pst::stat::StatProcessor::process weights_block pointer is null");
+    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process segment.weights.block pointer is null");
+    throw std::runtime_error("ska::pst::stat::StatProcessor::process segment.weights.block pointer is null");
   }
 
   // need to determine a few parameters in the storage.
@@ -107,27 +102,27 @@ void ska::pst::stat::StatProcessor::process(
     throw std::runtime_error("ska::pst::stat::StatProcessor::process nbytes_per_sample not greater than 0");
   }
 
-  if (data_length == 0 || weights_length == 0)
+  if (segment.data.size == 0 || segment.weights.size == 0)
   {
     SPDLOG_ERROR("ska::pst::stat::StatProcessor::process nbytes_per_sample not greater than 0");
-    throw std::runtime_error(std::string("ska::pst::stat::StatProcessor::process data_length={} nbytes_per_sample={}", data_length, nbytes_per_sample));
+    throw std::runtime_error(std::string("ska::pst::stat::StatProcessor::process segment.data.size={} nbytes_per_sample={}", segment.data.size, nbytes_per_sample));
   }
 
-  uint32_t nsamp_block = data_length / nbytes_per_sample;
+  uint32_t nsamp_block = segment.data.size / nbytes_per_sample;
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process nsamp_block={}", nsamp_block);
   if (data_resolution % nbytes_per_sample != 0)
   {
     SPDLOG_ERROR("ska::pst::stat::StatProcessor::process data_resolution \% nbytes_per_sample={}", (data_resolution % nbytes_per_sample));
     throw std::runtime_error("ska::pst::stat::StatProcessor::process data resolution not a multiple of nbytes_per_sample");
   }
-  if (data_length % data_resolution != 0)
+  if (segment.data.size % data_resolution != 0)
   {
-    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process data_length \% data_resolution={}", (data_length % data_resolution));
+    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process segment.data.size \% data_resolution={}", (segment.data.size % data_resolution));
     throw std::runtime_error("ska::pst::stat::StatProcessor::process block length not a multiple of data_resolution");
   }
-  if (weights_length % weights_resolution != 0)
+  if (segment.weights.size % weights_resolution != 0)
   {
-    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process weights_length \% weights_resolution={}", (weights_length % weights_resolution));
+    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process segment.weights.size \% weights_resolution={}", (segment.weights.size % weights_resolution));
     throw std::runtime_error("ska::pst::stat::StatProcessor::process block length not a multiple of weights_resolution");
   }
 
@@ -144,7 +139,7 @@ void ska::pst::stat::StatProcessor::process(
   computer->initialise();
 
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process computer->process()");
-  computer->compute(data_block, data_length, weights_block, weights_length);
+  computer->compute(segment);
 
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process publisher->publish()");
   publisher->publish();

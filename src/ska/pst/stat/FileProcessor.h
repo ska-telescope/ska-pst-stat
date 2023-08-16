@@ -32,7 +32,7 @@
 #include <string>
 
 #include "ska/pst/common/utils/AsciiHeader.h"
-#include "ska/pst/common/utils/DataWeightsFileBlockLoader.h"
+#include "ska/pst/common/utils/FileSegmentProducer.h"
 
 #include "ska/pst/stat/StatProcessor.h"
 
@@ -71,11 +71,17 @@ namespace ska::pst::stat {
       void process();
 
     private:
+
+      /**
+       * @brief If not already speficied, set any parameters required by StatProcessor to safe default values
+       */
+      void set_defaults(ska::pst::common::AsciiHeader& config);
+
       //! shared pointer a statistics processor
       std::shared_ptr<StatProcessor> processor;
 
       //! the block loader that us used to mmap the data and weights files
-      std::shared_ptr<ska::pst::common::DataWeightsBlockLoader> block_loader;
+      std::unique_ptr<ska::pst::common::FileSegmentProducer> segment_producer;
   };
 
 } // namespace ska::pst::stat

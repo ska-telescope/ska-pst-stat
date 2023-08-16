@@ -142,7 +142,7 @@ void StatHdf5FileWriterTest::validate_hdf5_file(const std::shared_ptr<H5::H5File
   ASSERT_EQ(header.t_max, t_min + storage->get_total_sample_time());
   ASSERT_EQ(header.freq, config.get_double("FREQ"));
   ASSERT_EQ(header.bandwidth, config.get_double("BW"));
-  ASSERT_EQ(header.start_chan, config.get_uint32("START_CHAN"));
+  ASSERT_EQ(header.start_chan, config.get_uint32("START_CHANNEL"));
   ASSERT_EQ(header.npol, storage->get_npol());
   ASSERT_EQ(header.ndim, storage->get_ndim());
   ASSERT_EQ(header.nchan, storage->get_nchan());

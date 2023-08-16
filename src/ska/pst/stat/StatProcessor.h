@@ -28,12 +28,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <memory>
-
-#include "ska/pst/common/definitions.h"
+#include "ska/pst/common/utils/SegmentProducer.h"
 #include "ska/pst/stat/StatStorage.h"
 #include "ska/pst/stat/StatComputer.h"
 #include "ska/pst/stat/StatHdf5FileWriter.h"
+#include "ska/pst/common/definitions.h"
+
+#include <memory>
 
 #ifndef __SKA_PST_STAT_StatProcessor_h
 #define __SKA_PST_STAT_StatProcessor_h
@@ -68,12 +69,9 @@ namespace ska::pst::stat {
        *
        * This method will ensure that the statistics are computed and then published.
        *
-       * @param data_block a pointer to the start of the data block to compute statistics for.
-       * @param block_length the size, in bytes, of the data block to process.
-       * @param weights_block a pointer to the start of the weights block to use in computing statistics.
-       * @param weights_length the size, in bytes, of the weights to process.
+       * @param segment the segment of data and weights for which statistics are computed and published
        */
-      void process(char * data_block, size_t block_length, char * weights_block, size_t weights_length);
+      void process(const ska::pst::common::SegmentProducer::Segment& segment);
 
 
     protected:

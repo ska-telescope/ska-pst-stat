@@ -32,8 +32,24 @@ RUN groupadd -g $GID $UNAME  && \
 ENV DEBIAN_FRONTEND noninteractive
 ENV LD_LIBRARY_PATH=/usr/local/lib/
 
+WORKDIR /usr/local
+COPY --from=builder /mnt/dependencies/runtime.apt.txt ./share/
+COPY --from=builder /mnt/src/ska/pst/stat/tests/data/* ./share/
+COPY --from=builder /usr/local/bin/ska_pst_stat* ./bin/
+COPY --from=builder /usr/local/lib/libska_pst*.so ./lib/
+
+# RUNTIME DEPENDENCIES and CLEANUP
+RUN stat share/runtime.apt.txt \
+    && apt-get update -y \
+    && apt-get install --no-install-recommends -y $(cat share/runtime.apt.txt) \
+    && apt-get autoremove --yes && rm -rf /var/lib/apt/lists/*
+
 # RUNTIME TEST
 WORKDIR /usr/local/bin
 
 USER $UNAME
+
+RUN ska_pst_stat_file_proc -h \
+    && ska_pst_stat_info -h
+
 CMD ["/bin/bash"]

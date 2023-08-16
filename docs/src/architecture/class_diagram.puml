@@ -28,20 +28,14 @@ class FileProcessor {
   + FileProcessor(config: AsciiHeader)
   + ~FileProcessor()
   + process()
-  - reader: DataWeightFileBlockLoader
+  - reader: common::FileSegmentProducer
   - processor: StatProcessor
-}
-
-class DataWeightFileBlockLoader {
-  + DataWeightFileBlockLoader(data_file, weights_file)
-  + ~DataWeightFileBlockLoader()
-  + next_block(): (block_ptr: char*, weights_ptr: char*)
 }
 
 class StatProcessor {
   + StatProcessor(data_config: AsciiHeader, weights_config: AsciiHeader)
   + ~StatProcessor()
-  + process(block_ptr: char*, block_length: usize_t, weights_ptr: char*, weights_length: usize_t)
+  + process(segment: common::SegmentProducer::Segment)
   - storage: std::shared_ptr<StatStorage>
   - computer: std::unique_ptr<StatComputer>
   - writer: std::unique_ptr<StatPublisher>
@@ -51,7 +45,7 @@ class StatProcessor {
 class StatComputer {
   + StatComputer(data_config: AsciiHeader, weights_config: AsciiHeader, std::shared_ptr<StatStorage> storage)
   + ~StatComputer()
-  + compute(block_ptr: char*, block_length: usize_t, weights_ptr: char*, weights_length: usize_t)
+  + compute(segment: common::SegmentProducer::Segment)
   + initialise()
   - storage: std::shared_ptr<StatStorage>
   - config: AsciiHeader
@@ -117,7 +111,6 @@ ApplicationManager <|-- StatApplicationManager
 StatApplicationManager o-- DataBlockView
 StatApplicationManager *-- StatProcessor
 
-FileProcessor *-- DataWeightFileBlockLoader
 FileProcessor *-- StatProcessor
 
 component ska_pst_stat_core
