@@ -59,17 +59,18 @@ TEST_F(FileProcessorTest, test_output_filename) // NOLINT
   ASSERT_EQ(processor.get_output_filename("anything.ext"), "anything.h5");
 
   // get_output_filename creates the stat/ sub-folder in the current working directory
-  ASSERT_EQ(processor.get_output_filename("folder/anything.ext"), "stat/anything.h5");
+  ASSERT_EQ(processor.get_output_filename("parent/anything.ext"), "stat/anything.h5");
   ASSERT_EQ(std::filesystem::is_directory("stat"), true);
   std::filesystem::remove("stat");
 
   // get_output_filename creates the stat/ sub-folder in the root directory of the data file
-  ASSERT_EQ(processor.get_output_filename("/tmp/subfolder/anything.ext"), "/tmp/stat/anything.h5");
+  // in this test '/tmp' plays the role of '/grandparent' folder
+  ASSERT_EQ(processor.get_output_filename("/tmp/parent/anything.ext"), "/tmp/stat/anything.h5");
   ASSERT_EQ(std::filesystem::is_directory("/tmp/stat"), true);
   std::filesystem::remove("/tmp/stat");
 }
 
-TEST_F(FileProcessorTest, test_match) // NOLINT
+TEST_F(FileProcessorTest, test_assert_equal_heap_offsets) // NOLINT
 {
   ska::pst::common::AsciiHeader data_config;
   ska::pst::common::AsciiHeader weights_config;
@@ -93,7 +94,7 @@ TEST_F(FileProcessorTest, test_match) // NOLINT
     weights_config.set("OBS_OFFSET", weights_byte_offset);
 
     // should not throw exception
-    processor.match(data_config, weights_config);
+    processor.assert_equal_heap_offsets(data_config, weights_config);
 
     heap_offset += delta_heap;
   }
@@ -101,7 +102,7 @@ TEST_F(FileProcessorTest, test_match) // NOLINT
   // offset the weights OBS_OFFSET from the data OBS_OFFSET
   auto weights_byte_offset = heap_offset * layout.get_weights_heap_stride();
   weights_config.set("OBS_OFFSET", weights_byte_offset);
-  EXPECT_THROW(processor.match(data_config, weights_config),std::runtime_error);
+  EXPECT_THROW(processor.assert_equal_heap_offsets(data_config, weights_config),std::runtime_error);
 }
 
 } // namespace ska::pst::stat::test

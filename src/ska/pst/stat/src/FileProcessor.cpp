@@ -51,8 +51,8 @@ ska::pst::stat::FileProcessor::FileProcessor(
   auto data_config = segment_producer->get_data_header();
   auto weights_config = segment_producer->get_weights_header();
 
-  // test that the data and weights files match eachother
-  match(data_config, weights_config);
+  // test that the data and weights files start at the same heap offset
+  assert_equal_heap_offsets(data_config, weights_config);
 
   data_config.set("STAT_OUTPUT_FILENAME",get_output_filename(data_filename));
 
@@ -92,26 +92,20 @@ void ska::pst::stat::FileProcessor::process()
 
 auto ska::pst::stat::FileProcessor::get_output_filename(const std::string& data_filename) const -> std::string
 {
-  std::filesystem::path data_file_path(data_filename);
+  std::filesystem::path data_file_path = data_filename;
 
   // create stat output filename using the stem of the data filename
-  std::filesystem::path stat_output_filename(data_file_path.stem());
-  stat_output_filename.replace_extension("h5");
+  std::filesystem::path stat_output_filename = data_file_path.filename().replace_extension("h5");
 
   if (data_file_path.has_parent_path())
   {
     // create stat/ output folder using the parent_path of the data subfolder
+    std::filesystem::path data_folder = data_file_path.parent_path();
+    std::filesystem::path parent_folder = data_folder.parent_path();
+    SPDLOG_DEBUG("ska::pst::stat::FileProcessor::ctor parent_folder={}", parent_folder.generic_string());
 
     std::filesystem::path stat_output_folder("stat");
-    std::filesystem::path data_folder = data_file_path.parent_path();
-
-    if (data_file_path.has_parent_path())
-    {
-      std::filesystem::path parent_folder = data_folder.parent_path();
-      SPDLOG_DEBUG("ska::pst::stat::FileProcessor::ctor parent_folder={}", parent_folder.generic_string());
-
-      stat_output_folder = parent_folder / stat_output_folder;
-    }
+    stat_output_folder = parent_folder / stat_output_folder;
 
     std::filesystem::create_directory(stat_output_folder);
     stat_output_filename = stat_output_folder / stat_output_filename;
@@ -129,14 +123,14 @@ auto get_heap_offset (const std::string& name, const ska::pst::common::AsciiHead
 
   if (byte_offset % heap_stride != 0)
   {
-    SPDLOG_ERROR("ska::pst::stat::FileProcessor::match {} OBS_OFFSET={} is not a multiple of heap stride", name, byte_offset, heap_stride);
-    throw std::runtime_error("ska::pst::stat::FileProcessor::match "+name+" OBS_OFFSET is not a multiple of heap stride");
+    SPDLOG_ERROR("ska::pst::stat::FileProcessor::assert_equal_heap_offsets {} OBS_OFFSET={} is not a multiple of heap stride", name, byte_offset, heap_stride);
+    throw std::runtime_error("ska::pst::stat::FileProcessor::assert_equal_heap_offsets "+name+" OBS_OFFSET is not a multiple of heap stride");
   }
 
   return byte_offset / heap_stride;
 }
 
-void ska::pst::stat::FileProcessor::match(const ska::pst::common::AsciiHeader& data_config, const ska::pst::common::AsciiHeader& weights_config) const
+void ska::pst::stat::FileProcessor::assert_equal_heap_offsets(const ska::pst::common::AsciiHeader& data_config, const ska::pst::common::AsciiHeader& weights_config) const
 {
   ska::pst::common::HeapLayout layout;
   layout.configure(data_config, weights_config);
@@ -147,7 +141,7 @@ void ska::pst::stat::FileProcessor::match(const ska::pst::common::AsciiHeader& d
 
   if (data_heap_offset != weights_heap_offset)
   {
-    SPDLOG_ERROR("ska::pst::stat::FileProcessor::match data_heap_offset={} does not equal weights_heap_offset={}", data_heap_offset, weights_heap_offset);
-    throw std::runtime_error("ska::pst::stat::FileProcessor::match data_heap_offset does not equal weights_heap_offset");
+    SPDLOG_ERROR("ska::pst::stat::FileProcessor::assert_equal_heap_offsets data_heap_offset={} does not equal weights_heap_offset={}", data_heap_offset, weights_heap_offset);
+    throw std::runtime_error("ska::pst::stat::FileProcessor::assert_equal_heap_offsets data_heap_offset does not equal weights_heap_offset");
   }
 }

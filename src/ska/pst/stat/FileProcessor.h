@@ -88,7 +88,7 @@ namespace ska::pst::stat {
       std::string get_output_filename(const std::string& data_filename) const;
 
       /**
-       * @brief Throws an exception if the data and weights files do not match each other
+       * @brief Throws an exception if the data and weights files do not start at the same heap offset
        *
        * @param data_config the header from the data file
        * @param weights_config the header from the weights file
@@ -96,7 +96,7 @@ namespace ska::pst::stat {
        * This test should be migrated to ska::pst::common::HeapLayout (see https://jira.skatelescope.org/browse/AT3-534)
        *
       */
-      void match(const ska::pst::common::AsciiHeader& data_config, const ska::pst::common::AsciiHeader& weights_config) const;
+      void assert_equal_heap_offsets(const ska::pst::common::AsciiHeader& data_config, const ska::pst::common::AsciiHeader& weights_config) const;
 
     private:
 
