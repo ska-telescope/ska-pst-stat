@@ -28,13 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <memory>
-#include <string>
-
-#include "ska/pst/common/utils/AsciiHeader.h"
-#include "ska/pst/common/utils/FileSegmentProducer.h"
-
 #include "ska/pst/stat/StatProcessor.h"
+#include "ska/pst/common/utils/FileSegmentProducer.h"
 
 #ifndef __SKA_PST_STAT_FileProcessor_h
 #define __SKA_PST_STAT_FileProcessor_h
@@ -48,16 +43,20 @@ namespace ska::pst::stat {
   class FileProcessor
   {
     public:
+
       /**
-       * @brief Create instance of a File Processor object.
+       * @brief Create an instance of a File Processor object.
        *
-       * @param data_file_path path to the data file to process.
-       * @param weights_file_path the path to the weights file for the data file.
+       * */
+      FileProcessor();
+
+      /**
+       * @brief Construct and build an instance of a File Processor object.
+       *
+       * @param data_filename path to the data file to process.
+       * @param weights_filename the path to the weights file for the data file.
        */
-      FileProcessor(
-        const std::string& data_file_path,
-        const std::string& weights_file_path
-      );
+      FileProcessor(const std::string& data_filename, const std::string& weights_filename);
 
       /**
        * @brief Destroy the File Processor object.
@@ -69,6 +68,35 @@ namespace ska::pst::stat {
        * @brief Process the file based on the configuration passed in the constructor.
        */
       void process();
+
+      /**
+       * @brief Returns the filename for the output statistics file
+       *
+       * @param data_filename the name of the input data file
+       *
+       * @return the output filename, created according to the following rules:
+       *
+       * 1. the output filename has the same stem as the data_filename with the extension replaced by 'h5'; e.g.
+       *    data_filename = something.data -> output_filename = something.h5
+       *
+       * 2. if data_filename has a parent folder, then the output_filename has a parent folder with the stem replaced by 'stat'
+       *    and the stat folder is created; e.g.
+       *    a) data_filename = parent/something.dada -> output_filename = stat/something.h5
+       *    b) data_filename = /absolute/path/to/something.data -> output_stat_filename = /absolute/path/stat/something.h5
+       *
+      */
+      std::string get_output_filename(const std::string& data_filename) const;
+
+      /**
+       * @brief Throws an exception if the data and weights files do not start at the same heap offset
+       *
+       * @param data_config the header from the data file
+       * @param weights_config the header from the weights file
+       * 
+       * This test should be migrated to ska::pst::common::HeapLayout (see https://jira.skatelescope.org/browse/AT3-534)
+       *
+      */
+      void assert_equal_heap_offsets(const ska::pst::common::AsciiHeader& data_config, const ska::pst::common::AsciiHeader& weights_config) const;
 
     private:
 
