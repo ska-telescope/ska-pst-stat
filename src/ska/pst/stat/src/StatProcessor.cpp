@@ -42,8 +42,16 @@ ska::pst::stat::StatProcessor::StatProcessor(
 {
   data_resolution = data_config.get_uint32("RESOLUTION");
   weights_resolution = weights_config.get_uint32("RESOLUTION");
-  req_time_bins = data_config.get_uint32("STAT_REQ_TIME_BINS");
-  req_freq_bins = data_config.get_uint32("STAT_REQ_FREQ_BINS");
+  req_time_bins = default_ntime_bins;
+  req_freq_bins = default_nfreq_bins;
+  if (data_config.has("STAT_REQ_TIME_BINS"))
+  {
+    req_time_bins = data_config.get_uint32("STAT_REQ_TIME_BINS");
+  }
+  if (data_config.has("STAT_REQ_FREQ_BINS"))
+  {
+    req_freq_bins = data_config.get_uint32("STAT_REQ_FREQ_BINS");
+  }
   nchan = data_config.get_uint32("NCHAN");
 
   if (req_time_bins <= 0 || req_time_bins > max_time_bins)

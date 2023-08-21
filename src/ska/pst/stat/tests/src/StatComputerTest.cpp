@@ -229,7 +229,7 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
   std::vector<int16_t> data = {
     // Pol A - sample 1 - 8
      -4,  19,  17,   6,  -2,   2,   0,  15,  15,   3,  15,   8, -11, -21, -18,   2, // NOLINT
-    // Pol A - sample 1 - 8
+    // Pol A - sample 9 - 16
     -11,   9,  -3,   5,  -4, -13,  12,  -1,   5,  10,  21,   0,  25,  -2,   0,  12, // NOLINT
     // Pol A - sample 17 - 24
       8,  -6,  -8,  23, -11,  -6,  28,   3,  32,  -2,  17,   6,  -8,   4,  -9,   0, // NOLINT
