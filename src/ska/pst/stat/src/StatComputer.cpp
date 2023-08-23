@@ -147,10 +147,10 @@ void ska::pst::stat::StatComputer::initialise()
     }
   }
 
+  SPDLOG_TRACE("ska::pst::stat::StatComputer::StatComputer - generating centre frequencies {} channels with channel_bandwidth={} MHz", nchan, channel_bandwidth);
   uint32_t num_masked = 0;
   for (auto ichan = 0; ichan<nchan; ichan++)
   {
-    SPDLOG_TRACE("ska::pst::stat::StatComputer::StatComputer - setting centre frequency for channel {}", ichan);
     auto channel_start_freq = start_freq + static_cast<double>(ichan) * channel_bandwidth;
     auto channel_end_freq = channel_start_freq + channel_bandwidth;
 
@@ -159,9 +159,6 @@ void ska::pst::stat::StatComputer::initialise()
 
     storage->channel_centre_frequencies[ichan] = channel_centre_freq;
     storage->rfi_mask_lut[ichan] = false;
-    SPDLOG_TRACE("chan {} centre frequency is {:.4f} MHz, frequncy band is {:.4f} MHz to {:.4f} MHz", ichan,
-      channel_centre_freq, channel_start_freq, channel_end_freq
-    );
 
     for (auto &rfi_mask_pair : rfi_masks)
     {

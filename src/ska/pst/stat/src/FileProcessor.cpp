@@ -70,7 +70,7 @@ static void set_default(ska::pst::common::AsciiHeader& config, const char* key, 
 {
   if (!config.has(key))
   {
-    SPDLOG_WARN("ska::pst::stat::FileProcessor::set_defaults {} not specified in data header set to default value of {}", key, default_value);
+    SPDLOG_WARN("ska::pst::stat::FileProcessor::set_default {} not specified in data header set to default value of {}", key, default_value);
     config.set(key, default_value);
   }
 }
@@ -79,7 +79,7 @@ void ska::pst::stat::FileProcessor::set_defaults(ska::pst::common::AsciiHeader& 
 {
   set_default (config, "STAT_NREBIN", 256); // NOLINT
   set_default (config, "STAT_REQ_TIME_BINS", 4); // NOLINT
-  set_default (config, "STAT_REQ_FREQ_BINS", 4); // NOLINT  
+  set_default (config, "STAT_REQ_FREQ_BINS", 4); // NOLINT
 }
 
 void ska::pst::stat::FileProcessor::process()
