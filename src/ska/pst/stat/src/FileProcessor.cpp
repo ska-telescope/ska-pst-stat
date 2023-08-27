@@ -54,7 +54,7 @@ ska::pst::stat::FileProcessor::FileProcessor(
   // test that the data and weights files start at the same heap offset
   assert_equal_heap_offsets(data_config, weights_config);
 
-  data_config.set("STAT_OUTPUT_FILENAME",get_output_filename(data_filename));
+  data_config.set("STAT_OUTPUT_FILENAME", get_output_filename(data_filename));
 
   set_defaults(data_config);
 

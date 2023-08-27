@@ -70,6 +70,7 @@ def plot_set_file(stat_filename: pathlib.Path) -> None:
       ibin = np.amin(sbins)
       jbin = np.amax(ebins)
 
+      # generating plots
       ax = plt.GridSpec(4, 1)
       ax.update(wspace=0.1, hspace=0.3)
 
@@ -101,7 +102,6 @@ def plot_set_file(stat_filename: pathlib.Path) -> None:
       ax4.set_ylabel("Counts")
       ax4.legend()
 
-      plt.colorbar(im)
       plt.show()
 
 

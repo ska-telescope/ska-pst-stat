@@ -21,7 +21,7 @@ FREQ                87.5
 BW                  75
 START_CHANNEL       0
 END_CHANNEL         20736
-RESOLUTION          41472
+RESOLUTION          44928
 BYTES_PER_SECOND    130208.33333333332848
 DATA_HOST           127.0.0.1
 DATA_PORT           9510
