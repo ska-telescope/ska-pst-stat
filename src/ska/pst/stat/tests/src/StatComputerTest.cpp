@@ -252,7 +252,7 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
   std::vector<char> weights(weights_length);
   auto scale = reinterpret_cast<float*>(weights.data());
   *scale = 1.0;
-  auto wt = reinterpret_cast<uint16_t*>(weights.data() + sizeof(float));
+  auto wt = reinterpret_cast<uint16_t*>(weights.data() + sizeof(float)); // NOLINT
   *wt = 1;
 
   ska::pst::common::SegmentProducer::Segment segment;
@@ -383,12 +383,12 @@ TEST_F(StatComputerTest, test_masked_channels) // NOLINT
   unsigned weights_length = sizeof(float) + nchan * sizeof(uint16_t);
   std::vector<char> weights(weights_length);
   auto scale = reinterpret_cast<float*>(weights.data());
-  auto wt = reinterpret_cast<uint16_t*>(weights.data() + sizeof(float));
+  auto wt = reinterpret_cast<uint16_t*>(weights.data() + sizeof(float)); // NOLINT
 
   *scale = 1.0;
   for (unsigned i=0; i<nchan; i++)
   {
-    wt[i] = 1;
+    wt[i] = 1; // NOLINT
   }
 
   ska::pst::common::SegmentProducer::Segment segment;
@@ -660,12 +660,12 @@ TEST_F(StatComputerTest, test_clipped_channels) // NOLINT
   unsigned weights_length = sizeof(float) + nchan * sizeof(uint16_t);
   std::vector<char> weights(weights_length);
   auto scale = reinterpret_cast<float*>(weights.data());
-  auto wt = reinterpret_cast<uint16_t*>(weights.data() + sizeof(float));
+  auto wt = reinterpret_cast<uint16_t*>(weights.data() + sizeof(float)); // NOLINT
 
   *scale = 1.0;
   for (unsigned i=0; i<nchan; i++)
   {
-    wt[i] = 1;
+    wt[i] = 1; // NOLINT
   }
 
   ska::pst::common::SegmentProducer::Segment segment;
