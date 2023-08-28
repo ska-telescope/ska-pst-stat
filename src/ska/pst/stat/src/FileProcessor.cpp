@@ -54,7 +54,7 @@ ska::pst::stat::FileProcessor::FileProcessor(
   // test that the data and weights files start at the same heap offset
   assert_equal_heap_offsets(data_config, weights_config);
 
-  data_config.set("STAT_OUTPUT_FILENAME",get_output_filename(data_filename));
+  data_config.set("STAT_OUTPUT_FILENAME", get_output_filename(data_filename));
 
   set_defaults(data_config);
 
@@ -70,16 +70,22 @@ static void set_default(ska::pst::common::AsciiHeader& config, const char* key, 
 {
   if (!config.has(key))
   {
-    SPDLOG_WARN("ska::pst::stat::FileProcessor::set_defaults {} not specified in data header set to default value of {}", key, default_value);
+    SPDLOG_WARN("ska::pst::stat::FileProcessor::set_default {} not specified in data header set to default value of {}", key, default_value);
     config.set(key, default_value);
   }
 }
 
 void ska::pst::stat::FileProcessor::set_defaults(ska::pst::common::AsciiHeader& config)
 {
-  set_default (config, "STAT_NREBIN", 256); // NOLINT
-  set_default (config, "STAT_REQ_TIME_BINS", 4); // NOLINT
-  set_default (config, "STAT_REQ_FREQ_BINS", 4); // NOLINT  
+  set_default(config, "STAT_NREBIN", 256); // NOLINT
+
+  /*
+   note that StatProcessor::calc_bins adjusts req_time_bins and req_freq_bins
+   to evenly divide the number of time samples and frequency channels.
+   */
+
+  set_default(config, "STAT_REQ_TIME_BINS", 1024); // NOLINT
+  set_default(config, "STAT_REQ_FREQ_BINS", 1024); // NOLINT
 }
 
 void ska::pst::stat::FileProcessor::process()

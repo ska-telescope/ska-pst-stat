@@ -229,7 +229,7 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
   std::vector<int16_t> data = {
     // Pol A - sample 1 - 8
      -4,  19,  17,   6,  -2,   2,   0,  15,  15,   3,  15,   8, -11, -21, -18,   2, // NOLINT
-    // Pol A - sample 1 - 8
+    // Pol A - sample 9 - 16
     -11,   9,  -3,   5,  -4, -13,  12,  -1,   5,  10,  21,   0,  25,  -2,   0,  12, // NOLINT
     // Pol A - sample 17 - 24
       8,  -6,  -8,  23, -11,  -6,  28,   3,  32,  -2,  17,   6,  -8,   4,  -9,   0, // NOLINT
@@ -252,7 +252,7 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
   std::vector<char> weights(weights_length);
   auto scale = reinterpret_cast<float*>(weights.data());
   *scale = 1.0;
-  auto wt = reinterpret_cast<uint16_t*>(weights.data() + sizeof(float));
+  auto wt = reinterpret_cast<uint16_t*>(weights.data() + sizeof(float)); // NOLINT
   *wt = 1;
 
   ska::pst::common::SegmentProducer::Segment segment;
@@ -383,12 +383,12 @@ TEST_F(StatComputerTest, test_masked_channels) // NOLINT
   unsigned weights_length = sizeof(float) + nchan * sizeof(uint16_t);
   std::vector<char> weights(weights_length);
   auto scale = reinterpret_cast<float*>(weights.data());
-  auto wt = reinterpret_cast<uint16_t*>(weights.data() + sizeof(float));
+  auto wt = reinterpret_cast<uint16_t*>(weights.data() + sizeof(float)); // NOLINT
 
   *scale = 1.0;
   for (unsigned i=0; i<nchan; i++)
   {
-    wt[i] = 1;
+    wt[i] = 1; // NOLINT
   }
 
   ska::pst::common::SegmentProducer::Segment segment;
@@ -660,12 +660,12 @@ TEST_F(StatComputerTest, test_clipped_channels) // NOLINT
   unsigned weights_length = sizeof(float) + nchan * sizeof(uint16_t);
   std::vector<char> weights(weights_length);
   auto scale = reinterpret_cast<float*>(weights.data());
-  auto wt = reinterpret_cast<uint16_t*>(weights.data() + sizeof(float));
+  auto wt = reinterpret_cast<uint16_t*>(weights.data() + sizeof(float)); // NOLINT
 
   *scale = 1.0;
   for (unsigned i=0; i<nchan; i++)
   {
-    wt[i] = 1;
+    wt[i] = 1; // NOLINT
   }
 
   ska::pst::common::SegmentProducer::Segment segment;

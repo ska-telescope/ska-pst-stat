@@ -44,7 +44,10 @@ ska::pst::stat::StatStorage::StatStorage(const ska::pst::common::AsciiHeader& co
   ndim = config.get_uint32("NDIM");
   nchan = config.get_uint32("NCHAN");
   nbin = 1 << config.get_uint32("NBIT");
-  nrebin = config.get_uint32("STAT_NREBIN");
+  if (config.has("STAT_NREBIN"))
+  {
+    nrebin = config.get_uint32("STAT_NREBIN");
+  }
   SPDLOG_DEBUG("ska::pst::stat::StatStorage::StatStorage npol={} ndim={} nchan={} nbin={} nrebin={}",
     npol, ndim, nchan, nbin, nrebin);
 }

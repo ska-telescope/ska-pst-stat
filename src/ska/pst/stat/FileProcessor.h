@@ -92,7 +92,7 @@ namespace ska::pst::stat {
        *
        * @param data_config the header from the data file
        * @param weights_config the header from the weights file
-       * 
+       *
        * This test should be migrated to ska::pst::common::HeapLayout (see https://jira.skatelescope.org/browse/AT3-534)
        *
       */
