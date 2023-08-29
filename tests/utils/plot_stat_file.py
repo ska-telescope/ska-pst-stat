@@ -10,7 +10,7 @@ from matplotlib.colors import LogNorm
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def plot_set_file(stat_filename: pathlib.Path) -> None:
+def plot_set_file(stat_filename: pathlib.Path, contour_plots=False) -> None:
 
   with h5py.File(stat_filename, "r") as f:
 
@@ -69,21 +69,33 @@ def plot_set_file(stat_filename: pathlib.Path) -> None:
                       ebins[i][j] = (nbin-1)-k
       ibin = np.amin(sbins)
       jbin = np.amax(ebins)
+      mid_bin = nbin / 2
+      max_dist_bin = max(abs(mid_bin-ibin), abs(mid_bin-jbin))
+      ibin = max(0, int(mid_bin - max_dist_bin))
+      jbin = min(nbin-1, int(mid_bin + max_dist_bin))
+
+      hist2d_key = "HISTOGRAM_REBINNED_2D_FREQ_AVG"
+      hist2d_ds_obj = f[hist2d_key]  # returns a h5py dataset object
+      hist2d_arr = hist2d_ds_obj[()]  # returns a numpy array
+      logger.info(f"Shape of {hist2d_key} array: {hist2d_arr.shape}")  # pylint: disable=no-member
+      nrebin = hist2d_arr.shape[2]  # pylint: disable=no-member
+
+      fig = plt.figure(figsize=(8,8))
+      fig.suptitle("PST Voltage Recorder Statistics")
 
       # generating plots
-      ax = plt.GridSpec(4, 1)
-      ax.update(wspace=0.1, hspace=0.3)
-
-      ax1 = plt.subplot(ax[0, 0])
-      ax2 = plt.subplot(ax[1, 0])
-      ax3 = plt.subplot(ax[2, 0])
-      ax4 = plt.subplot(ax[3, 0])
+      gs = plt.GridSpec(5, 2, wspace=0.5, hspace=0.3)
+      ax1 = plt.subplot(gs[0, :])
+      ax2 = plt.subplot(gs[1, :])
+      ax3 = plt.subplot(gs[2, :])
+      ax4 = plt.subplot(gs[3:, 0])
+      ax5 = plt.subplot(gs[3:, 1])
 
       mean = np.mean(sg_arr[0])
       stddev = np.std(sg_arr[0])
-      minval = mean - 1 * stddev
-      maxval = mean + 1 * stddev
-      im = ax1.imshow(sg_arr[0], vmin=minval, vmax=maxval, aspect='auto')
+      minval = mean - 2 * stddev
+      maxval = mean + 2 * stddev
+      im = ax1.imshow(sg_arr[0], origin='lower', vmin=minval, vmax=maxval, aspect='auto')
       ax1.set_ylabel("Channel")
 
       ax2.plot(mean0[2], label='polA')
@@ -95,12 +107,22 @@ def plot_set_file(stat_filename: pathlib.Path) -> None:
       ax3.set_xlabel("Channel")
       ax3.set_ylabel("Power")
 
-      ax4.set_xlim([xbins[int(ibin)], xbins[int(jbin)]])
+      ax4.set_xlim([xbins[ibin], xbins[jbin]])
       ax4.plot(xbins, hist_arr[0][0], label='polA')
       ax4.plot(xbins, hist_arr[1][0], label='polB')
       ax4.set_xlabel("Input state")
       ax4.set_ylabel("Counts")
       ax4.legend()
+
+      n = nrebin/2
+      if contour_plots:
+        x = np.arange(-n, n)
+        y = np.arange(-n, n)
+        im = ax5.contour(x, y, hist2d_arr[0])
+      else:
+        im = ax5.imshow(hist2d_arr[0], origin='lower',  aspect='auto', extent=(-n, n, -n, n))
+      ax5.set_xlabel("Real")
+      ax5.set_ylabel("Imag")
 
       plt.show()
 
@@ -114,5 +136,6 @@ if __name__ == "__main__":
         type=pathlib.Path,
         help="PST Statistics File in HDF5 format.",
     )
+    p.add_argument("-c", "--contour", action="store_true", help="Plot contoured histogram instead of heat map")
     args = p.parse_args()
-    plot_set_file(args.stat_filename)
+    plot_set_file(args.stat_filename, contour_plots=args.contour)
