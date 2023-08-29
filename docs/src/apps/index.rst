@@ -54,7 +54,7 @@ To generate a stats file that can be used with this script, use the ska_pst_gene
     ska_pst_generate_file -d /mnt/ska-pst-stat/src/ska/pst/stat/tests/data/data_header_LowAA0.5.txt -w /mnt/ska-pst-stat/src/ska/pst/stat/tests/data/weights_header_LowAA0.5.txt -s GaussianNoise -T 0.1
 
     # This command will generate the HDF5 statistics file
-    ska_pst_stat_file_proc -d data/2023-02-14-22:15:37_0000000000000000_000000.dada weights/2023-02-14-22:15:37_0000000000000000_000000.dada
+    ska_pst_stat_file_proc -d data/2023-02-14-22:15:37_0000000000000000_000000.dada -w weights/2023-02-14-22:15:37_0000000000000000_000000.dada
 Data files
 
     # the generated HDF5 statistics file will then be produced in the /tmp/stat directory.

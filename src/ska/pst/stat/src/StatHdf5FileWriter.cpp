@@ -30,6 +30,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <H5Cpp.h>
+#include <H5Exception.h>
 #include <iostream>
 #include <spdlog/spdlog.h>
 #include <stdexcept>
@@ -148,36 +149,47 @@ void ska::pst::stat::StatHdf5FileWriter::publish()
   write_1d_vec_header(storage->timeseries_bins, header.timeseries_bins);
 
   std::vector<char> temp_data;
+  std::string stat_filename = config.get_val("STAT_OUTPUT_FILENAME");
+  try
+  {
+    SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::publish opening file: {}", stat_filename);
+    file = std::make_shared<H5::H5File>(stat_filename, H5F_ACC_TRUNC);
 
-  file = std::make_shared<H5::H5File>(config.get_val("STAT_OUTPUT_FILENAME"), H5F_ACC_TRUNC);
+    auto header_datatype = get_hdf5_header_datatype();
 
-  auto header_datatype = get_hdf5_header_datatype();
+    // Define the dataset dimensions
+    const int rank = 1;
+    std::array<hsize_t, rank> dims = {1};
 
-  // Define the dataset dimensions
-  const int rank = 1;
-  std::array<hsize_t, rank> dims = {1};
+    SPDLOG_TRACE("ska::pst::stat::StatHdf5FileWriter::publish creating HEADER dataset");
+    H5::DataSpace header_dataspace(rank, &dims[0]);
+    H5::DataSet header_dataset = file->createDataSet("HEADER", header_datatype, header_dataspace);
+    header_dataset.write(&header, header_datatype);
 
-  H5::DataSpace header_dataspace(rank, &dims[0]);
-  H5::DataSet header_dataset = file->createDataSet("HEADER", header_datatype, header_dataspace);
-  header_dataset.write(&header, header_datatype);
+    write_2d_vec<float>(storage->mean_frequency_avg, "MEAN_FREQUENCY_AVG", H5::PredType::NATIVE_FLOAT, temp_data);
+    write_2d_vec<float>(storage->mean_frequency_avg_masked, "MEAN_FREQUENCY_AVG_MASKED", H5::PredType::NATIVE_FLOAT, temp_data);
+    write_2d_vec<float>(storage->variance_frequency_avg, "VARIANCE_FREQUENCY_AVG", H5::PredType::NATIVE_FLOAT, temp_data);
+    write_2d_vec<float>(storage->variance_frequency_avg_masked, "VARIANCE_FREQUENCY_AVG_MASKED", H5::PredType::NATIVE_FLOAT, temp_data);
+    write_3d_vec<float>(storage->mean_spectrum, "MEAN_SPECTRUM", H5::PredType::NATIVE_FLOAT, temp_data);
+    write_3d_vec<float>(storage->variance_spectrum, "VARIANCE_SPECTRUM", H5::PredType::NATIVE_FLOAT, temp_data);
+    write_2d_vec<float>(storage->mean_spectral_power, "MEAN_SPECTRAL_POWER", H5::PredType::NATIVE_FLOAT, temp_data);
+    write_2d_vec<float>(storage->max_spectral_power, "MAX_SPECTRAL_POWER", H5::PredType::NATIVE_FLOAT, temp_data);
+    write_3d_vec<uint32_t>(storage->histogram_1d_freq_avg, "HISTOGRAM_1D_FREQ_AVG", H5::PredType::NATIVE_UINT32, temp_data);
+    write_3d_vec<uint32_t>(storage->rebinned_histogram_2d_freq_avg, "HISTOGRAM_REBINNED_2D_FREQ_AVG", H5::PredType::NATIVE_UINT32, temp_data);
+    write_3d_vec<uint32_t>(storage->histogram_1d_freq_avg_masked, "HISTOGRAM_1D_FREQ_AVG_MASKED", H5::PredType::NATIVE_UINT32, temp_data);
+    write_3d_vec<uint32_t>(storage->num_clipped_samples_spectrum, "NUM_CLIPPED_SAMPLES_SPECTRUM", H5::PredType::NATIVE_UINT32, temp_data);
+    write_2d_vec<uint32_t>(storage->num_clipped_samples, "NUM_CLIPPED_SAMPLES", H5::PredType::NATIVE_UINT32, temp_data);
+    write_3d_vec<float>(storage->spectrogram, "SPECTROGRAM", H5::PredType::NATIVE_FLOAT, temp_data);
+    write_3d_vec<float>(storage->timeseries, "TIMESERIES", H5::PredType::NATIVE_FLOAT, temp_data);
+    write_3d_vec<float>(storage->timeseries_masked, "TIMESERIES_MASKED", H5::PredType::NATIVE_FLOAT, temp_data);
 
-  write_2d_vec<float>(storage->mean_frequency_avg, "MEAN_FREQUENCY_AVG", H5::PredType::NATIVE_FLOAT, temp_data);
-  write_2d_vec<float>(storage->mean_frequency_avg_masked, "MEAN_FREQUENCY_AVG_MASKED", H5::PredType::NATIVE_FLOAT, temp_data);
-  write_2d_vec<float>(storage->variance_frequency_avg, "VARIANCE_FREQUENCY_AVG", H5::PredType::NATIVE_FLOAT, temp_data);
-  write_2d_vec<float>(storage->variance_frequency_avg_masked, "VARIANCE_FREQUENCY_AVG_MASKED", H5::PredType::NATIVE_FLOAT, temp_data);
-  write_3d_vec<float>(storage->mean_spectrum, "MEAN_SPECTRUM", H5::PredType::NATIVE_FLOAT, temp_data);
-  write_3d_vec<float>(storage->variance_spectrum, "VARIANCE_SPECTRUM", H5::PredType::NATIVE_FLOAT, temp_data);
-  write_2d_vec<float>(storage->mean_spectral_power, "MEAN_SPECTRAL_POWER", H5::PredType::NATIVE_FLOAT, temp_data);
-  write_2d_vec<float>(storage->max_spectral_power, "MAX_SPECTRAL_POWER", H5::PredType::NATIVE_FLOAT, temp_data);
-  write_3d_vec<uint32_t>(storage->histogram_1d_freq_avg, "HISTOGRAM_1D_FREQ_AVG", H5::PredType::NATIVE_UINT32, temp_data);
-  write_3d_vec<uint32_t>(storage->histogram_1d_freq_avg_masked, "HISTOGRAM_1D_FREQ_AVG_MASKED", H5::PredType::NATIVE_UINT32, temp_data);
-  write_3d_vec<uint32_t>(storage->num_clipped_samples_spectrum, "NUM_CLIPPED_SAMPLES_SPECTRUM", H5::PredType::NATIVE_UINT32, temp_data);
-  write_2d_vec<uint32_t>(storage->num_clipped_samples, "NUM_CLIPPED_SAMPLES", H5::PredType::NATIVE_UINT32, temp_data);
-  write_3d_vec<float>(storage->spectrogram, "SPECTROGRAM", H5::PredType::NATIVE_FLOAT, temp_data);
-  write_3d_vec<float>(storage->timeseries, "TIMESERIES", H5::PredType::NATIVE_FLOAT, temp_data);
-  write_3d_vec<float>(storage->timeseries_masked, "TIMESERIES_MASKED", H5::PredType::NATIVE_FLOAT, temp_data);
-
-  file->close();
+    file->close();
+  }
+  catch (H5::Exception& exc)
+  {
+    SPDLOG_ERROR("ska::pst::stat::StatHdf5FileWriter::publish H5::Exception when writing to {}: {}", stat_filename, exc.getDetailMsg());
+    throw std::runtime_error("Unable to write HDF5 file");
+  }
 }
 
 void ska::pst::stat::StatHdf5FileWriter::write_array(

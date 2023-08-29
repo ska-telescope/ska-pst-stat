@@ -249,6 +249,12 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
   const int binning_offset = 1 << (nbit - 1);
   const int max_bin = (1 << nbit) - 1;
 
+  // for the rebinned histograms, no changes are required for NBIT=8, but for NBIT=16, the values -128 to 127 will
+  // be used. Any excess values will be clipped in the rebinned histograms, but will not result in increments
+  // to the number of clipped samples.
+  const int rebinning_offset = 128;
+  const int max_rebin = storage->get_nrebin() - 1;
+
   uint32_t packet_number{0};
   std::vector<uint32_t> pol_samples(npol,  0);
   std::vector<uint32_t> pol_samples_masked(npol,  0);
@@ -396,6 +402,14 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
             storage->histogram_1d_freq_avg[ipol][I_IDX][value_i_bin] += 1;
             storage->histogram_1d_freq_avg[ipol][Q_IDX][value_q_bin] += 1;
 
+            // 1D and 2D rebinned histograms always used nrebin bins
+            const int value_i_rebin = std::max(std::min(static_cast<int>(value_i_int) + rebinning_offset, max_rebin), 0);
+            const int value_q_rebin = std::max(std::min(static_cast<int>(value_q_int) + rebinning_offset, max_rebin), 0);
+
+            storage->rebinned_histogram_2d_freq_avg[ipol][value_i_rebin][value_q_rebin] += 1;
+            storage->rebinned_histogram_1d_freq_avg[ipol][I_IDX][value_i_rebin] += 1;
+            storage->rebinned_histogram_1d_freq_avg[ipol][Q_IDX][value_q_rebin] += 1;
+
             if (value_i_bin == 0 || value_i_bin == max_bin) {
               storage->num_clipped_samples_spectrum[ipol][I_IDX][ochan] += 1;
               storage->num_clipped_samples[ipol][I_IDX] += 1;
@@ -432,6 +446,10 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
               // 1D histogram bins - masked
               storage->histogram_1d_freq_avg_masked[ipol][I_IDX][value_i_bin] += 1;
               storage->histogram_1d_freq_avg_masked[ipol][Q_IDX][value_q_bin] += 1;
+
+              // 2D histogram bins - masked
+              storage->rebinned_histogram_2d_freq_avg_masked[ipol][value_i_rebin][value_q_rebin] += 1;
+              storage->rebinned_histogram_2d_freq_avg_masked[ipol][value_i_rebin][value_q_rebin] += 1;
 
               storage->timeseries_masked[ipol][temporal_bin][TS_MAX_IDX] = std::max(storage->timeseries_masked[ipol][temporal_bin][TS_MAX_IDX], power);
               storage->timeseries_masked[ipol][temporal_bin][TS_MIN_IDX] = std::min(storage->timeseries_masked[ipol][temporal_bin][TS_MIN_IDX], power);
