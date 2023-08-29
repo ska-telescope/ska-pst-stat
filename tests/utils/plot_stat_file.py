@@ -71,8 +71,8 @@ def plot_set_file(stat_filename: pathlib.Path, contour_plots=False) -> None:
       jbin = np.amax(ebins)
       mid_bin = nbin / 2
       max_dist_bin = max(abs(mid_bin-ibin), abs(mid_bin-jbin))
-      ibin = int(mid_bin - max_dist_bin)
-      jbin = int(mid_bin + max_dist_bin)
+      ibin = max(0, int(mid_bin - max_dist_bin))
+      jbin = min(nbin-1, int(mid_bin + max_dist_bin))
 
       hist2d_key = "HISTOGRAM_REBINNED_2D_FREQ_AVG"
       hist2d_ds_obj = f[hist2d_key]  # returns a h5py dataset object
@@ -93,9 +93,9 @@ def plot_set_file(stat_filename: pathlib.Path, contour_plots=False) -> None:
 
       mean = np.mean(sg_arr[0])
       stddev = np.std(sg_arr[0])
-      minval = mean - 1 * stddev
-      maxval = mean + 1 * stddev
-      im = ax1.imshow(sg_arr[0], vmin=minval, vmax=maxval, aspect='auto')
+      minval = mean - 2 * stddev
+      maxval = mean + 2 * stddev
+      im = ax1.imshow(sg_arr[0], origin='lower', vmin=minval, vmax=maxval, aspect='auto')
       ax1.set_ylabel("Channel")
 
       ax2.plot(mean0[2], label='polA')
