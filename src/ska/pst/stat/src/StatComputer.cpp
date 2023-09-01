@@ -206,27 +206,43 @@ void ska::pst::stat::StatComputer::compute(const ska::pst::common::SegmentProduc
     return;
   }
 
-  // assert segment.data.size is a multiple of data_heap_stride
-  // might be at the end of the file - may not have a full heap
-  if (segment.data.size % heap_layout.get_data_heap_stride() != 0)
+  const uint32_t nheaps = segment.data.size / heap_layout.get_data_heap_stride();
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::compute - nheaps={}", nheaps);
+  if (nheaps == 0)
   {
     std::stringstream error_msg;
     error_msg << "ska::pst::stat::StatComputer::compute - expected segment.data.size " << segment.data.size <<
-      " to be a multiple of data_heap_stride " << heap_layout.get_data_heap_stride();
+      " to be at least the size of data_heap_stride " << heap_layout.get_data_heap_stride();
 
     SPDLOG_ERROR(error_msg.str());
     throw std::runtime_error(error_msg.str());
   }
-  const uint32_t nheaps = segment.data.size / heap_layout.get_data_heap_stride();
+
+  // warn if segment.data.size is not a multiple of data_heap_stride
+  // might be at the end of the file - may not have a full heap
+  if (segment.data.size % heap_layout.get_data_heap_stride() != 0)
+  {
+    auto data_size = nheaps * heap_layout.get_data_heap_stride();
+    SPDLOG_WARN("ska::pst::stat::StatComputer::compute - effectively using only {} bytes from segment data", data_size);
+  }
+
+  // this will get the whole number of heaps to use, ignoring the partial heap
   auto expected_num_packets = nheaps * heap_layout.get_packets_per_heap();
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::compute - expected_num_packets={}", expected_num_packets);
 
   // assert segment.weights.size is a multiple weights_packet_stride - do we have enough weights?
   auto expected_weights_size = expected_num_packets * heap_layout.get_weights_packet_stride();
   if (segment.weights.size != expected_weights_size) {
-    std::stringstream error_msg;
-    error_msg << "ska::pst::stat::StatComputer::compute - expected segment.weights.size " << segment.weights.size << " to be equal to " << expected_weights_size;
-    SPDLOG_ERROR(error_msg.str());
-    throw std::runtime_error(error_msg.str());
+    SPDLOG_WARN("ska::pst::stat::StatComputer::compute - expected segment.weights.size {} to be equal to {}",
+      segment.weights.size, expected_weights_size
+    );
+    if (segment.weights.size < expected_weights_size) {
+      std::stringstream error_msg;
+      error_msg << "ska::pst::stat::StatComputer::compute - expected segment.weights.size " << segment.weights.size << " to be equal to " << expected_weights_size;
+      SPDLOG_ERROR(error_msg.str());
+      throw std::runtime_error(error_msg.str());
+    }
+    SPDLOG_WARN("ska::pst::stat::StatComputer::compute - effectively using only {} bytes from segment weights", expected_weights_size);
   }
 
   // unpack the 8 or 16 bit signed integers
@@ -253,7 +269,7 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
   // be used. Any excess values will be clipped in the rebinned histograms, but will not result in increments
   // to the number of clipped samples.
   const int rebinning_offset = 128;
-  const int max_rebin = storage->get_nrebin() - 1;
+  const int max_rebin = static_cast<int>(storage->get_nrebin()) - 1;
 
   uint32_t packet_number{0};
   std::vector<uint32_t> pol_samples(npol,  0);
@@ -449,7 +465,8 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
 
               // 2D histogram bins - masked
               storage->rebinned_histogram_2d_freq_avg_masked[ipol][value_i_rebin][value_q_rebin] += 1;
-              storage->rebinned_histogram_2d_freq_avg_masked[ipol][value_i_rebin][value_q_rebin] += 1;
+              storage->rebinned_histogram_1d_freq_avg_masked[ipol][I_IDX][value_i_rebin] += 1;
+              storage->rebinned_histogram_1d_freq_avg_masked[ipol][Q_IDX][value_q_rebin] += 1;
 
               storage->timeseries_masked[ipol][temporal_bin][TS_MAX_IDX] = std::max(storage->timeseries_masked[ipol][temporal_bin][TS_MAX_IDX], power);
               storage->timeseries_masked[ipol][temporal_bin][TS_MIN_IDX] = std::min(storage->timeseries_masked[ipol][temporal_bin][TS_MIN_IDX], power);

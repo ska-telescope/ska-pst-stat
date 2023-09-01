@@ -89,8 +89,34 @@ namespace ska::pst::stat::test {
         return sp->get_weights_config().get_uint32("RESOLUTION");
       };
 
+      size_t get_data_packet_size() {
+        auto npol = sp->get_data_config().get_uint32("NPOL");
+        auto ndim = sp->get_data_config().get_uint32("NDIM");
+        auto nbit = sp->get_data_config().get_uint32("NBIT");
+        auto nsamp = sp->get_data_config().get_uint32("UDP_NSAMP");
+        auto nchan_per_packet = sp->get_data_config().get_uint32("UDP_NCHAN");
+
+        return static_cast<size_t>(npol * ndim * nbit * nsamp * nchan_per_packet / ska::pst::common::bits_per_byte);
+      }
+
+      size_t get_weights_packet_size() {
+        auto npol = sp->get_weights_config().get_uint32("NPOL");
+        auto ndim = sp->get_weights_config().get_uint32("NDIM");
+        auto packet_scale_size = sp->get_weights_config().get_uint32("PACKET_SCALES_SIZE");
+        auto packet_weights_size = sp->get_weights_config().get_uint32("PACKET_WEIGHTS_SIZE");
+
+        return static_cast<size_t>(npol * ndim * (packet_scale_size + packet_weights_size));
+      }
+
+      size_t get_packets_per_resolution() {
+        auto resolution = get_data_length();
+        auto packet_size = get_data_packet_size();
+
+        return resolution / packet_size;
+      }
+
       void init_segment();
-      
+
       std::vector<char> data_block;
       std::vector<char> weights_block;
 

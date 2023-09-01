@@ -102,35 +102,70 @@ void ska::pst::stat::StatProcessor::process(const ska::pst::common::SegmentProdu
   uint32_t nbytes_per_sample = data_config.compute_bits_per_sample() / ska::pst::common::bits_per_byte;
 
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process nbytes_per_sample={}", nbytes_per_sample);
-  if (nbytes_per_sample <= 0)
+  if (nbytes_per_sample == 0)
   {
-    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process nbytes_per_sample not greater than 0");
-    throw std::runtime_error("ska::pst::stat::StatProcessor::process nbytes_per_sample not greater than 0");
+    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process nbytes_per_sample equals 0");
+    throw std::runtime_error("ska::pst::stat::StatProcessor::process nbytes_per_sample equals 0");
   }
 
-  if (segment.data.size == 0 || segment.weights.size == 0)
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process segment.data.size={}", segment.data.size);
+  if (segment.data.size == 0)
   {
-    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process nbytes_per_sample not greater than 0");
-    throw std::runtime_error(std::string("ska::pst::stat::StatProcessor::process segment.data.size={} nbytes_per_sample={}", segment.data.size, nbytes_per_sample));
+    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process segment.data.size equals 0");
+    throw std::runtime_error("ska::pst::stat::StatProcessor::process segment.data.size equals 0");
   }
 
-  uint32_t nsamp_block = segment.data.size / nbytes_per_sample;
-  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process nsamp_block={}", nsamp_block);
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process segment.weights.size={}", segment.weights.size);
+  if (segment.weights.size == 0)
+  {
+    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process segment.weights.size equals 0");
+    throw std::runtime_error("ska::pst::stat::StatProcessor::process segment.weights.size equals 0");
+  }
+
   if (data_resolution % nbytes_per_sample != 0)
   {
     SPDLOG_ERROR("ska::pst::stat::StatProcessor::process data_resolution \% nbytes_per_sample={}", (data_resolution % nbytes_per_sample));
     throw std::runtime_error("ska::pst::stat::StatProcessor::process data resolution not a multiple of nbytes_per_sample");
   }
-  if (segment.data.size % data_resolution != 0)
+
+  auto num_data_heaps = segment.data.size / data_resolution;
+  auto num_weights_heaps = segment.weights.size / weights_resolution;
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process num_data_heaps={}", num_data_heaps);
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process num_weights_heaps={}", num_weights_heaps);
+  if (num_data_heaps == 0)
   {
     SPDLOG_ERROR("ska::pst::stat::StatProcessor::process segment.data.size \% data_resolution={}", (segment.data.size % data_resolution));
-    throw std::runtime_error("ska::pst::stat::StatProcessor::process block length not a multiple of data_resolution");
+    throw std::runtime_error("ska::pst::stat::StatProcessor::process block length of data to process is effectively 0 bytes");
   }
-  if (segment.weights.size % weights_resolution != 0)
+
+  if (num_weights_heaps == 0)
   {
     SPDLOG_ERROR("ska::pst::stat::StatProcessor::process segment.weights.size \% weights_resolution={}", (segment.weights.size % weights_resolution));
-    throw std::runtime_error("ska::pst::stat::StatProcessor::process block length not a multiple of weights_resolution");
+    throw std::runtime_error("ska::pst::stat::StatProcessor::process block length of weights to process is effectively 0 bytes");
   }
+
+  if (num_data_heaps != num_weights_heaps)
+  {
+    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process num_data_heaps={}, num_weights_heaps={} are not equal", num_data_heaps, num_weights_heaps);
+    throw std::runtime_error("ska::pst::stat::StatProcessor::process number of heaps in the data and weights is not the same");
+  }
+
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process segment.data.size \% data_resolution={}", (segment.data.size % data_resolution));
+  if (segment.data.size % data_resolution != 0)
+  {
+    SPDLOG_WARN("ska::pst::stat::StatProcessor::process segment.data.size={} is not a multiple of data_resolution={} effectively using only {} bytes",
+      segment.data.size, data_resolution, (num_data_heaps * data_resolution));
+  }
+
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process segment.weights.size \% data_resolution={}", (segment.weights.size % weights_resolution));
+  if (segment.weights.size % weights_resolution != 0)
+  {
+    SPDLOG_WARN("ska::pst::stat::StatProcessor::process segment.weights.size={} is not a multiple of weights_resolution={} effectively using only {} bytes",
+      segment.weights.size, weights_resolution, (num_weights_heaps * weights_resolution));
+  }
+
+  uint32_t nsamp_block = num_data_heaps * data_resolution / nbytes_per_sample;
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process nsamp_block={}", nsamp_block);
 
   uint32_t ntime_bins = calc_bins(nsamp_block, req_time_bins);
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process ntime_bins={}", ntime_bins);
@@ -170,7 +205,7 @@ auto ska::pst::stat::StatProcessor::calc_bins(uint32_t block_length, uint32_t re
     }
   }
 
-  // at worse use the number of channels.  This has a nbin_factor of 1
+  // at worse use the block_length as this has a nbin_factor of 1
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::calc_bins unable to find a factor close to {} using {} bins", req_bins, block_length);
   return block_length;
 }

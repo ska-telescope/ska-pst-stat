@@ -29,6 +29,11 @@ StatStorage instance.
 This is not threadsafe, calls to the *process* method should ensure that
 the calls to it are threadsafe.
 
+The StatProcessor asserts that there is data at least the length of one
+RESOLUTION bytes (i.e. NPOL * NDIM * NBITS * NCHAN * UDP_NSAMP / 8).
+If there is a fractional amount it will only calculate the statistics of
+an integer multiple of RESOLUTION bytes.
+
 StatComputer
 ^^^^^^^^^^^^
 
@@ -37,7 +42,7 @@ This class is the main class for performing the statisical computations.
 This class is designed to be re-used between different blocks of data
 perform a calculation and updates the StatStorage struct.
 
-TODO - document the stats computed
+See the StatHdf5FileWriter section for the output statistics that are calculated.
 
 StatHdf5FileWriter
 ^^^^^^^^^^^^^^^^^^
@@ -90,6 +95,10 @@ The output data of the HDF5 includes the following datasets:
   * MAX_SPECTRAL_POWER - maximum power of the data for each polarisation and channel.
   * HISTOGRAM_1D_FREQ_AVG - histogram of the input data integer states for each polarisation and dimension, averaged over all channels.
   * HISTOGRAM_1D_FREQ_AVG_MASKED - histogram of the input data integer states for each polarisation and dimension, averaged over all channels, expect those flagged for RFI.
+  * HISTOGRAM_REBINNED_2D_FREQ_AVG - rebinned 2D histogram of the input data integer states for each polarisation, averaged over all channels.
+  * HISTOGRAM_REBINNED_2D_FREQ_AVG_MASKED - rebinned 2D histogram of the input data integer states for each polarisation, averaged over all channels, expect those flagged for RFI.
+  * HISTOGRAM_REBINNED_1D_FREQ_AVG - rebinned histogram of the input data integer states for each polarisation and dimension, averaged over all channels
+  * HISTOGRAM_REBINNED_1D_FREQ_AVG_MASKED - rebinned histogram of the input data integer states for each polarisation and dimension, averaged over all channels, expect those flagged for RFI.
   * NUM_CLIPPED_SAMPLES_SPECTRUM - number of clipped input samples (maximum level) for each polarisation, dimension and channel.
   * NUM_CLIPPED_SAMPLES - number of clipped input samples (maximum level) for each polarisation, dimension.
   * SPECTROGRAM - spectrogram of the data for each polarisation, rebinned in frequency to NCHAN_DS bins and in time to NDAT_DS bins.

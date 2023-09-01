@@ -33,6 +33,7 @@
 #include <spdlog/spdlog.h>
 #include <string>
 #include <vector>
+#include <cstdlib>
 
 #include "ska/pst/common/utils/AsciiHeader.h"
 #include "ska/pst/common/utils/Timer.h"
@@ -66,7 +67,7 @@ void ska::pst::stat::test::StatProcessorTest::clear_config()
   sp = nullptr;
 }
 
-void ska::pst::stat::test::StatProcessorTest::init_segment ()
+void ska::pst::stat::test::StatProcessorTest::init_segment()
 {
   sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
 
@@ -78,6 +79,8 @@ void ska::pst::stat::test::StatProcessorTest::init_segment ()
   segment.weights.block = weights_block.data();
   segment.weights.size = weights_block.size();
 }
+
+
 
 void StatProcessorTest::SetUp()
 {
@@ -120,6 +123,28 @@ TEST_F(StatProcessorTest, test_construct_delete) // NOLINT
 TEST_F(StatProcessorTest, test_process_valid_values) // NOLINT
 {
   sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
+  ASSERT_NO_THROW(sp->process(segment));
+}
+
+TEST_F(StatProcessorTest, test_process_multiple_heaps) // NOLINT
+{
+  sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
+
+  // 2 to 4 heaps
+  auto nheaps = 2 + (rand() % 3);
+
+  size_t data_length = nheaps * get_data_length();
+  std::vector<char> data_block(data_length);
+
+  size_t weights_length = nheaps * get_weights_length();
+  std::vector<char> weights_block(weights_length);
+
+  ska::pst::common::SegmentProducer::Segment segment;
+  segment.data.block = data_block.data();
+  segment.data.size = data_length;
+  segment.weights.block = weights_block.data();
+  segment.weights.size = weights_length;
+
   ASSERT_NO_THROW(sp->process(segment));
 }
 
@@ -179,7 +204,7 @@ TEST_F(StatProcessorTest, test_process_null_pointer_error) // NOLINT
   EXPECT_ANY_THROW(sp->process(bad_segment));
 }
 
-TEST_F(StatProcessorTest, test_length_multiple_of_resolution) // NOLINT
+TEST_F(StatProcessorTest, test_data_size_less_than_one_resolution) // NOLINT
 {
   sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
 
@@ -194,7 +219,28 @@ TEST_F(StatProcessorTest, test_length_multiple_of_resolution) // NOLINT
   EXPECT_ANY_THROW(sp->process(bad_segment));
 }
 
-TEST_F(StatProcessorTest, test_resolution_multiple_of_bytes_per_sample) // NOLINT
+TEST_F(StatProcessorTest, test_partial_nheap_is_valid) // NOLINT
+{
+  sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
+
+  auto extra_packets = 1 + (rand() % (get_packets_per_resolution() - 1));
+
+  size_t data_length = get_data_length() + extra_packets * get_data_packet_size();
+  std::vector<char> data_block(data_length);
+
+  size_t weights_length = get_weights_length() + extra_packets * get_weights_packet_size();
+  std::vector<char> weights_block(weights_length);
+
+  ska::pst::common::SegmentProducer::Segment segment;
+  segment.data.block = data_block.data();
+  segment.data.size = data_length;
+  segment.weights.block = weights_block.data();
+  segment.weights.size = weights_length;
+
+  EXPECT_NO_THROW(sp->process(segment));
+}
+
+TEST_F(StatProcessorTest, test_resolution_not_multiple_of_bytes_per_sample) // NOLINT
 {
   init_config();
   data_config.set("RESOLUTION", 3);
