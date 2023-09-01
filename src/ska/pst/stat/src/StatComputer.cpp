@@ -465,7 +465,8 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
 
               // 2D histogram bins - masked
               storage->rebinned_histogram_2d_freq_avg_masked[ipol][value_i_rebin][value_q_rebin] += 1;
-              storage->rebinned_histogram_2d_freq_avg_masked[ipol][value_i_rebin][value_q_rebin] += 1;
+              storage->rebinned_histogram_1d_freq_avg_masked[ipol][I_IDX][value_i_rebin] += 1;
+              storage->rebinned_histogram_1d_freq_avg_masked[ipol][Q_IDX][value_q_rebin] += 1;
 
               storage->timeseries_masked[ipol][temporal_bin][TS_MAX_IDX] = std::max(storage->timeseries_masked[ipol][temporal_bin][TS_MAX_IDX], power);
               storage->timeseries_masked[ipol][temporal_bin][TS_MIN_IDX] = std::min(storage->timeseries_masked[ipol][temporal_bin][TS_MIN_IDX], power);

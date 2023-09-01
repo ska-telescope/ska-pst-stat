@@ -175,8 +175,11 @@ void ska::pst::stat::StatHdf5FileWriter::publish()
     write_2d_vec<float>(storage->mean_spectral_power, "MEAN_SPECTRAL_POWER", H5::PredType::NATIVE_FLOAT, temp_data);
     write_2d_vec<float>(storage->max_spectral_power, "MAX_SPECTRAL_POWER", H5::PredType::NATIVE_FLOAT, temp_data);
     write_3d_vec<uint32_t>(storage->histogram_1d_freq_avg, "HISTOGRAM_1D_FREQ_AVG", H5::PredType::NATIVE_UINT32, temp_data);
-    write_3d_vec<uint32_t>(storage->rebinned_histogram_2d_freq_avg, "HISTOGRAM_REBINNED_2D_FREQ_AVG", H5::PredType::NATIVE_UINT32, temp_data);
     write_3d_vec<uint32_t>(storage->histogram_1d_freq_avg_masked, "HISTOGRAM_1D_FREQ_AVG_MASKED", H5::PredType::NATIVE_UINT32, temp_data);
+    write_3d_vec<uint32_t>(storage->rebinned_histogram_2d_freq_avg, "HISTOGRAM_REBINNED_2D_FREQ_AVG", H5::PredType::NATIVE_UINT32, temp_data);
+    write_3d_vec<uint32_t>(storage->rebinned_histogram_2d_freq_avg_masked, "HISTOGRAM_REBINNED_2D_FREQ_AVG_MASKED", H5::PredType::NATIVE_UINT32, temp_data);
+    write_3d_vec<uint32_t>(storage->rebinned_histogram_1d_freq_avg, "HISTOGRAM_REBINNED_1D_FREQ_AVG", H5::PredType::NATIVE_UINT32, temp_data);
+    write_3d_vec<uint32_t>(storage->rebinned_histogram_1d_freq_avg_masked, "HISTOGRAM_REBINNED_1D_FREQ_AVG_MASKED", H5::PredType::NATIVE_UINT32, temp_data);
     write_3d_vec<uint32_t>(storage->num_clipped_samples_spectrum, "NUM_CLIPPED_SAMPLES_SPECTRUM", H5::PredType::NATIVE_UINT32, temp_data);
     write_2d_vec<uint32_t>(storage->num_clipped_samples, "NUM_CLIPPED_SAMPLES", H5::PredType::NATIVE_UINT32, temp_data);
     write_3d_vec<float>(storage->spectrogram, "SPECTROGRAM", H5::PredType::NATIVE_FLOAT, temp_data);
