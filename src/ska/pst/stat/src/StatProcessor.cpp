@@ -104,22 +104,22 @@ void ska::pst::stat::StatProcessor::process(const ska::pst::common::SegmentProdu
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process nbytes_per_sample={}", nbytes_per_sample);
   if (nbytes_per_sample == 0)
   {
-    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process nbytes_per_sample not greater than 0");
-    throw std::runtime_error("ska::pst::stat::StatProcessor::process nbytes_per_sample not greater than 0");
+    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process nbytes_per_sample equals 0");
+    throw std::runtime_error("ska::pst::stat::StatProcessor::process nbytes_per_sample equals 0");
   }
 
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process segment.data.size={}", segment.data.size);
   if (segment.data.size == 0)
   {
-    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process segment.data.size not greater than 0");
-    throw std::runtime_error("ska::pst::stat::StatProcessor::process segment.data.size not greater than 0");
+    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process segment.data.size equals 0");
+    throw std::runtime_error("ska::pst::stat::StatProcessor::process segment.data.size equals 0");
   }
 
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process segment.weights.size={}", segment.weights.size);
   if (segment.weights.size == 0)
   {
-    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process segment.weights.size not greater than 0");
-    throw std::runtime_error("ska::pst::stat::StatProcessor::process segment.weights.size not greater than 0");
+    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process segment.weights.size equals 0");
+    throw std::runtime_error("ska::pst::stat::StatProcessor::process segment.weights.size equals 0");
   }
 
   if (data_resolution % nbytes_per_sample != 0)
@@ -146,8 +146,8 @@ void ska::pst::stat::StatProcessor::process(const ska::pst::common::SegmentProdu
 
   if (num_data_heaps != num_weights_heaps)
   {
-      SPDLOG_ERROR("ska::pst::stat::StatProcessor::process num_data_heaps={}, num_weights_heaps={} are not equal", num_data_heaps, num_weights_heaps);
-      throw std::runtime_error("ska::pst::stat::StatProcessor::process number of heaps in the data and weights is not the same");
+    SPDLOG_ERROR("ska::pst::stat::StatProcessor::process num_data_heaps={}, num_weights_heaps={} are not equal", num_data_heaps, num_weights_heaps);
+    throw std::runtime_error("ska::pst::stat::StatProcessor::process number of heaps in the data and weights is not the same");
   }
 
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process segment.data.size \% data_resolution={}", (segment.data.size % data_resolution));
