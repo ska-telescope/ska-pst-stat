@@ -218,7 +218,7 @@ void ska::pst::stat::StatComputer::compute(const ska::pst::common::SegmentProduc
     throw std::runtime_error(error_msg.str());
   }
 
-  // assert segment.data.size is a multiple of data_heap_stride
+  // warn if segment.data.size is not a multiple of data_heap_stride
   // might be at the end of the file - may not have a full heap
   if (segment.data.size % heap_layout.get_data_heap_stride() != 0)
   {

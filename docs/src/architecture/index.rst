@@ -31,8 +31,8 @@ the calls to it are threadsafe.
 
 The StatProcessor asserts that there is data at least the length of one
 RESOLUTION bytes (i.e. NPOL * NDIM * NBITS * NCHAN * UDP_NSAMP / 8).
-If there is a fractional amount it will only calculate statistics on the an
-integer number RESOLUTION.
+If there is a fractional amount it will only calculate the statistics of
+an integer multiple of RESOLUTION bytes.
 
 StatComputer
 ^^^^^^^^^^^^
