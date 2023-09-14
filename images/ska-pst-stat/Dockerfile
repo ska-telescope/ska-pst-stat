@@ -37,6 +37,7 @@ COPY --from=builder /mnt/dependencies/runtime.apt.txt ./share/
 COPY --from=builder /mnt/src/ska/pst/stat/tests/data/* ./share/
 COPY --from=builder /usr/local/bin/ska_pst_stat* ./bin/
 COPY --from=builder /usr/local/lib/libska_pst*.so ./lib/
+COPY --from=builder /usr/local/lib/lib* ./lib/
 
 # RUNTIME DEPENDENCIES and CLEANUP
 RUN stat share/runtime.apt.txt \
