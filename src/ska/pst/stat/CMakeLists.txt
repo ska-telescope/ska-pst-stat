@@ -14,6 +14,7 @@ set(public_headers
 
 set(sources
   src/FileProcessor.cpp
+  src/StatApplicationManager.cpp
   src/version.cpp
   src/StatStorage.cpp
   src/StatPublisher.cpp
@@ -54,6 +55,7 @@ target_link_libraries(ska_pst_stat
     spdlog::spdlog
     ska_pst_common
     ${PSRDADA_LIBRARIES}
+    ${SkaPstSmrb_LIBRARIES}
     ${HDF5_CXX_LIBRARIES}
 )
 
