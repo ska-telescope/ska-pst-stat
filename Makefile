@@ -36,12 +36,11 @@ OCI_BUILD_ADDITIONAL_ARGS	:=--build-arg SMRB_RUNTIME_IMAGE=${SMRB_RUNTIME_IMAGE}
 .PHONY: docs-pre-build
 docs-pre-build:
 	@rm -rf docs/build/*
-	apt-get update -y
-	apt-get install -y doxygen
-	pip3 install -r docs/requirements.txt
 
 _VENV=.venv
 
 local-apt-install-dependencies:
 	apt-get update -y
 	apt-get install -y `cat dependencies/apt.txt`
+	pip3 install -r docs/requirements.txt
+

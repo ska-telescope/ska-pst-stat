@@ -1,12 +1,12 @@
-@startuml PST STAT Client using datablock sequence
+@startuml PST STAT Client using SmrbSegmentProducer sequence
 actor Client
 Client -> StatApplicationManager: configure beam
 activate StatApplicationManager
-StatApplicationManager -> "Data RB Viewer": connect
-activate "Data RB Viewer"
-StatApplicationManager -> "Weights RB Viewer": connect
-activate "Weights RB Viewer"
+StatApplicationManager -> SmrbSegmentProducer: SmrbSegmentProducer(data_key, weights_key, viewer)
+activate SmrbSegmentProducer
 Client -> StatApplicationManager: configure scan
+StatApplicationManager -> SmrbSegmentProducer: connect
+StatApplicationManager <-- SmrbSegmentProducer: connected
 StatApplicationManager -> StatProcessor: StatProcessor(config)
 activate StatProcessor
 StatApplicationManager <-- StatProcessor: configured
@@ -14,15 +14,10 @@ Client <-- StatApplicationManager: scan configured
 group scan
   Client -> StatApplicationManager: start scan
   StatApplicationManager -> StatApplicationManager: start background processing
-  StatApplicationManager -> "Data RB Viewer": get data header
-  StatApplicationManager -> "Weights RB Viewer": get weights header
-  StatApplicationManager -> StatApplicationManager: validate headers against config
   loop in background while scanning
-      StatApplicationManager -> "Data RB Viewer": get next block
-      StatApplicationManager <-- "Data RB Viewer": return block_ptr
-      StatApplicationManager -> "Weights RB Viewer": get weights for data
-      StatApplicationManager <-- "Weights RB Viewer": return weights_ptr
-      StatApplicationManager -> StatProcessor: process(block_ptr, block_length, weights_ptr, weights_length)
+      StatApplicationManager -> SmrbSegmentProducer: next_segment()
+      StatApplicationManager <-- SmrbSegmentProducer: return segment
+      StatApplicationManager -> StatProcessor: process(segment)
       StatApplicationManager <-- StatProcessor
       StatApplicationManager -> StatApplicationManager: wait stat interval
   end
@@ -34,9 +29,7 @@ StatApplicationManager --> StatProcessor: drop
 deactivate StatProcessor
 Client <-- StatApplicationManager: scan deconfigured
 Client -> StatApplicationManager: deconfigure beam
-StatApplicationManager -> "Data RB Viewer": disconnect
-deactivate "Data RB Viewer"
-StatApplicationManager -> "Weights RB Viewer": disconnect
-deactivate "Weights RB Viewer"
+StatApplicationManager -> SmrbSegmentProducer: disconnect
+deactivate SmrbSegmentProducer
 Client <-- StatApplicationManager: beam deconfigured
 @enduml

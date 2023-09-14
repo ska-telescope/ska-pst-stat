@@ -1,1 +1,4 @@
 libhdf5-dev
+doxygen
+graphviz
+plantuml

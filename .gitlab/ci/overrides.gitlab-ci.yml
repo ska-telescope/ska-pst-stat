@@ -17,3 +17,22 @@ oci-image-build:
 
 oci-image-publish:
   when: manual
+
+docs-pages:
+  script:
+  - time apt-get update -y
+  - time apt-get install -y doxygen graphviz plantuml
+  - make docs-build html
+  - |
+    if [[ -d docs/build/html/ ]]; then
+      mv docs/build/html/ public;
+    else
+      echo "WARNING: no docs/build/html/";
+    fi;
+
+docs-build:
+  script:
+  - time apt-get update -y
+  - time apt-get install -y doxygen graphviz plantuml
+  - make docs-build html
+
