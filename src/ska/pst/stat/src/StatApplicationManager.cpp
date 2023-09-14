@@ -173,7 +173,7 @@ void ska::pst::stat::StatApplicationManager::perform_start_scan()
 void ska::pst::stat::StatApplicationManager::perform_scan()
 {
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan");
-  processor->process();
+  // processor->process();
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan complete");
 }
 
