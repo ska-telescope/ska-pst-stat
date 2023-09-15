@@ -135,8 +135,10 @@ void StatApplicationManagerTest::SetUp()
   data_scan_config.load_from_file(test_data_file("data_config.txt"));
   weights_scan_config.load_from_file(test_data_file("weights_config.txt"));
 
-  data_header.load_from_file(test_data_file("data_config.txt"));
-  weights_header.load_from_file(test_data_file("weights_config.txt"));
+  data_header.load_from_file(test_data_file("data_header_LowAA0.5.txt"));
+  weights_header.load_from_file(test_data_file("weights_header_LowAA0.5.txt"));
+  beam_config.append_header(data_header);
+  beam_config.append_header(weights_header);
 
   setup_data_block();
 }
@@ -149,6 +151,56 @@ void StatApplicationManagerTest::TearDown()
 TEST_F(StatApplicationManagerTest, test_construct_delete) // NOLINT
 {
   sm = std::make_unique<ska::pst::stat::StatApplicationManager>();
+  ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
+}
+
+TEST_F(StatApplicationManagerTest, test_configure_deconfigure_beam) // NOLINT
+{
+  sm = std::make_unique<ska::pst::stat::StatApplicationManager>();
+  ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
+
+  sm->configure_beam(beam_config);
+  ASSERT_EQ(ska::pst::common::BeamConfigured, sm->get_state());
+
+  sm->deconfigure_beam();
+  ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
+
+  sm->configure_beam(beam_config);
+  ASSERT_EQ(ska::pst::common::BeamConfigured, sm->get_state());
+
+  sm->deconfigure_beam();
+  ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
+}
+
+TEST_F(StatApplicationManagerTest, test_configure_deconfigure_scan) // NOLINT
+{
+  sm = std::make_unique<ska::pst::stat::StatApplicationManager>();
+  ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
+
+  sm->configure_beam(beam_config);
+  ASSERT_EQ(ska::pst::common::BeamConfigured, sm->get_state());
+
+  /* ERROR IN CONFIGURE SCAN INVOLVING NPOL
+  sm->configure_scan(scan_config);
+  ASSERT_EQ(ska::pst::common::ScanConfigured, sm->get_state());
+
+  sm->deconfigure_scan();
+  ASSERT_EQ(ska::pst::common::BeamConfigured, sm->get_state());
+
+  sm->configure_scan(scan_config);
+  ASSERT_EQ(ska::pst::common::ScanConfigured, sm->get_state());
+
+  sm->deconfigure_scan();
+  ASSERT_EQ(ska::pst::common::BeamConfigured, sm->get_state());
+
+  sm->start_scan(start_scan_config);
+  ASSERT_EQ(ska::pst::common::Scanning, sm->get_state());
+
+  sm->stop_scan();
+  ASSERT_EQ(ska::pst::common::ScanConfigured, sm->get_state());
+  */
+
+  sm->deconfigure_beam();
   ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
 }
 

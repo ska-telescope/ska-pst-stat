@@ -48,7 +48,7 @@ ska::pst::stat::StatApplicationManager::~StatApplicationManager()
 
 void ska::pst::stat::StatApplicationManager::configure_from_file(const std::string &config_file)
 {
-  SPDLOG_DEBUG("ska::pst::dsp::DiskManager::configure_from_file config_file={}",config_file);
+  SPDLOG_DEBUG("ska::pst::stat::DiskManager::configure_from_file config_file={}",config_file);
   ska::pst::common::AsciiHeader config;
   config.load_from_file(config_file);
   SPDLOG_INFO("ska::pst::stat::StatApplicationManager::configure_from_file config={}",config.raw());
@@ -78,16 +78,19 @@ void ska::pst::stat::StatApplicationManager::validate_configure_beam(const ska::
       if (config.has(config_key))
       {
         SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::validate_configure_beam data {}={}", config_key, config.get_val(config_key));
-        data_beam_config.set_val(config_key, config.get_val(config_key));
+        // data_beam_config.set_val(config_key, config.get_val(config_key));
+        data_beam_config.clone(config);
       } else {
         context->add_missing_field_error(config_key);
       }
-  }// Iterate through the vector and validate existince of required weights header keys
+  }
+  // Iterate through the vector and validate existince of required weights header keys
   for (const std::string& config_key : weights_config_keys) {
       if (config.has(config_key))
       {
         SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::validate_configure_beam weights{}={}", config_key, config.get_val(config_key));
-        weights_beam_config.set_val(config_key, config.get_val(config_key));
+        // weights_beam_config.set_val(config_key, config.get_val(config_key));
+        weights_beam_config.clone(config);
       } else {
         context->add_missing_field_error(config_key);
       }
@@ -137,21 +140,19 @@ void ska::pst::stat::StatApplicationManager::perform_initialise()
 void ska::pst::stat::StatApplicationManager::perform_configure_beam()
 {
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam");
-  // Initialise pointers
-  data_rb_view = std::make_unique<ska::pst::smrb::DataBlockView>(data_beam_config.get_val("DATA_KEY"));
-  weights_rb_view = std::make_unique<ska::pst::smrb::DataBlockView>(weights_beam_config.get_val("WEIGHTS_KEY"));
 
-  // TODO: Refactor data_rb_view and weights_rb_view with SMRB Segment Producer
+  producer = std::make_unique<ska::pst::smrb::SmrbSegmentProducer>(data_beam_config.get_val("DATA_KEY"), weights_beam_config.get_val("WEIGHTS_KEY"));
   // Connect to SMRB
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam data_rb_view->connect({})", timeout);
-  data_rb_view->connect(timeout);
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam data_rb_view->lock()");
-  data_rb_view->lock();
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam producer->connect({})", timeout);
+  producer->connect(timeout);
 
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam weights_rb_view->connect({})", timeout);
-  weights_rb_view->connect(timeout);
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam weights_rb_view->lock()");
-  weights_rb_view->lock();
+  // Copy the rest of the headers
+  // SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam  producer->get_data_header={}", producer->get_data_header().raw());
+  // SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam producer->get_weights_header={}", producer->get_weights_header().raw());
+  // data_beam_config.clone(producer->get_data_header());
+  // weights_beam_config.clone(producer->get_weights_header());
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam data_beam_config={}", data_beam_config.raw());
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam weights_beam_config={}", weights_beam_config.raw());
 
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam complete");
 }
@@ -159,6 +160,9 @@ void ska::pst::stat::StatApplicationManager::perform_configure_beam()
 void ska::pst::stat::StatApplicationManager::perform_configure_scan()
 {
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan");
+  // producer->open();
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan data_beam_config={}", data_beam_config.raw());
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan weights_beam_config={}", weights_beam_config.raw());
   processor = std::make_unique<StatProcessor>(data_beam_config, weights_beam_config);
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan complete");
 }
@@ -173,7 +177,23 @@ void ska::pst::stat::StatApplicationManager::perform_start_scan()
 void ska::pst::stat::StatApplicationManager::perform_scan()
 {
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan");
-  // processor->process();
+  bool eod = false;
+  while (!eod)
+  {
+    SPDLOG_DEBUG("ska::pst::stat::StreamWriter::perform_scan producer->next_segment()");
+    auto segment = producer->next_segment();
+    SPDLOG_DEBUG("ska::pst::stat::StreamWriter::perform_scan opened segment containing {} bytes", segment.data.size);
+
+    if (segment.data.block == nullptr)
+    {
+      SPDLOG_DEBUG("ska::pst::stat::StreamWriter::perform_scan encountered end of data");
+      eod = true;
+    }
+    else
+    {
+      processor->process(segment);
+    }
+  }
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan complete");
 }
 
@@ -185,27 +205,13 @@ void ska::pst::stat::StatApplicationManager::perform_stop_scan()
 void ska::pst::stat::StatApplicationManager::perform_deconfigure_scan()
 {
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_deconfigure_scan");
-  // processor->drop()?
+  producer->close();
 }
 
 void ska::pst::stat::StatApplicationManager::perform_deconfigure_beam()
 {
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_deconfigure_beam");
-  // data_rb_view cleanup
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_deconfigure_beam data_rb_view->unlock()");
-  data_rb_view->unlock();
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_deconfigure_beam data_rb_view->disconnect()");
-  data_rb_view->disconnect();
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_deconfigure_beam data_rb_view.reset()");
-  data_rb_view.reset();
-
-  // weights_rb_view cleanup
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_deconfigure_beam weights_rb_view->unlock()");
-  weights_rb_view->unlock();
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_deconfigure_beam weights_rb_view->disconnect()");
-  weights_rb_view->disconnect();
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_deconfigure_beam weights_rb_view.reset()");
-  weights_rb_view.reset();
+  producer->disconnect();
 
   // beam_config cleanup
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_deconfigure_beam data_beam_config.reset()");
