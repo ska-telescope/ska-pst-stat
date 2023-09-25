@@ -21,7 +21,7 @@ include .make/base.mk
 -include PrivateRules.mak
 
 DEV_IMAGE	?=registry.gitlab.com/ska-telescope/pst/ska-pst-smrb/ska-pst-smrb-builder
-DEV_TAG		?=0.10.2
+DEV_TAG		?=0.10.3
 PROCESSOR_COUNT=${nproc}
 OCI_IMAGE_BUILD_CONTEXT=$(PWD)
 
