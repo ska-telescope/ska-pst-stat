@@ -95,14 +95,14 @@ void ska::pst::stat::StatApplicationManager::validate_configure_beam(const ska::
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::validate_configure_beam complete");
 }
 
-void ska::pst::stat::StatApplicationManager::validate_configure_scan(const ska::pst::common::AsciiHeader& /*config*/, ska::pst::common::ValidationContext *context)
+void ska::pst::stat::StatApplicationManager::validate_configure_scan(const ska::pst::common::AsciiHeader& config, ska::pst::common::ValidationContext *context)
 {
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::validate_configure_scan placeholder");
+  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::validate_configure_scan config={}", config.raw());
 }
 
-void ska::pst::stat::StatApplicationManager::validate_start_scan(const ska::pst::common::AsciiHeader& /*config*/)
+void ska::pst::stat::StatApplicationManager::validate_start_scan(const ska::pst::common::AsciiHeader& config)
 {
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::validate_start_scan placeholder");
+  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::validate_configure_scan config={}", config.raw());
 }
 
 void ska::pst::stat::StatApplicationManager::perform_initialise()

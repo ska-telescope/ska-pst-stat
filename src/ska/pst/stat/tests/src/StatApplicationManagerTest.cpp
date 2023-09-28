@@ -107,12 +107,10 @@ void StatApplicationManagerTest::write_bytes_to_weights_writer(uint64_t bytes_to
 
 void StatApplicationManagerTest::tear_down_data_block()
 {
-  //*
   SPDLOG_TRACE("tear_down_data_block teardown");
   data_helper->teardown();
   weights_helper->teardown();
   SPDLOG_TRACE("tear_down_data_block teardown complete");
-  //*/
 }
 
 void StatApplicationManagerTest::SetUp()
@@ -224,47 +222,45 @@ TEST_F(StatApplicationManagerTest, test_multiple_configure_deconfigure_scan) // 
 
 TEST_F(StatApplicationManagerTest, test_start_stop_scan) // NOLINT
 {
-  SPDLOG_INFO("test_start_stop_scan create StatApplicationManager");
+  SPDLOG_TRACE("test_start_stop_scan create StatApplicationManager");
   sm = std::make_unique<ska::pst::stat::StatApplicationManager>();
   ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
 
-  SPDLOG_INFO("test_start_stop_scan sm->configure_beam");
+  SPDLOG_TRACE("test_start_stop_scan sm->configure_beam");
   sm->configure_beam(beam_config);
   ASSERT_EQ(ska::pst::common::BeamConfigured, sm->get_state());
-  SPDLOG_INFO("test_start_stop_scan sm->configure_beam complete");
+  SPDLOG_TRACE("test_start_stop_scan sm->configure_beam complete");
 
-  SPDLOG_INFO("test_start_stop_scan sm->configure_scan");
+  SPDLOG_TRACE("test_start_stop_scan sm->configure_scan");
   sm->configure_scan(scan_config);
   ASSERT_EQ(ska::pst::common::ScanConfigured, sm->get_state());
-  SPDLOG_INFO("test_start_stop_scan sm->configure_scan complete");
+  SPDLOG_TRACE("test_start_stop_scan sm->configure_scan complete");
 
-  SPDLOG_INFO("test_start_stop_scan sm->start_scan");
+  SPDLOG_TRACE("test_start_stop_scan sm->start_scan");
   sm->start_scan(start_scan_config);
   ASSERT_EQ(ska::pst::common::Scanning, sm->get_state());
-  SPDLOG_INFO("test_start_stop_scan sm->start_scan complete");
+  SPDLOG_TRACE("test_start_stop_scan sm->start_scan complete");
 
   static constexpr float delay_ms = 10;
   size_t constexpr test_nblocks = 64;
   std::thread data_thread = std::thread(&ska::pst::smrb::test::DataBlockTestHelper::write_and_close, data_helper.get(), delay_ms, test_nblocks);
   std::thread weights_thread = std::thread(&ska::pst::smrb::test::DataBlockTestHelper::write_and_close, weights_helper.get(), delay_ms, test_nblocks);
-  // data_helper->write_and_close() // write buffer and clear it
-  // weights_helper->write(5); // write buffer and clear it
   data_thread.join();
   weights_thread.join();
 
-  SPDLOG_INFO("test_start_stop_scan sm->stop_scan");
+  SPDLOG_TRACE("test_start_stop_scan sm->stop_scan");
   sm->stop_scan();
   ASSERT_EQ(ska::pst::common::ScanConfigured, sm->get_state());
-  SPDLOG_INFO("test_start_stop_scan sm->stop_scan complete");
+  SPDLOG_TRACE("test_start_stop_scan sm->stop_scan complete");
 
-  SPDLOG_INFO("test_start_stop_scan sm->deconfigure_scan");
+  SPDLOG_TRACE("test_start_stop_scan sm->deconfigure_scan");
   sm->deconfigure_scan();
   ASSERT_EQ(ska::pst::common::BeamConfigured, sm->get_state());
-  SPDLOG_INFO("test_start_stop_scan sm->deconfigure_scan complete");
-  SPDLOG_INFO("test_start_stop_scan sm->deconfigure_beam");
+  SPDLOG_TRACE("test_start_stop_scan sm->deconfigure_scan complete");
+  SPDLOG_TRACE("test_start_stop_scan sm->deconfigure_beam");
   sm->deconfigure_beam();
   ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
-  SPDLOG_INFO("test_start_stop_scan sm->deconfigure_beam complete");
+  SPDLOG_TRACE("test_start_stop_scan sm->deconfigure_beam complete");
 }
 
 
