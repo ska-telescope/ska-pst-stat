@@ -33,6 +33,8 @@
 #include <spdlog/spdlog.h>
 
 #include "ska/pst/stat/testutils/GtestMain.h"
+#include "ska/pst/smrb/DataBlockRead.h"
+
 #include "ska/pst/stat/tests/StatApplicationManagerTest.h"
 
 auto main(int argc, char* argv[]) -> int
@@ -49,6 +51,7 @@ StatApplicationManagerTest::StatApplicationManagerTest()
 
 void StatApplicationManagerTest::setup_data_block()
 {
+
   static constexpr uint64_t header_nbufs = 4;
   static constexpr uint64_t header_bufsz = 4096;
   static constexpr uint64_t data_nbufs = 8;
@@ -56,74 +59,60 @@ void StatApplicationManagerTest::setup_data_block()
   static constexpr uint64_t bufsz_factor = 16;
   static constexpr unsigned nreaders = 1;
   static constexpr int device = -1;
-  uint64_t data_bufsz = data_header.get_uint64("RESOLUTION") * bufsz_factor;
-  uint64_t weights_bufsz = weights_header.get_uint64("RESOLUTION") * bufsz_factor;
-  SPDLOG_DEBUG("ska::pst::dsp::test::DiskManagerTest::setup_data_block data_bufsz={} weights_bufsz={}", data_bufsz, weights_bufsz);
+  weights_bufsz = weights_header.get_uint64("RESOLUTION") * bufsz_factor;
+  data_bufsz = data_header.get_uint64("RESOLUTION") * bufsz_factor;
 
-  _dbc_data = std::make_unique<ska::pst::smrb::DataBlockCreate>(beam_config.get_val("DATA_KEY"));
-  _dbc_data->create(header_nbufs, header_bufsz, data_nbufs, data_bufsz, nreaders, device);
+  weights_helper = std::make_unique<ska::pst::smrb::test::DataBlockTestHelper>(beam_config.get_val("WEIGHTS_KEY"), 1);
+  data_helper = std::make_unique<ska::pst::smrb::test::DataBlockTestHelper>(beam_config.get_val("DATA_KEY"), 1);
 
-  _writer_data = std::make_unique<ska::pst::smrb::DataBlockWrite>(beam_config.get_val("DATA_KEY"));
-  _writer_data->connect(0);
-  _writer_data->lock();
+  weights_helper->set_data_block_bufsz(weights_bufsz);
+  data_helper->set_data_block_bufsz(data_bufsz);
 
-  _dbc_weights = std::make_unique<ska::pst::smrb::DataBlockCreate>(beam_config.get_val("WEIGHTS_KEY"));
-  _dbc_weights->create(header_nbufs, header_bufsz, weights_nbufs, weights_bufsz, nreaders, device);
+  weights_helper->set_data_block_nbufs(weights_nbufs);
+  data_helper->set_data_block_nbufs(data_nbufs);
 
-  _writer_weights = std::make_unique<ska::pst::smrb::DataBlockWrite>(beam_config.get_val("WEIGHTS_KEY"));
-  _writer_weights->connect(0);
-  _writer_weights->lock();
+  weights_helper->set_header_block_nbufs(header_nbufs);
+  data_helper->set_header_block_nbufs(header_nbufs);
 
-  data_to_write.resize(data_bufsz * 2);
-  weights_to_write.resize(weights_bufsz * 2);
+  weights_helper->set_header_block_bufsz(header_bufsz);
+  data_helper->set_header_block_bufsz(header_bufsz);
 
-  _writer_data->write_config(data_scan_config.raw());
-  _writer_weights->write_config(weights_scan_config.raw());
+  weights_helper->set_config(data_scan_config);
+  data_helper->set_config(weights_scan_config);
 
-  _writer_data->write_header(data_header.raw());
-  _writer_weights->write_header(weights_header.raw());
+  weights_helper->set_header(weights_header);
+  data_helper->set_header(data_header);
+
+  weights_helper->setup();
+  data_helper->setup();
+
+  weights_helper->enable_reader();
+  data_helper->enable_reader();
+
+  weights_helper->start();
+  data_helper->start();
+}
+
+void StatApplicationManagerTest::write_bytes_to_data_writer(uint64_t bytes_to_write)
+{
+  std::vector<char> data(bytes_to_write);
+  _writer_data->write_data(&data[0], data.size());
+}
+
+void StatApplicationManagerTest::write_bytes_to_weights_writer(uint64_t bytes_to_write)
+{
+  std::vector<char> data(bytes_to_write);
+  _writer_weights->write_data(&data[0], data.size());
 }
 
 void StatApplicationManagerTest::tear_down_data_block()
 {
-  if (_writer_data)
-  {
-    if (_writer_data->get_opened())
-    {
-      _writer_data->close();
-    }
-    if (_writer_data->get_locked())
-    {
-      _writer_data->unlock();
-    }
-    _writer_data->disconnect();
-  }
-  _writer_data = nullptr;
-
-  if (_dbc_data)
-  {
-    _dbc_data->destroy();
-  }
-  _dbc_data = nullptr;
-  if (_writer_weights)
-  {
-    if (_writer_weights->get_opened())
-    {
-      _writer_weights->close();
-    }
-    if (_writer_weights->get_locked())
-    {
-      _writer_weights->unlock();
-    }
-    _writer_weights->disconnect();
-  }
-  _writer_weights = nullptr;
-
-  if (_dbc_weights)
-  {
-    _dbc_weights->destroy();
-  }
-  _dbc_weights = nullptr;
+  //*
+  SPDLOG_TRACE("tear_down_data_block teardown");
+  data_helper->teardown();
+  weights_helper->teardown();
+  SPDLOG_TRACE("tear_down_data_block teardown complete");
+  //*/
 }
 
 void StatApplicationManagerTest::SetUp()
@@ -146,6 +135,7 @@ void StatApplicationManagerTest::SetUp()
 void StatApplicationManagerTest::TearDown()
 {
   tear_down_data_block();
+  sm = nullptr;
 }
 
 TEST_F(StatApplicationManagerTest, test_construct_delete) // NOLINT
@@ -172,6 +162,24 @@ TEST_F(StatApplicationManagerTest, test_configure_deconfigure_beam) // NOLINT
   ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
 }
 
+TEST_F(StatApplicationManagerTest, test_multiple_configure_deconfigure_beam) // NOLINT
+{
+  sm = std::make_unique<ska::pst::stat::StatApplicationManager>();
+  ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
+
+  sm->configure_beam(beam_config);
+  ASSERT_EQ(ska::pst::common::BeamConfigured, sm->get_state());
+
+  sm->deconfigure_beam();
+  ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
+
+  sm->configure_beam(beam_config);
+  ASSERT_EQ(ska::pst::common::BeamConfigured, sm->get_state());
+
+  sm->deconfigure_beam();
+  ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
+}
+
 TEST_F(StatApplicationManagerTest, test_configure_deconfigure_scan) // NOLINT
 {
   sm = std::make_unique<ska::pst::stat::StatApplicationManager>();
@@ -180,28 +188,85 @@ TEST_F(StatApplicationManagerTest, test_configure_deconfigure_scan) // NOLINT
   sm->configure_beam(beam_config);
   ASSERT_EQ(ska::pst::common::BeamConfigured, sm->get_state());
 
-  /* ERROR IN CONFIGURE SCAN INVOLVING NPOL
   sm->configure_scan(scan_config);
   ASSERT_EQ(ska::pst::common::ScanConfigured, sm->get_state());
 
   sm->deconfigure_scan();
   ASSERT_EQ(ska::pst::common::BeamConfigured, sm->get_state());
-
-  sm->configure_scan(scan_config);
-  ASSERT_EQ(ska::pst::common::ScanConfigured, sm->get_state());
-
-  sm->deconfigure_scan();
-  ASSERT_EQ(ska::pst::common::BeamConfigured, sm->get_state());
-
-  sm->start_scan(start_scan_config);
-  ASSERT_EQ(ska::pst::common::Scanning, sm->get_state());
-
-  sm->stop_scan();
-  ASSERT_EQ(ska::pst::common::ScanConfigured, sm->get_state());
-  */
 
   sm->deconfigure_beam();
   ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
 }
+
+TEST_F(StatApplicationManagerTest, test_multiple_configure_deconfigure_scan) // NOLINT
+{
+  sm = std::make_unique<ska::pst::stat::StatApplicationManager>();
+  ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
+
+  sm->configure_beam(beam_config);
+  ASSERT_EQ(ska::pst::common::BeamConfigured, sm->get_state());
+
+  sm->configure_scan(scan_config);
+  ASSERT_EQ(ska::pst::common::ScanConfigured, sm->get_state());
+
+  sm->deconfigure_scan();
+  ASSERT_EQ(ska::pst::common::BeamConfigured, sm->get_state());
+
+  sm->configure_scan(scan_config);
+  ASSERT_EQ(ska::pst::common::ScanConfigured, sm->get_state());
+
+  sm->deconfigure_scan();
+  ASSERT_EQ(ska::pst::common::BeamConfigured, sm->get_state());
+
+  sm->deconfigure_beam();
+  ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
+}
+
+TEST_F(StatApplicationManagerTest, test_start_stop_scan) // NOLINT
+{
+  SPDLOG_INFO("test_start_stop_scan create StatApplicationManager");
+  sm = std::make_unique<ska::pst::stat::StatApplicationManager>();
+  ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
+
+  SPDLOG_INFO("test_start_stop_scan sm->configure_beam");
+  sm->configure_beam(beam_config);
+  ASSERT_EQ(ska::pst::common::BeamConfigured, sm->get_state());
+  SPDLOG_INFO("test_start_stop_scan sm->configure_beam complete");
+
+  SPDLOG_INFO("test_start_stop_scan sm->configure_scan");
+  sm->configure_scan(scan_config);
+  ASSERT_EQ(ska::pst::common::ScanConfigured, sm->get_state());
+  SPDLOG_INFO("test_start_stop_scan sm->configure_scan complete");
+
+  SPDLOG_INFO("test_start_stop_scan sm->start_scan");
+  sm->start_scan(start_scan_config);
+  ASSERT_EQ(ska::pst::common::Scanning, sm->get_state());
+  SPDLOG_INFO("test_start_stop_scan sm->start_scan complete");
+
+  static constexpr float delay_ms = 10;
+  size_t constexpr test_nblocks = 64;
+  std::thread data_thread = std::thread(&ska::pst::smrb::test::DataBlockTestHelper::write_and_close, data_helper.get(), delay_ms, test_nblocks);
+  std::thread weights_thread = std::thread(&ska::pst::smrb::test::DataBlockTestHelper::write_and_close, weights_helper.get(), delay_ms, test_nblocks);
+  // data_helper->write_and_close() // write buffer and clear it
+  // weights_helper->write(5); // write buffer and clear it
+  data_thread.join();
+  weights_thread.join();
+
+  SPDLOG_INFO("test_start_stop_scan sm->stop_scan");
+  sm->stop_scan();
+  ASSERT_EQ(ska::pst::common::ScanConfigured, sm->get_state());
+  SPDLOG_INFO("test_start_stop_scan sm->stop_scan complete");
+
+  SPDLOG_INFO("test_start_stop_scan sm->deconfigure_scan");
+  sm->deconfigure_scan();
+  ASSERT_EQ(ska::pst::common::BeamConfigured, sm->get_state());
+  SPDLOG_INFO("test_start_stop_scan sm->deconfigure_scan complete");
+  SPDLOG_INFO("test_start_stop_scan sm->deconfigure_beam");
+  sm->deconfigure_beam();
+  ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
+  SPDLOG_INFO("test_start_stop_scan sm->deconfigure_beam complete");
+}
+
+
 
 } // namespace ska::pst::stat::test

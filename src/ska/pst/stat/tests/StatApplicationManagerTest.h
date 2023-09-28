@@ -33,6 +33,8 @@
 #include "ska/pst/smrb/DataBlockWrite.h"
 
 #include "ska/pst/common/utils/AsciiHeader.h"
+#include "ska/pst/stat/testutils/DataBlockTestHelper.h"
+
 #include "ska/pst/stat/StatApplicationManager.h"
 
 #ifndef SKA_PST_STAT_TESTS_StatApplicationManagerTest_h
@@ -53,12 +55,21 @@ class StatApplicationManagerTest : public ::testing::Test
     void SetUp() override;
 
     void TearDown() override;
+
+    ska::pst::common::AsciiHeader config;
+    ska::pst::common::AsciiHeader header;
   public:
     StatApplicationManagerTest();
 
     ~StatApplicationManagerTest() = default;
+    std::unique_ptr<ska::pst::smrb::test::DataBlockTestHelper> data_helper;
+    std::unique_ptr<ska::pst::smrb::test::DataBlockTestHelper> weights_helper;
+
+    void write_bytes_to_data_writer(uint64_t bytes_to_write);
+    void write_bytes_to_weights_writer(uint64_t bytes_to_write);
 
     void setup_data_block();
+    void setup_db_test_helper();
     void tear_down_data_block();
 
     ska::pst::common::AsciiHeader beam_config;
@@ -74,6 +85,9 @@ class StatApplicationManagerTest : public ::testing::Test
     std::unique_ptr<ska::pst::smrb::DataBlockWrite> _writer_data{nullptr};
     std::unique_ptr<ska::pst::smrb::DataBlockCreate> _dbc_weights{nullptr};
     std::unique_ptr<ska::pst::smrb::DataBlockWrite> _writer_weights{nullptr};
+
+    uint64_t data_bufsz;
+    uint64_t weights_bufsz;
 
     std::vector<char> data_to_write;
     std::vector<char> weights_to_write;

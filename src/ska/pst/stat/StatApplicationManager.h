@@ -154,9 +154,11 @@ namespace ska::pst::stat {
        */
       void perform_terminate();
 
+      // void processSegmentInBackground();
+
     private:
       //! timeout to wait when attempting to connect to the DataBlockView object.
-      int timeout{120};
+      int timeout{5};
 
       //! allocated configuration for beam of data stream and weights stream
       ska::pst::common::AsciiHeader data_beam_config;

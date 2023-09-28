@@ -55,17 +55,14 @@ void ska::pst::stat::StatApplicationManager::configure_from_file(const std::stri
 
   // configure beam
   ska::pst::common::AsciiHeader beam_config;
-  // TODO: beam_config.set_val($KEY, config.get_val($KEY));
   configure_beam(beam_config);
 
   // configure scan
   ska::pst::common::AsciiHeader scan_config;
-  // TODO: scan_config.set_val($KEY, config.get_val($KEY));
   configure_scan(scan_config);
 
   // configure from file
   ska::pst::common::AsciiHeader start_scan_config;
-  // TODO: start_scan_config.set_val($KEY, config.get_val($KEY));
   start_scan(start_scan_config);
 }
 
@@ -98,34 +95,14 @@ void ska::pst::stat::StatApplicationManager::validate_configure_beam(const ska::
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::validate_configure_beam complete");
 }
 
-void ska::pst::stat::StatApplicationManager::validate_configure_scan(const ska::pst::common::AsciiHeader& config, ska::pst::common::ValidationContext *context)
+void ska::pst::stat::StatApplicationManager::validate_configure_scan(const ska::pst::common::AsciiHeader& /*config*/, ska::pst::common::ValidationContext *context)
 {
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::validate_configure_scan");
-  /* TODO
-  if (config.has($KEY))
-  {
-    SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::validate_configure_beam DATA_KEY={}", config.get_val($KEY));
-    scan_config.set_val($KEY, config.get_val($KEY));
-  } else {
-    context->add_missing_field_error($KEY);
-  }
-  */
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::validate_configure_scan done");
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::validate_configure_scan placeholder");
 }
 
-void ska::pst::stat::StatApplicationManager::validate_start_scan(const ska::pst::common::AsciiHeader& config)
+void ska::pst::stat::StatApplicationManager::validate_start_scan(const ska::pst::common::AsciiHeader& /*config*/)
 {
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::validate_start_scan");
-  /* TODO
-  if (config.has($KEY))
-  {
-    SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::validate_configure_beam DATA_KEY={}", config.get_val($KEY));
-    startscan_config.set_val($KEY, config.get_val($KEY));
-  } else {
-    context->add_missing_field_error($KEY);
-  }
-  */
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::validate_start_scan done");
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::validate_start_scan placeholder");
 }
 
 void ska::pst::stat::StatApplicationManager::perform_initialise()
@@ -147,12 +124,12 @@ void ska::pst::stat::StatApplicationManager::perform_configure_beam()
   producer->connect(timeout);
 
   // Copy the rest of the headers
-  // SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam  producer->get_data_header={}", producer->get_data_header().raw());
-  // SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam producer->get_weights_header={}", producer->get_weights_header().raw());
-  // data_beam_config.clone(producer->get_data_header());
-  // weights_beam_config.clone(producer->get_weights_header());
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam data_beam_config={}", data_beam_config.raw());
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam weights_beam_config={}", weights_beam_config.raw());
+  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_configure_beam  producer->get_data_header={}", producer->get_data_header().raw());
+  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_configure_beam producer->get_weights_header={}", producer->get_weights_header().raw());
+  data_beam_config.clone(producer->get_data_header());
+  weights_beam_config.clone(producer->get_weights_header());
+  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_configure_beam data_beam_config={}", data_beam_config.raw());
+  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_configure_beam weights_beam_config={}", weights_beam_config.raw());
 
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam complete");
 }
@@ -160,9 +137,8 @@ void ska::pst::stat::StatApplicationManager::perform_configure_beam()
 void ska::pst::stat::StatApplicationManager::perform_configure_scan()
 {
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan");
-  // producer->open();
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan data_beam_config={}", data_beam_config.raw());
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan weights_beam_config={}", weights_beam_config.raw());
+  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_configure_scan data_beam_config={}", data_beam_config.raw());
+  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_configure_scan weights_beam_config={}", weights_beam_config.raw());
   processor = std::make_unique<StatProcessor>(data_beam_config, weights_beam_config);
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan complete");
 }
@@ -170,7 +146,7 @@ void ska::pst::stat::StatApplicationManager::perform_configure_scan()
 void ska::pst::stat::StatApplicationManager::perform_start_scan()
 {
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_start_scan");
-  // TODO: start scan config validation??
+  producer->open();
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_start_scan complete");
 }
 
@@ -191,7 +167,9 @@ void ska::pst::stat::StatApplicationManager::perform_scan()
     }
     else
     {
+      SPDLOG_DEBUG("ska::pst::stat::StreamWriter::perform_scan processor->process");
       processor->process(segment);
+      SPDLOG_DEBUG("ska::pst::stat::StreamWriter::perform_scan processor->process done");
     }
   }
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan complete");
@@ -199,13 +177,14 @@ void ska::pst::stat::StatApplicationManager::perform_scan()
 
 void ska::pst::stat::StatApplicationManager::perform_stop_scan()
 {
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_stop_scan");
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_stop_scan placeholder");
 }
 
 void ska::pst::stat::StatApplicationManager::perform_deconfigure_scan()
 {
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_deconfigure_scan");
   producer->close();
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_deconfigure_scan done");
 }
 
 void ska::pst::stat::StatApplicationManager::perform_deconfigure_beam()
