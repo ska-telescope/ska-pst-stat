@@ -97,12 +97,12 @@ void ska::pst::stat::StatApplicationManager::validate_configure_beam(const ska::
 
 void ska::pst::stat::StatApplicationManager::validate_configure_scan(const ska::pst::common::AsciiHeader& config, ska::pst::common::ValidationContext *context)
 {
-  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::validate_configure_scan config={}", config.raw());
+  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::validate_configure_scan placeholder");
 }
 
 void ska::pst::stat::StatApplicationManager::validate_start_scan(const ska::pst::common::AsciiHeader& config)
 {
-  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::validate_configure_scan config={}", config.raw());
+  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::validate_configure_start_scan placeholder");
 }
 
 void ska::pst::stat::StatApplicationManager::perform_initialise()
@@ -116,7 +116,7 @@ void ska::pst::stat::StatApplicationManager::perform_initialise()
 
 void ska::pst::stat::StatApplicationManager::perform_configure_beam()
 {
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam");
+  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::perform_configure_beam");
 
   producer = std::make_unique<ska::pst::smrb::SmrbSegmentProducer>(data_beam_config.get_val("DATA_KEY"), weights_beam_config.get_val("WEIGHTS_KEY"));
   // Connect to SMRB
@@ -124,12 +124,12 @@ void ska::pst::stat::StatApplicationManager::perform_configure_beam()
   producer->connect(timeout);
 
   // Copy the rest of the headers
-  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_configure_beam  producer->get_data_header={}", producer->get_data_header().raw());
-  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_configure_beam producer->get_weights_header={}", producer->get_weights_header().raw());
+  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_configure_beam  producer->get_data_header\n:{}", producer->get_data_header().raw());
+  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_configure_beam producer->get_weights_header\n:{}", producer->get_weights_header().raw());
   data_beam_config.clone(producer->get_data_header());
   weights_beam_config.clone(producer->get_weights_header());
-  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_configure_beam data_beam_config={}", data_beam_config.raw());
-  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_configure_beam weights_beam_config={}", weights_beam_config.raw());
+  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::perform_configure_beam data_beam_config:\n{}", data_beam_config.raw());
+  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::perform_configure_beam weights_beam_config:\n{}", weights_beam_config.raw());
 
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam complete");
 }
@@ -137,8 +137,8 @@ void ska::pst::stat::StatApplicationManager::perform_configure_beam()
 void ska::pst::stat::StatApplicationManager::perform_configure_scan()
 {
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan");
-  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_configure_scan data_beam_config={}", data_beam_config.raw());
-  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_configure_scan weights_beam_config={}", weights_beam_config.raw());
+  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::perform_configure_scan data_beam_config={}", data_beam_config.raw());
+  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::perform_configure_scan weights_beam_config={}", weights_beam_config.raw());
   processor = std::make_unique<StatProcessor>(data_beam_config, weights_beam_config);
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan complete");
 }
