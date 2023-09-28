@@ -107,11 +107,7 @@ void ska::pst::stat::StatApplicationManager::validate_start_scan(const ska::pst:
 
 void ska::pst::stat::StatApplicationManager::perform_initialise()
 {
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_initialise()");
-  /* TODO:
-  - initialise stat computer?
-  - initialise stat publisher?
-  */
+  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::perform_initialise placeholder");
 }
 
 void ska::pst::stat::StatApplicationManager::perform_configure_beam()
@@ -124,12 +120,12 @@ void ska::pst::stat::StatApplicationManager::perform_configure_beam()
   producer->connect(timeout);
 
   // Copy the rest of the headers
-  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_configure_beam  producer->get_data_header\n:{}", producer->get_data_header().raw());
-  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_configure_beam producer->get_weights_header\n:{}", producer->get_weights_header().raw());
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam  producer->get_data_header\n:{}", producer->get_data_header().raw());
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam producer->get_weights_header\n:{}", producer->get_weights_header().raw());
   data_beam_config.clone(producer->get_data_header());
   weights_beam_config.clone(producer->get_weights_header());
-  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::perform_configure_beam data_beam_config:\n{}", data_beam_config.raw());
-  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::perform_configure_beam weights_beam_config:\n{}", weights_beam_config.raw());
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam data_beam_config:\n{}", data_beam_config.raw());
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam weights_beam_config:\n{}", weights_beam_config.raw());
 
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam complete");
 }
@@ -137,8 +133,8 @@ void ska::pst::stat::StatApplicationManager::perform_configure_beam()
 void ska::pst::stat::StatApplicationManager::perform_configure_scan()
 {
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan");
-  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::perform_configure_scan data_beam_config:\n{}", data_beam_config.raw());
-  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::perform_configure_scan weights_beam_config:\n{}", weights_beam_config.raw());
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan data_beam_config:\n{}", data_beam_config.raw());
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan weights_beam_config:\n{}", weights_beam_config.raw());
   processor = std::make_unique<StatProcessor>(data_beam_config, weights_beam_config);
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan complete");
 }
@@ -182,14 +178,14 @@ void ska::pst::stat::StatApplicationManager::perform_stop_scan()
 
 void ska::pst::stat::StatApplicationManager::perform_deconfigure_scan()
 {
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_deconfigure_scan");
+  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::perform_deconfigure_scan");
   producer->close();
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_deconfigure_scan done");
+  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::perform_deconfigure_scan done");
 }
 
 void ska::pst::stat::StatApplicationManager::perform_deconfigure_beam()
 {
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_deconfigure_beam");
+  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::perform_deconfigure_beam");
   producer->disconnect();
 
   // beam_config cleanup
@@ -197,6 +193,7 @@ void ska::pst::stat::StatApplicationManager::perform_deconfigure_beam()
   data_beam_config.reset();
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_deconfigure_beam weights_beam_config.reset()");
   weights_beam_config.reset();
+  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::perform_deconfigure_beam done");
 }
 
 void ska::pst::stat::StatApplicationManager::perform_terminate()

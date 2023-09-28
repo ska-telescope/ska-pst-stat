@@ -91,6 +91,11 @@ void StatApplicationManagerTest::setup_data_block()
 
   weights_helper->start();
   data_helper->start();
+  SPDLOG_INFO("weights_helper->config:\n{}",weights_helper->config.raw());
+  SPDLOG_INFO("weights_helper->header:\n{}",weights_helper->header.raw());
+  SPDLOG_INFO("data_helper->config:\n{}",data_helper->config.raw());
+  SPDLOG_INFO("data_helper->header:\n{}",data_helper->header.raw());
+
 }
 
 void StatApplicationManagerTest::write_bytes_to_data_writer(uint64_t bytes_to_write)

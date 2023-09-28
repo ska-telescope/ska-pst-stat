@@ -46,7 +46,7 @@ namespace ska::pst::smrb::test {
  * @details This class creates a ring buffer in shared memory, writes buffers to it, and optionally reads/clears buffers from it
  *
  */
-class DataBlockTestHelper 
+class DataBlockTestHelper
 {
   public:
 
@@ -72,6 +72,9 @@ class DataBlockTestHelper
     void write(size_t nblocks, float delay_ms = 0.0);
     void write_and_close(size_t nblocks, float delay_ms);
 
+    ska::pst::common::AsciiHeader config;
+    ska::pst::common::AsciiHeader header;
+
   protected:
 
     std::string id{"dada"};
@@ -79,9 +82,6 @@ class DataBlockTestHelper
     std::shared_ptr<DataBlockWrite> writer{nullptr}; // writes to ring buffer
     std::shared_ptr<DataBlockRead> reader{nullptr};  // clears buffers for more writing
     int device_id{-1};
-
-    ska::pst::common::AsciiHeader config;
-    ska::pst::common::AsciiHeader header;
 
     uint64_t hdr_nbufs{5};
     uint64_t hdr_bufsz{8192};
