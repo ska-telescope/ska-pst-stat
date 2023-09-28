@@ -137,8 +137,8 @@ void ska::pst::stat::StatApplicationManager::perform_configure_beam()
 void ska::pst::stat::StatApplicationManager::perform_configure_scan()
 {
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan");
-  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::perform_configure_scan data_beam_config={}", data_beam_config.raw());
-  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::perform_configure_scan weights_beam_config={}", weights_beam_config.raw());
+  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::perform_configure_scan data_beam_config:\n{}", data_beam_config.raw());
+  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::perform_configure_scan weights_beam_config:\n{}", weights_beam_config.raw());
   processor = std::make_unique<StatProcessor>(data_beam_config, weights_beam_config);
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan complete");
 }
