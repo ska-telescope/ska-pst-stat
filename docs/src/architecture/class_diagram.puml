@@ -22,25 +22,25 @@ class StatApplicationManager {
   + perform_end_scan()
   + perform_deconfigure_scan()
   + perform_deconfigure_beam()
-  - processor: StatProcessor
-  - producer: SmrbSegmentProducer
+  - processor: std::shared_ptr<StatProcessor>
+  - producer: std::shared_ptr<SmrbSegmentProducer>
 }
 
 class FileProcessor {
   + FileProcessor(config: AsciiHeader)
   + ~FileProcessor()
   + process()
-  - processor: StatProcessor
-  - reader: FileSegmentProducer
+  - processor: std::shared_ptr<StatProcessor>
+  - reader: std::unique_ptr<FileSegmentProducer>
 }
 
 class StatProcessor {
   + StatProcessor(data_config: AsciiHeader, weights_config: AsciiHeader)
   + ~StatProcessor()
   + process(segment: SegmentProducer::Segment)
-  - storage: StatStorage
-  - computer: StatComputer
-  - writer: StatPublisher
+  - storage: std::shared_ptr<StatStorage>
+  - computer: std::unique_ptr<StatComputer>
+  - writer: std::unique_ptr<StatPublisher>
   - config: AsciiHeader
 }
 
