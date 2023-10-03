@@ -1,13 +1,13 @@
 @startuml PST Stat Class Diagram
 allow_mixing
 
-package ska::pst::common 
+package ska::pst::common
 {
   class ApplicationManager <<abstract>>
   class FileSegmentProducer
 }
 
-package ska::pst::smrb 
+package ska::pst::smrb
 {
   class SmrbSegmentProducer
 }
@@ -49,7 +49,7 @@ class StatComputer {
   + ~StatComputer()
   + compute(segment: SegmentProducer::Segment)
   + initialise()
-  - storage: StatStorage
+  - storage: std::shared_ptr<StatStorage>
   - config: AsciiHeader
 }
 
@@ -110,7 +110,7 @@ StatComputer o-- StatStorage
 StatPublisher o-- StatStorage
 
 ApplicationManager <|-- StatApplicationManager
-StatApplicationManager o- SmrbSegmentProducer
+StatApplicationManager o-- SmrbSegmentProducer
 StatApplicationManager *-- StatProcessor
 
 FileProcessor *-- StatProcessor

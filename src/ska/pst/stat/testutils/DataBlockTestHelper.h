@@ -35,10 +35,10 @@
 
 #include <memory>
 
-#ifndef SKA_PST_SMRB_TESTUTILS_DataBlockTestHelper_h
-#define SKA_PST_SMRB_TESTUTILS_DataBlockTestHelper_h
+#ifndef SKA_PST_STAT_TESTUTILS_DataBlockTestHelper_h
+#define SKA_PST_STAT_TESTUTILS_DataBlockTestHelper_h
 
-namespace ska::pst::smrb::test {
+namespace ska::pst::stat::test {
 
 /**
  * @brief Helper for testing classes that read from a ring buffer in shared memory
@@ -78,9 +78,9 @@ class DataBlockTestHelper
   protected:
 
     std::string id{"dada"};
-    std::shared_ptr<DataBlockCreate> db{nullptr};
-    std::shared_ptr<DataBlockWrite> writer{nullptr}; // writes to ring buffer
-    std::shared_ptr<DataBlockRead> reader{nullptr};  // clears buffers for more writing
+    std::shared_ptr<ska::pst::smrb::DataBlockCreate> db{nullptr};
+    std::shared_ptr<ska::pst::smrb::DataBlockWrite> writer{nullptr}; // writes to ring buffer
+    std::shared_ptr<ska::pst::smrb::DataBlockRead> reader{nullptr};  // clears buffers for more writing
     int device_id{-1};
 
     uint64_t hdr_nbufs{5};
@@ -92,7 +92,7 @@ class DataBlockTestHelper
     uint64_t counter;
 };
 
-} // ska::pst::smrb::test
+} // ska::pst::stat::test
 
 #endif // SKA_PST_SMRB_TESTUTILS_DataBlockTestHelper_h
 

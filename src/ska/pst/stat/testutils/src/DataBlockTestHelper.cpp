@@ -34,7 +34,7 @@
 #include <iostream>
 #include <spdlog/spdlog.h>
 
-namespace ska::pst::smrb::test {
+namespace ska::pst::stat::test {
 
 DataBlockTestHelper::DataBlockTestHelper(const std::string& _id, unsigned _num_readers)
 {
@@ -77,27 +77,27 @@ void DataBlockTestHelper::set_data_block_bufsz (uint64_t bufsz)
 
 void DataBlockTestHelper::setup()
 {
-  SPDLOG_DEBUG("ska::pst::smrb::test::DataBlockTestHelper::setup construct DataBlockCreate with id='{}'", id);
-  db = std::make_shared<DataBlockCreate>(id);
+  SPDLOG_DEBUG("ska::pst::stat::test::DataBlockTestHelper::setup construct ska::pst::smrb::DataBlockCreate with id='{}'", id);
+  db = std::make_shared<ska::pst::smrb::DataBlockCreate>(id);
 
-  SPDLOG_DEBUG("ska::pst::smrb::test::DataBlockTestHelper::setup call DataBlockCreate::create");
+  SPDLOG_DEBUG("ska::pst::stat::test::DataBlockTestHelper::setup call ska::pst::smrb::DataBlockCreate::create");
   db->create(hdr_nbufs, hdr_bufsz, dat_nbufs, dat_bufsz, num_readers, device_id);
 
-  SPDLOG_DEBUG("ska::pst::smrb::test::DataBlockTestHelper::setup construct DataBlockWrite with id='{}'", id);
-  writer = std::make_shared<DataBlockWrite>(id);
+  SPDLOG_DEBUG("ska::pst::stat::test::DataBlockTestHelper::setup construct ska::pst::smrb::DataBlockWrite with id='{}'", id);
+  writer = std::make_shared<ska::pst::smrb::DataBlockWrite>(id);
 
-  SPDLOG_DEBUG("ska::pst::smrb::test::DataBlockTestHelper::setup call DataBlockWrite::connect");
+  SPDLOG_DEBUG("ska::pst::stat::test::DataBlockTestHelper::setup call ska::pst::smrb::DataBlockWrite::connect");
   writer->connect(1);
 
-  SPDLOG_DEBUG("ska::pst::smrb::test::DataBlockTestHelper::setup call DataBlockWrite::lock");
+  SPDLOG_DEBUG("ska::pst::stat::test::DataBlockTestHelper::setup call ska::pst::smrb::DataBlockWrite::lock");
   writer->lock();
 
-  SPDLOG_DEBUG("ska::pst::smrb::test::DataBlockTestHelper::setup return");
+  SPDLOG_DEBUG("ska::pst::stat::test::DataBlockTestHelper::setup return");
 }
 
 void DataBlockTestHelper::enable_reader()
 {
-  SPDLOG_DEBUG("ska::pst::smrb::test::DataBlockTestHelper::enable reader");
+  SPDLOG_DEBUG("ska::pst::stat::test::DataBlockTestHelper::enable reader");
 
   if (reader)
     throw std::runtime_error("DataBlockTestHelper::enable_reader already enabled");
@@ -108,13 +108,13 @@ void DataBlockTestHelper::enable_reader()
   if (num_readers == 0)
     throw std::runtime_error("DataBlockTestHelper::enable_reader ring buffer configured with zero readers");
 
-  SPDLOG_DEBUG("ska::pst::smrb::test::DataBlockTestHelper::setup construct DataBlockRead with id='{}'", id);
-  reader = std::make_shared<DataBlockRead>(id);
+  SPDLOG_DEBUG("ska::pst::stat::test::DataBlockTestHelper::setup construct ska::pst::smrb::DataBlockRead with id='{}'", id);
+  reader = std::make_shared<ska::pst::smrb::DataBlockRead>(id);
 
-  SPDLOG_DEBUG("ska::pst::smrb::test::DataBlockTestHelper::setup call DataBlockRead::connect");
+  SPDLOG_DEBUG("ska::pst::stat::test::DataBlockTestHelper::setup call ska::pst::smrb::DataBlockRead::connect");
   reader->connect(1);
 
-  SPDLOG_DEBUG("ska::pst::smrb::test::DataBlockTestHelper::setup call DataBlockRead::lock");
+  SPDLOG_DEBUG("ska::pst::stat::test::DataBlockTestHelper::setup call ska::pst::smrb::DataBlockRead::lock");
   reader->lock();
 }
 
@@ -197,22 +197,22 @@ void DataBlockTestHelper::write(size_t nblocks, float delay_ms)
     *count_ptr = counter;
     counter ++;
 
-    SPDLOG_DEBUG("ska::pst::smrb::test::DataBlockTestHelper::write write {} data bytes", dat_bufsz);
+    SPDLOG_DEBUG("ska::pst::stat::test::DataBlockTestHelper::write write {} data bytes", dat_bufsz);
 
     writer->write_data(ptr, dat_bufsz);
-    SPDLOG_DEBUG("ska::pst::smrb::test::DataBlockTestHelper::write {} data bytes written", dat_bufsz);
+    SPDLOG_DEBUG("ska::pst::stat::test::DataBlockTestHelper::write {} data bytes written", dat_bufsz);
 
     if (delay_us)
       usleep(delay_us);
 
     if (reader)
     {
-      SPDLOG_DEBUG("ska::pst::smrb::test::DataBlockTestHelper::write reader open_block");
+      SPDLOG_DEBUG("ska::pst::stat::test::DataBlockTestHelper::write reader open_block");
       reader->open_block();
-      SPDLOG_DEBUG("ska::pst::smrb::test::DataBlockTestHelper::write reader close_block");
+      SPDLOG_DEBUG("ska::pst::stat::test::DataBlockTestHelper::write reader close_block");
       reader->close_block(dat_bufsz);
     }
   }
 }
 
-} // namespace ska::pst::smrb::test
+} // namespace ska::pst::stat::test

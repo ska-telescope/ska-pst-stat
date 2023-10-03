@@ -62,8 +62,8 @@ class StatApplicationManagerTest : public ::testing::Test
     StatApplicationManagerTest();
 
     ~StatApplicationManagerTest() = default;
-    std::unique_ptr<ska::pst::smrb::test::DataBlockTestHelper> data_helper;
-    std::unique_ptr<ska::pst::smrb::test::DataBlockTestHelper> weights_helper;
+    std::unique_ptr<DataBlockTestHelper> data_helper;
+    std::unique_ptr<DataBlockTestHelper> weights_helper;
 
     void write_bytes_to_data_writer(uint64_t bytes_to_write);
     void write_bytes_to_weights_writer(uint64_t bytes_to_write);

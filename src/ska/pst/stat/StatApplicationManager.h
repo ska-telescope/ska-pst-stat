@@ -30,7 +30,6 @@
 
 #include "ska/pst/common/utils/AsciiHeader.h"
 #include "ska/pst/common/statemodel/ApplicationManager.h"
-// #include "ska/pst/smrb/DataBlockView.h"
 #include "ska/pst/smrb/SmrbSegmentProducer.h"
 #include "ska/pst/stat/StatProcessor.h"
 #include <string>
@@ -154,8 +153,6 @@ namespace ska::pst::stat {
        */
       void perform_terminate();
 
-      // void processSegmentInBackground();
-
     private:
       //! timeout to wait when attempting to connect to the DataBlockView object.
       int timeout{120};
@@ -169,13 +166,6 @@ namespace ska::pst::stat {
 
       //! shared pointer a statistics processor
       std::shared_ptr<ska::pst::smrb::SmrbSegmentProducer> producer;
-
-      // TODO: Refactor data_rb_view and weights_rb_view with SMRB Segment Producer
-      //! shared pointer to a view of the data ring buffer
-      // std::shared_ptr<ska::pst::smrb::DataBlockView> data_rb_view;
-
-      //! shared pointer to a view of the weights ring buffer
-      // std::shared_ptr<ska::pst::smrb::DataBlockView> weights_rb_view;
 
       //! List of mandatory data config keys
       const std::vector<std::string> data_config_keys = {"DATA_KEY", "RESOLUTION", "NCHAN"};

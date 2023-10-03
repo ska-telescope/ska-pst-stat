@@ -20,3 +20,9 @@ TSAMP               207.36
 
 DATA_KEY            a000
 WEIGHTS_KEY         a002
+
+HB_NBUFS            4
+HB_BUFSZ            4096
+
+DB_NBUFS            8
+WB_NBUFS            8
