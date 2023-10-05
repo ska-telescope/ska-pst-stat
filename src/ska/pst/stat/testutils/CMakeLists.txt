@@ -3,7 +3,8 @@ enable_testing()
 
 add_library(ska-pst-stat-testutils
     STATIC
-    src/GtestMain.cpp)
+    src/GtestMain.cpp
+    src/DataBlockTestHelper.cpp)
 
 target_include_directories(ska-pst-stat-testutils
     PUBLIC

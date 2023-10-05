@@ -30,6 +30,8 @@
 
 #include "ska/pst/common/utils/AsciiHeader.h"
 #include "ska/pst/common/statemodel/ApplicationManager.h"
+#include "ska/pst/smrb/SmrbSegmentProducer.h"
+#include "ska/pst/stat/StatProcessor.h"
 #include <string>
 #include <memory>
 
@@ -55,7 +57,38 @@ namespace ska::pst::stat {
        * @brief Destroy the Stat Application Manager object.
        *
        */
-      virtual ~StatApplicationManager();
+      ~StatApplicationManager();
+
+      /**
+       * @brief Configure beam and scan as described by the configuration file
+       *
+       * @param config_file configuration file containing beam and scan configuration parameters
+       */
+      void configure_from_file(const std::string &config_file);
+
+      /**
+       * @brief Configure beam as described by the configuration parameters
+       *
+       * @param config beam configuration containing the recording path, data and weights key
+       * @param context A validation context where errors should be added.
+       */
+      void validate_configure_beam(const ska::pst::common::AsciiHeader& config, ska::pst::common::ValidationContext *context);
+
+      /**
+       * @brief Configure scan as described by the configuration parameters
+       *
+       * @param config scan configuration containing the bytes_per_second and scan_len_max
+       * @param context A validation context where errors should be added.
+       */
+      void validate_configure_scan(const ska::pst::common::AsciiHeader& config, ska::pst::common::ValidationContext *context);
+
+      /**
+       * @brief Start scan as described by the configuration parameters
+       *
+       * @param config star scan configuration containing the bytes_per_second and scan_len_max
+       * @param context A validation context where errors should be added.
+       */
+      void validate_start_scan(const ska::pst::common::AsciiHeader& config);
 
       /**
        * @brief Initialisation callback.
@@ -121,15 +154,25 @@ namespace ska::pst::stat {
       void perform_terminate();
 
     private:
+      //! timeout to wait when attempting to connect to the DataBlockView object.
+      int timeout{120};
+
+      //! allocated configuration for beam of data stream and weights stream
+      ska::pst::common::AsciiHeader data_beam_config;
+      ska::pst::common::AsciiHeader weights_beam_config;
+
       //! shared pointer a statistics processor
       std::shared_ptr<StatProcessor> processor;
 
-      //! shared pointer to a view of the data ring buffer
-      std::shared_ptr<DataBlockStats> data_rb_view;
+      //! shared pointer a statistics processor
+      std::shared_ptr<ska::pst::smrb::SmrbSegmentProducer> producer;
 
-      //! shared pointer to a view of the weights ring buffer
-      std::shared_ptr<DataBlockStats> weights_rb_view;
-  }
+      //! List of mandatory data config keys
+      const std::vector<std::string> data_config_keys = {"DATA_KEY", "RESOLUTION", "NCHAN"};
+
+      //! List of mandatory weights config keys
+      const std::vector<std::string> weights_config_keys = {"WEIGHTS_KEY", "RESOLUTION"};
+  };
 
 } // namespace ska::pst::stat
 

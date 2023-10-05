@@ -21,7 +21,7 @@ include .make/base.mk
 -include PrivateRules.mak
 
 DEV_IMAGE	?=registry.gitlab.com/ska-telescope/pst/ska-pst-smrb/ska-pst-smrb-builder
-DEV_TAG		?=0.10.2
+DEV_TAG		?=0.10.3
 PROCESSOR_COUNT=${nproc}
 OCI_IMAGE_BUILD_CONTEXT=$(PWD)
 
@@ -36,12 +36,11 @@ OCI_BUILD_ADDITIONAL_ARGS	:=--build-arg SMRB_RUNTIME_IMAGE=${SMRB_RUNTIME_IMAGE}
 .PHONY: docs-pre-build
 docs-pre-build:
 	@rm -rf docs/build/*
-	apt-get update -y
-	apt-get install -y doxygen
-	pip3 install -r docs/requirements.txt
 
 _VENV=.venv
 
 local-apt-install-dependencies:
 	apt-get update -y
 	apt-get install -y `cat dependencies/apt.txt`
+	pip3 install -r docs/requirements.txt
+

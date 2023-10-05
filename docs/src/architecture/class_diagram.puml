@@ -1,12 +1,15 @@
 @startuml PST Stat Class Diagram
 allow_mixing
 
-package ska::pst::common {
+package ska::pst::common
+{
   class ApplicationManager <<abstract>>
-
+  class FileSegmentProducer
 }
-package ska::pst::smrb {
-  class DataBlockView
+
+package ska::pst::smrb
+{
+  class SmrbSegmentProducer
 }
 
 class StatApplicationManager {
@@ -19,23 +22,22 @@ class StatApplicationManager {
   + perform_end_scan()
   + perform_deconfigure_scan()
   + perform_deconfigure_beam()
-  - processor: StatProcessor
-  - data_rb_view: DataBlockView
-  - weights_rb_view: DataBlockView
+  - processor: std::shared_ptr<StatProcessor>
+  - producer: std::shared_ptr<SmrbSegmentProducer>
 }
 
 class FileProcessor {
   + FileProcessor(config: AsciiHeader)
   + ~FileProcessor()
   + process()
-  - reader: common::FileSegmentProducer
-  - processor: StatProcessor
+  - processor: std::shared_ptr<StatProcessor>
+  - reader: std::unique_ptr<FileSegmentProducer>
 }
 
 class StatProcessor {
   + StatProcessor(data_config: AsciiHeader, weights_config: AsciiHeader)
   + ~StatProcessor()
-  + process(segment: common::SegmentProducer::Segment)
+  + process(segment: SegmentProducer::Segment)
   - storage: std::shared_ptr<StatStorage>
   - computer: std::unique_ptr<StatComputer>
   - writer: std::unique_ptr<StatPublisher>
@@ -43,9 +45,9 @@ class StatProcessor {
 }
 
 class StatComputer {
-  + StatComputer(data_config: AsciiHeader, weights_config: AsciiHeader, std::shared_ptr<StatStorage> storage)
+  + StatComputer(data_config: AsciiHeader, weights_config: AsciiHeader, storage: StatStorage)
   + ~StatComputer()
-  + compute(segment: common::SegmentProducer::Segment)
+  + compute(segment: SegmentProducer::Segment)
   + initialise()
   - storage: std::shared_ptr<StatStorage>
   - config: AsciiHeader
@@ -108,10 +110,11 @@ StatComputer o-- StatStorage
 StatPublisher o-- StatStorage
 
 ApplicationManager <|-- StatApplicationManager
-StatApplicationManager o-- DataBlockView
+StatApplicationManager o-- SmrbSegmentProducer
 StatApplicationManager *-- StatProcessor
 
 FileProcessor *-- StatProcessor
+FileProcessor o- FileSegmentProducer
 
 component ska_pst_stat_core
 ska_pst_stat_core -- "uses" StatApplicationManager
