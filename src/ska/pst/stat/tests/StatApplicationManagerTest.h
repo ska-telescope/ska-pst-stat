@@ -43,7 +43,7 @@
 namespace ska::pst::stat::test {
 
 /**
- * @brief Test the StatStorage class
+ * @brief Test the StatApplicationManagerTest class
  *
  * @details
  *

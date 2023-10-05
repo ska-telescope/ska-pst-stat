@@ -54,16 +54,13 @@ void ska::pst::stat::StatApplicationManager::configure_from_file(const std::stri
   SPDLOG_INFO("ska::pst::stat::StatApplicationManager::configure_from_file config={}",config.raw());
 
   // configure beam
-  ska::pst::common::AsciiHeader beam_config;
-  configure_beam(beam_config);
+  configure_beam(config);
 
   // configure scan
-  ska::pst::common::AsciiHeader scan_config;
-  configure_scan(scan_config);
+  configure_scan(config);
 
   // configure from file
-  ska::pst::common::AsciiHeader start_scan_config;
-  start_scan(start_scan_config);
+  start_scan(config);
 }
 
 void ska::pst::stat::StatApplicationManager::validate_configure_beam(const ska::pst::common::AsciiHeader& config, ska::pst::common::ValidationContext *context)
