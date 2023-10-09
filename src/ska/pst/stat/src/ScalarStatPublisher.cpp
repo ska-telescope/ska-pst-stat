@@ -27,52 +27,47 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <spdlog/spdlog.h>
+#include <stdexcept>
+#include <string>
+#include <vector>
+#include <filesystem>
+#include <algorithm>
 
-#include <memory>
+#include "ska/pst/common/definitions.h"
+#include "ska/pst/stat/ScalarStatPublisher.h"
 
-#include "ska/pst/common/utils/AsciiHeader.h"
-#include "ska/pst/stat/StatStorage.h"
 
-#ifndef __SKA_PST_STAT_StatPublisher_h
-#define __SKA_PST_STAT_StatPublisher_h
+ska::pst::stat::ScalarStatPublisher::ScalarStatPublisher(
+  const ska::pst::common::AsciiHeader& config,
+  std::shared_ptr<StatStorage> storage
+) : StatPublisher(config, std::move(storage))
+{
+  SPDLOG_DEBUG("ska::pst::stat::ScalarStatPublisher::ScalarStatPublisher");
+}
 
-namespace ska::pst::stat {
+ska::pst::stat::ScalarStatPublisher::~ScalarStatPublisher()
+{
+  SPDLOG_DEBUG("ska::pst::stat::ScalarStatPublisher::~ScalarStatPublisher()");
+}
 
-  /**
-   * @brief An abstract class providing an API to publish computed statistics.
-   *
-   */
-  class StatPublisher
-  {
-    public:
-      /**
-       * @brief Create instance of a Stat Publisher object.
-       *
-       * @param config the configuration current voltage data stream.
-       * @param storage a shared pointer to the in memory storage of the computed statistics.
-       */
-      StatPublisher(const ska::pst::common::AsciiHeader& config, std::shared_ptr<StatStorage> storage);
+void ska::pst::stat::ScalarStatPublisher::publish()
+{
+  SPDLOG_DEBUG("ska::pst::stat::ScalarStatPublisher::publish()");
+  std::lock_guard<std::mutex> lock(scalar_stats_mutex);
+  scalar_stats.mean_frequency_avg = storage->mean_frequency_avg;
+  scalar_stats.mean_frequency_avg_masked = storage->mean_frequency_avg_masked;
+  scalar_stats.variance_frequency_avg = storage->variance_frequency_avg;
+  scalar_stats.variance_frequency_avg_masked = storage->variance_frequency_avg_masked;
+  scalar_stats.num_clipped_samples = storage->num_clipped_samples;
+}
 
-      /**
-       * @brief Destroy the Stat Publisher object.
-       *
-       */
-      virtual ~StatPublisher();
-
-      /**
-       * @brief publish the current statistics to configured endpoint/location.
-       */
-      virtual void publish() = 0;
-
-    protected:
-      //! shared pointer a statistics storage, shared also with the stat process or computer
-      std::shared_ptr<StatStorage> storage;
-
-      //! the configuration for the current stream of voltage data.
-      ska::pst::common::AsciiHeader config;
-
-  };
-
-} // namespace ska::pst::stat
-
-#endif // __SKA_PST_STAT_StatPublisher_h
+auto ska::pst::stat::ScalarStatPublisher::get_scalar_stats() -> ska::pst::stat::StatStorage::scalar_stats_t
+{
+  SPDLOG_DEBUG("ska::pst::stat::ScalarStatPublisher::get_scalar_stats()");
+  std::lock_guard<std::mutex> lock(scalar_stats_mutex);
+  return scalar_stats;
+}

@@ -87,6 +87,7 @@ class StatStorage {
   + timeseries: std::vector<std::vector<std::vector<float>>>
   + timeseries_masked: std::vector<std::vector<std::vector<float>>>
   + rfi_mask_lut: std::vector<bool>
+  + scalar_stats_t : struct
 }
 
 class StatPublisher <<abstract>> {
@@ -95,6 +96,12 @@ class StatPublisher <<abstract>> {
   + StatPublisher(config: AsciiHeader, storage: std::shared_ptr<StatStorage>)
   + ~StatPublisher()
   {abstract} + publish()
+}
+
+class ScalarStatPublisher implements StatPublisher {
+  + ScalarStatPublisher(config: AsciiHeader, storage: std::shared_ptr<StatStorage>)
+  + ~ScalarStatPublisher()
+  + publish()
 }
 
 class StatHdf5FileWriter implements StatPublisher {

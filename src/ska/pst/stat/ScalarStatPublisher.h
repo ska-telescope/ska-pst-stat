@@ -28,51 +28,55 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <memory>
-
 #include "ska/pst/common/utils/AsciiHeader.h"
-#include "ska/pst/stat/StatStorage.h"
+#include "ska/pst/stat/StatPublisher.h"
 
-#ifndef __SKA_PST_STAT_StatPublisher_h
-#define __SKA_PST_STAT_StatPublisher_h
+#include <spdlog/spdlog.h>
+#include <memory>
+#include <string>
+#include <cstring>
+
+#ifndef __SKA_PST_STAT_ScalarStatPublisher_h
+#define __SKA_PST_STAT_ScalarStatPublisher_h
 
 namespace ska::pst::stat {
-
-  /**
-   * @brief An abstract class providing an API to publish computed statistics.
-   *
-   */
-  class StatPublisher
+  class ScalarStatPublisher : public StatPublisher
   {
     public:
       /**
-       * @brief Create instance of a Stat Publisher object.
+       * @brief Create instance of a ScalarStatPublisher object.
        *
        * @param config the configuration current voltage data stream.
        * @param storage a shared pointer to the in memory storage of the computed statistics.
        */
-      StatPublisher(const ska::pst::common::AsciiHeader& config, std::shared_ptr<StatStorage> storage);
+      ScalarStatPublisher(
+        const ska::pst::common::AsciiHeader& config,
+        std::shared_ptr<StatStorage> storage
+      );
 
       /**
-       * @brief Destroy the Stat Publisher object.
+       * @brief Destroy the ScalarStatPublisher object.
        *
        */
-      virtual ~StatPublisher();
+      virtual ~ScalarStatPublisher();
 
       /**
-       * @brief publish the current statistics to configured endpoint/location.
+       * @brief publish the computed statistics as a HDF5 file.
        */
-      virtual void publish() = 0;
+      void publish() override;
 
-    protected:
-      //! shared pointer a statistics storage, shared also with the stat process or computer
-      std::shared_ptr<StatStorage> storage;
+      /**
+       * @brief Return the scalar statistics of the ScalarStatPublisher.
+       *
+       */
+      ska::pst::stat::StatStorage::scalar_stats_t get_scalar_stats();
 
-      //! the configuration for the current stream of voltage data.
-      ska::pst::common::AsciiHeader config;
-
+    private:
+      // mutex for protecting data access
+      std::mutex scalar_stats_mutex;
+      // contains scalar statistics
+      ska::pst::stat::StatStorage::scalar_stats_t scalar_stats;
   };
-
 } // namespace ska::pst::stat
 
-#endif // __SKA_PST_STAT_StatPublisher_h
+#endif // __SKA_PST_STAT_ScalarStatPublisher_h

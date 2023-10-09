@@ -10,6 +10,7 @@ set(public_headers
   StatProcessor.h
   StatPublisher.h
   StatStorage.h
+  ScalarStatPublisher.h
 )
 
 set(sources
@@ -22,6 +23,7 @@ set(sources
   src/StatComputer.cpp
   src/StatStorage.cpp
   src/StatProcessor.cpp
+  src/ScalarStatPublisher.cpp
 )
 
 set(private_headers

@@ -3,6 +3,7 @@ include_directories(../..)
 
 add_executable(FileProcessorTest src/FileProcessorTest.cpp)
 add_executable(StatHdf5FileWriterTest src/StatHdf5FileWriterTest.cpp)
+add_executable(ScalarStatPublisherTest src/ScalarStatPublisherTest.cpp)
 add_executable(StatStorageTest src/StatStorageTest.cpp)
 add_executable(StatProcessorTest src/StatProcessorTest.cpp)
 add_executable(StatComputerTest src/StatComputerTest.cpp)
@@ -10,6 +11,7 @@ add_executable(StatApplicationManagerTest src/StatApplicationManagerTest.cpp)
 
 target_link_libraries(FileProcessorTest gtest_main ska_pst_stat ska-pst-stat-testutils)
 target_link_libraries(StatHdf5FileWriterTest gtest_main ska_pst_stat ska-pst-stat-testutils)
+target_link_libraries(ScalarStatPublisherTest gtest_main ska_pst_stat ska-pst-stat-testutils)
 target_link_libraries(StatStorageTest gtest_main ska_pst_stat ska-pst-stat-testutils)
 target_link_libraries(StatProcessorTest gtest_main ska_pst_stat ska-pst-stat-testutils)
 target_link_libraries(StatComputerTest gtest_main ska_pst_stat ska-pst-stat-testutils)
@@ -17,6 +19,7 @@ target_link_libraries(StatApplicationManagerTest gtest_main ska_pst_stat ska-pst
 
 add_test(FileProcessorTest FileProcessorTest --test_data "${CMAKE_CURRENT_LIST_DIR}/data")
 add_test(StatHdf5FileWriterTest StatHdf5FileWriterTest --test_data "${CMAKE_CURRENT_LIST_DIR}/data")
+add_test(ScalarStatPublisherTest ScalarStatPublisherTest --test_data "${CMAKE_CURRENT_LIST_DIR}/data")
 add_test(StatStorageTest StatStorageTest --test_data "${CMAKE_CURRENT_LIST_DIR}/data")
 add_test(StatProcessorTest StatProcessorTest --test_data "${CMAKE_CURRENT_LIST_DIR}/data")
 add_test(StatComputerTest StatComputerTest --test_data "${CMAKE_CURRENT_LIST_DIR}/data")
