@@ -62,6 +62,7 @@ void ska::pst::stat::ScalarStatPublisher::publish()
   scalar_stats.mean_frequency_avg_masked = storage->mean_frequency_avg_masked;
   scalar_stats.variance_frequency_avg = storage->variance_frequency_avg;
   scalar_stats.variance_frequency_avg_masked = storage->variance_frequency_avg_masked;
+  scalar_stats.num_clipped_samples_spectrum = storage->num_clipped_samples_spectrum;
   scalar_stats.num_clipped_samples = storage->num_clipped_samples;
 }
 

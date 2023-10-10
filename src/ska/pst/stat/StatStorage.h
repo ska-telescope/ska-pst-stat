@@ -96,13 +96,13 @@ namespace ska::pst::stat {
         std::vector<std::vector<uint32_t>> num_clipped_samples;
 
         /**
-         * @brief number of clipped input samples (maximum level) for each polarisation, dimension,
-         * expect those flagged for RFI.
+         * @brief number of clipped input samples (maximum level) for each polarisation, dimension and channel.
          *
          * First dimension is polarisation (2 dimensions)
          * Second dimension is the real and imaginary components (I and Q).
+         * Third dimension is the channel number.
          */
-        std::vector<std::vector<uint32_t>> num_clipped_samples_masked;
+        std::vector<std::vector<std::vector<uint32_t>>> num_clipped_samples_spectrum;
 
       } scalar_stats_t;
 

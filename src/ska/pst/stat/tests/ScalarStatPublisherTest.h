@@ -57,6 +57,8 @@ class ScalarStatPublisherTest : public ::testing::Test
 
       ska::pst::common::AsciiHeader config;
 
+      std::mutex scalar_stats_test_mutex;
+
       void populate_storage();
 
       std::shared_ptr<ScalarStatPublisher> scalar_stat_publisher{nullptr};

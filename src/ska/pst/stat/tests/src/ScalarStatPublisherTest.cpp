@@ -71,6 +71,7 @@ void ScalarStatPublisherTest::TearDown()
 
 void ScalarStatPublisherTest::populate_storage()
 {
+  std::lock_guard<std::mutex> lock(scalar_stats_test_mutex);
   // header values
   populate_1d_vec<double>(storage->channel_centre_frequencies);
   populate_1d_vec<double>(storage->timeseries_bins);
@@ -133,13 +134,12 @@ TEST_F(ScalarStatPublisherTest, test_controlled_process_and_read_data)
   ASSERT_EQ(copied_scalar_stat.variance_frequency_avg, storage->variance_frequency_avg);
   ASSERT_EQ(copied_scalar_stat.variance_frequency_avg_masked, storage->variance_frequency_avg_masked);
   ASSERT_EQ(copied_scalar_stat.num_clipped_samples, storage->num_clipped_samples);
-  // ASSERT_EQ(copied_scalar_stat.num_clipped_samples_masked, storage->num_clipped_samples_masked);
 }
 
 TEST_F(ScalarStatPublisherTest, test_threaded_process_and_read_data)
 {
-    const int numThreads = 4; // Number of threads for testing
-    const int numIterations = 10; // Number of iterations for each thread
+    const int numThreads = 5; // Number of threads for testing
+    const int numIterations = 5; // Number of iterations for each thread
 
     std::vector<std::thread> threads;
 
@@ -153,15 +153,15 @@ TEST_F(ScalarStatPublisherTest, test_threaded_process_and_read_data)
                 scalar_stat_publisher->publish();
 
                 // Simulate concurrent execution of get_scalar_stats() in multiple threads
-                ska::pst::stat::StatStorage::scalar_stats_t copied_scalar_stat = scalar_stat_publisher->get_scalar_stats();
+                auto copied_scalar_stat = scalar_stat_publisher->get_scalar_stats();
 
                 // Add assertions to verify that the result matches the expected values
                 ASSERT_EQ(copied_scalar_stat.mean_frequency_avg, storage->mean_frequency_avg);
                 ASSERT_EQ(copied_scalar_stat.mean_frequency_avg_masked, storage->mean_frequency_avg_masked);
                 ASSERT_EQ(copied_scalar_stat.variance_frequency_avg, storage->variance_frequency_avg);
                 ASSERT_EQ(copied_scalar_stat.variance_frequency_avg_masked, storage->variance_frequency_avg_masked);
+                ASSERT_EQ(copied_scalar_stat.num_clipped_samples_spectrum, storage->num_clipped_samples_spectrum);
                 ASSERT_EQ(copied_scalar_stat.num_clipped_samples, storage->num_clipped_samples);
-                // ASSERT_EQ(copied_scalar_stat.num_clipped_samples_masked, storage->num_clipped_samples_masked);
             }
         });
     }
