@@ -33,8 +33,6 @@
 
 #include <spdlog/spdlog.h>
 #include <memory>
-#include <string>
-#include <cstring>
 
 #ifndef __SKA_PST_STAT_ScalarStatPublisher_h
 #define __SKA_PST_STAT_ScalarStatPublisher_h
@@ -61,21 +59,28 @@ namespace ska::pst::stat {
       virtual ~ScalarStatPublisher();
 
       /**
-       * @brief publish the computed statistics as a HDF5 file.
+       * @brief publish the computed statistics as a scalar_stats attribute.
+       *
        */
       void publish() override;
+
+      /**
+       * @brief reset the computed statistics scalar_stats attribute.
+       *
+       */
+      void reset();
 
       /**
        * @brief Return the scalar statistics of the ScalarStatPublisher.
        *
        */
-      ska::pst::stat::StatStorage::scalar_stats_t get_scalar_stats();
+      StatStorage::scalar_stats_t get_scalar_stats();
 
     private:
       // mutex for protecting data access
       std::mutex scalar_stats_mutex;
       // contains scalar statistics
-      ska::pst::stat::StatStorage::scalar_stats_t scalar_stats;
+      StatStorage::scalar_stats_t scalar_stats;
   };
 } // namespace ska::pst::stat
 

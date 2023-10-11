@@ -42,8 +42,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <array>
-#include <H5Cpp.h>
 
 auto main(int argc, char* argv[]) -> int
 {
@@ -138,38 +136,95 @@ TEST_F(ScalarStatPublisherTest, test_controlled_process_and_read_data)
 
 TEST_F(ScalarStatPublisherTest, test_threaded_process_and_read_data)
 {
-    const int numThreads = 5; // Number of threads for testing
-    const int numIterations = 5; // Number of iterations for each thread
+  const int numThreads = 5; // Number of threads for testing
+  const int numIterations = 5; // Number of iterations for each thread
 
-    std::vector<std::thread> threads;
+  std::vector<std::thread> threads;
 
-    for (int i = 0; i < numThreads; ++i) {
-        threads.emplace_back([&]() {
-            for (int j = 0; j < numIterations; ++j) {
-                // Simulate concurrent execution of populate_storage() in multiple threads
-                populate_storage();
+  for (int i = 0; i < numThreads; ++i)
+  {
+    threads.emplace_back([&]()
+    {
+      for (int j = 0; j < numIterations; ++j)
+      {
+        // Simulate concurrent execution of populate_storage() in multiple threads
+        populate_storage();
 
-                // Simulate concurrent execution of publish() in multiple threads
-                scalar_stat_publisher->publish();
+        // Simulate concurrent execution of publish() in multiple threads
+        scalar_stat_publisher->publish();
 
-                // Simulate concurrent execution of get_scalar_stats() in multiple threads
-                auto copied_scalar_stat = scalar_stat_publisher->get_scalar_stats();
+        // Simulate concurrent execution of get_scalar_stats() in multiple threads
+        auto copied_scalar_stat = scalar_stat_publisher->get_scalar_stats();
 
-                // Add assertions to verify that the result matches the expected values
-                ASSERT_EQ(copied_scalar_stat.mean_frequency_avg, storage->mean_frequency_avg);
-                ASSERT_EQ(copied_scalar_stat.mean_frequency_avg_masked, storage->mean_frequency_avg_masked);
-                ASSERT_EQ(copied_scalar_stat.variance_frequency_avg, storage->variance_frequency_avg);
-                ASSERT_EQ(copied_scalar_stat.variance_frequency_avg_masked, storage->variance_frequency_avg_masked);
-                ASSERT_EQ(copied_scalar_stat.num_clipped_samples_spectrum, storage->num_clipped_samples_spectrum);
-                ASSERT_EQ(copied_scalar_stat.num_clipped_samples, storage->num_clipped_samples);
-            }
-        });
-    }
+        // Add assertions to verify that the result matches the expected values
+        ASSERT_EQ(copied_scalar_stat.mean_frequency_avg, storage->mean_frequency_avg);
+        ASSERT_EQ(copied_scalar_stat.mean_frequency_avg_masked, storage->mean_frequency_avg_masked);
+        ASSERT_EQ(copied_scalar_stat.variance_frequency_avg, storage->variance_frequency_avg);
+        ASSERT_EQ(copied_scalar_stat.variance_frequency_avg_masked, storage->variance_frequency_avg_masked);
+        ASSERT_EQ(copied_scalar_stat.num_clipped_samples_spectrum, storage->num_clipped_samples_spectrum);
+        ASSERT_EQ(copied_scalar_stat.num_clipped_samples, storage->num_clipped_samples);
+      }
+    });
+  }
 
-    // Wait for all threads to finish
-    for (std::thread& thread : threads) {
-        thread.join();
-    }
+  // Wait for all threads to finish
+  for (std::thread& thread : threads) {
+      thread.join();
+  }
 }
 
+TEST_F(ScalarStatPublisherTest, test_controlled_reset)
+{
+  populate_storage();
+  scalar_stat_publisher->publish();
+  scalar_stat_publisher->reset();
+  ska::pst::stat::StatStorage::scalar_stats_t copied_scalar_stat = scalar_stat_publisher->get_scalar_stats();
+  ASSERT_EQ(copied_scalar_stat.mean_frequency_avg.size(), 0);
+  ASSERT_EQ(copied_scalar_stat.mean_frequency_avg_masked.size(), 0);
+  ASSERT_EQ(copied_scalar_stat.variance_frequency_avg.size(), 0);
+  ASSERT_EQ(copied_scalar_stat.variance_frequency_avg_masked.size(), 0);
+  ASSERT_EQ(copied_scalar_stat.num_clipped_samples.size(), 0);
 }
+
+
+TEST_F(ScalarStatPublisherTest, test_threaded_reset)
+{
+  const int numThreads = 5; // Number of threads for testing
+  const int numIterations = 5; // Number of iterations for each thread
+
+  std::vector<std::thread> threads;
+
+  for (int i = 0; i < numThreads; ++i)
+  {
+    threads.emplace_back([&]()
+    {
+      for (int j = 0; j < numIterations; ++j)
+      {
+        // Simulate concurrent execution of populate_storage() in multiple threads
+        populate_storage();
+
+        // Simulate concurrent execution of publish() in multiple threads
+        scalar_stat_publisher->publish();
+
+        // Simulate reset after publish
+        scalar_stat_publisher->reset();
+
+        // Simulate concurrent execution of get_scalar_stats() in multiple threads
+        auto copied_scalar_stat = scalar_stat_publisher->get_scalar_stats();
+
+        // Add assertions to verify that the result matches the expected values
+        ASSERT_EQ(copied_scalar_stat.mean_frequency_avg.size(), 0);
+        ASSERT_EQ(copied_scalar_stat.mean_frequency_avg_masked.size(), 0);
+        ASSERT_EQ(copied_scalar_stat.variance_frequency_avg.size(), 0);
+        ASSERT_EQ(copied_scalar_stat.variance_frequency_avg_masked.size(), 0);
+        ASSERT_EQ(copied_scalar_stat.num_clipped_samples.size(), 0);
+      }
+    });
+  }
+
+  // Wait for all threads to finish
+  for (std::thread& thread : threads) {
+      thread.join();
+  }
+}
+} // namespace ska::pst::stat::test

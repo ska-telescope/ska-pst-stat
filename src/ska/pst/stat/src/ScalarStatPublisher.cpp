@@ -27,19 +27,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <cstdlib>
-#include <cstring>
-#include <iostream>
+#include <mutex>
 #include <spdlog/spdlog.h>
-#include <stdexcept>
-#include <string>
-#include <vector>
-#include <filesystem>
-#include <algorithm>
 
 #include "ska/pst/common/definitions.h"
 #include "ska/pst/stat/ScalarStatPublisher.h"
-
 
 ska::pst::stat::ScalarStatPublisher::ScalarStatPublisher(
   const ska::pst::common::AsciiHeader& config,
@@ -71,4 +63,16 @@ auto ska::pst::stat::ScalarStatPublisher::get_scalar_stats() -> ska::pst::stat::
   SPDLOG_DEBUG("ska::pst::stat::ScalarStatPublisher::get_scalar_stats()");
   std::lock_guard<std::mutex> lock(scalar_stats_mutex);
   return scalar_stats;
+}
+
+void ska::pst::stat::ScalarStatPublisher::reset()
+{
+  SPDLOG_DEBUG("ska::pst::stat::ScalarStatPublisher::reset()");
+  std::lock_guard<std::mutex> lock(scalar_stats_mutex);
+  scalar_stats.mean_frequency_avg = {};
+  scalar_stats.mean_frequency_avg_masked = {};
+  scalar_stats.variance_frequency_avg = {};
+  scalar_stats.variance_frequency_avg_masked = {};
+  scalar_stats.num_clipped_samples_spectrum = {};
+  scalar_stats.num_clipped_samples = {};
 }
