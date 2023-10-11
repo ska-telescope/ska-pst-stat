@@ -50,6 +50,62 @@ namespace ska::pst::stat {
   struct StatStorage
   {
     public:
+
+      typedef struct
+      {
+        /**
+         * @brief the mean of the data for each polarisation and dimension, averaged over all channels.
+         *
+         * First dimension is polarisation (2 dimensions)
+         * Second dimension is the real and imaginary components (I and Q).
+         */
+        std::vector<std::vector<float>> mean_frequency_avg;
+
+        /**
+         * @brief the mean of the data for each polarisation and dimension, averaged over all channels,
+         * expect those flagged for RFI.
+         *
+         * First dimension is polarisation (2 dimensions)
+         * Second dimension is the real and imaginary components (I and Q).
+         */
+        std::vector<std::vector<float>> mean_frequency_avg_masked;
+
+        /**
+         * @brief the variance of the data for each polarisation and dimension, averaged over all channels.
+         *
+         * First dimension is polarisation (2 dimensions)
+         * Second dimension is the real and imaginary components (I and Q).
+         */
+        std::vector<std::vector<float>> variance_frequency_avg;
+
+        /**
+         * @brief the variance of the data for each polarisation and dimension, averaged over all channels,
+         * expect those flagged for RFI.
+         *
+         * First dimension is polarisation (2 dimensions)
+         * Second dimension is the real and imaginary components (I and Q).
+         */
+        std::vector<std::vector<float>> variance_frequency_avg_masked;
+
+        /**
+         * @brief number of clipped input samples (maximum level) for each polarisation, dimension.
+         *
+         * First dimension is polarisation (2 dimensions)
+         * Second dimension is the real and imaginary components (I and Q).
+         */
+        std::vector<std::vector<uint32_t>> num_clipped_samples;
+
+        /**
+         * @brief number of clipped input samples (maximum level) for each polarisation, dimension and channel.
+         *
+         * First dimension is polarisation (2 dimensions)
+         * Second dimension is the real and imaginary components (I and Q).
+         * Third dimension is the channel number.
+         */
+        std::vector<std::vector<std::vector<uint32_t>>> num_clipped_samples_spectrum;
+
+      } scalar_stats_t;
+
       /**
        * @brief Create instance of a Stat Storage object.
        *
