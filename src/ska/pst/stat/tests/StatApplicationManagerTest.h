@@ -86,8 +86,8 @@ class StatApplicationManagerTest : public ::testing::Test
     std::unique_ptr<ska::pst::smrb::DataBlockCreate> _dbc_weights{nullptr};
     std::unique_ptr<ska::pst::smrb::DataBlockWrite> _writer_weights{nullptr};
 
-    uint64_t data_bufsz;
-    uint64_t weights_bufsz;
+    uint64_t data_bufsz{0};
+    uint64_t weights_bufsz{0};
 
     std::vector<char> data_to_write;
     std::vector<char> weights_to_write;
