@@ -117,12 +117,12 @@ void ScalarStatPublisherTest::initialise(const std::string& config_file)
   populate_storage();
 }
 
-TEST_F(ScalarStatPublisherTest, test_construct_delete)
+TEST_F(ScalarStatPublisherTest, test_construct_delete) // NOLINT
 {
   std::shared_ptr<ska::pst::stat::ScalarStatPublisher> ssp = std::make_shared<ska::pst::stat::ScalarStatPublisher>(config, storage);
 }
 
-TEST_F(ScalarStatPublisherTest, test_controlled_process_and_read_data)
+TEST_F(ScalarStatPublisherTest, test_controlled_process_and_read_data) // NOLINT
 {
   populate_storage();
   scalar_stat_publisher->publish();
@@ -134,12 +134,13 @@ TEST_F(ScalarStatPublisherTest, test_controlled_process_and_read_data)
   ASSERT_EQ(copied_scalar_stat.num_clipped_samples, storage->num_clipped_samples);
 }
 
-TEST_F(ScalarStatPublisherTest, test_threaded_process_and_read_data)
+TEST_F(ScalarStatPublisherTest, test_threaded_process_and_read_data) // NOLINT
 {
   const int numThreads = 5; // Number of threads for testing
   const int numIterations = 5; // Number of iterations for each thread
 
   std::vector<std::thread> threads;
+  threads.reserve(numThreads * numIterations);
 
   for (int i = 0; i < numThreads; ++i)
   {
@@ -173,7 +174,7 @@ TEST_F(ScalarStatPublisherTest, test_threaded_process_and_read_data)
   }
 }
 
-TEST_F(ScalarStatPublisherTest, test_controlled_reset)
+TEST_F(ScalarStatPublisherTest, test_controlled_reset) // NOLINT
 {
   populate_storage();
   scalar_stat_publisher->publish();
@@ -187,12 +188,13 @@ TEST_F(ScalarStatPublisherTest, test_controlled_reset)
 }
 
 
-TEST_F(ScalarStatPublisherTest, test_threaded_reset)
+TEST_F(ScalarStatPublisherTest, test_threaded_reset) // NOLINT
 {
   const int numThreads = 5; // Number of threads for testing
   const int numIterations = 5; // Number of iterations for each thread
 
   std::vector<std::thread> threads;
+  threads.reserve(numThreads * numIterations);
 
   for (int i = 0; i < numThreads; ++i)
   {
