@@ -113,11 +113,9 @@ namespace ska::pst::stat {
        * @brief Create instance of a Stat HDF5 File Writer object.
        *
        * @param config the configuration current voltage data stream.
-       * @param storage a shared pointer to the in memory storage of the computed statistics.
        */
       StatHdf5FileWriter(
-        const ska::pst::common::AsciiHeader& config,
-        std::shared_ptr<StatStorage> storage
+        const ska::pst::common::AsciiHeader& config
       );
 
       /**
@@ -128,8 +126,10 @@ namespace ska::pst::stat {
 
       /**
        * @brief publish the computed statistics as a HDF5 file.
+       *
+       * @param storage reference to the computed statistics to publish.
        */
-      void publish() override;
+      void publish(std::shared_ptr<StatStorage> storage) override;
 
       /**
        * @brief get the HDF5 compound data type for STAT.

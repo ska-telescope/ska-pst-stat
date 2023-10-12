@@ -22,6 +22,7 @@ group scan
       StatApplicationManager -> StatApplicationManager: wait stat interval
   end
   Client -> StatApplicationManager: end scan
+  StatApplicationManager -> StatProcessor: interrupt
   StatApplicationManager -> StatApplicationManager: stop background processing
 end
 Client -> StatApplicationManager: deconfigure scan

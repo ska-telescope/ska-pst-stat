@@ -186,12 +186,19 @@ void ska::pst::stat::StatComputer::initialise()
     }
   }
 
+  keep_computing = true;
   initialised = true;
 
   SPDLOG_DEBUG("ska::pst::stat::StatComputer::initialise() - Number of masked channels = {}", num_masked);
 }
 
-void ska::pst::stat::StatComputer::compute(const ska::pst::common::SegmentProducer::Segment& segment)
+void ska::pst::stat::StatComputer::interrupt()
+{
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::interrupt setting keep_computing=false");
+  keep_computing = false;
+}
+
+auto ska::pst::stat::StatComputer::compute(const ska::pst::common::SegmentProducer::Segment& segment) -> bool
 {
   SPDLOG_DEBUG("ska::pst::stat::StatComputer::compute()");
   if (!initialised) {
@@ -203,7 +210,7 @@ void ska::pst::stat::StatComputer::compute(const ska::pst::common::SegmentProduc
   if (segment.data.size == 0)
   {
     SPDLOG_WARN("ska::pst::stat::StatComputer::compute - segment.data.size is zero. No computation necessary");
-    return;
+    return false;
   }
 
   const uint32_t nheaps = segment.data.size / heap_layout.get_data_heap_stride();
@@ -245,19 +252,22 @@ void ska::pst::stat::StatComputer::compute(const ska::pst::common::SegmentProduc
     SPDLOG_WARN("ska::pst::stat::StatComputer::compute - effectively using only {} bytes from segment weights", expected_weights_size);
   }
 
+  bool all_samples_computed{false};
   // unpack the 8 or 16 bit signed integers
   if (nbit == 8) // NOLINT
   {
-    compute_samples(reinterpret_cast<int8_t*>(segment.data.block), segment.weights.block, nheaps);
+    all_samples_computed = compute_samples(reinterpret_cast<int8_t*>(segment.data.block), segment.weights.block, nheaps);
   }
   else if (nbit == 16) // NOLINT
   {
-    compute_samples(reinterpret_cast<int16_t*>(segment.data.block), segment.weights.block, nheaps);
+    all_samples_computed = compute_samples(reinterpret_cast<int16_t*>(segment.data.block), segment.weights.block, nheaps);
   }
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::compute all_samples_computed={}", all_samples_computed);
+  return all_samples_computed;
 }
 
 template <typename T>
-void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint32_t nheaps)
+auto ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint32_t nheaps) -> bool
 {
   // binning_offset is used to turn convert signed data to unsiged data
   // for NBIT = 8, data goes from -128 to 127, the binning offset is 128 and bins goes from 0 to 255
@@ -339,11 +349,11 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
   const uint32_t nchan_per_packet = heap_layout.get_packet_layout().get_nchan_per_packet();
   const uint32_t packets_per_heap = heap_layout.get_packets_per_heap();
 
-  for (uint32_t iheap=0; iheap<nheaps; iheap++)
+  for (uint32_t iheap=0; (iheap<nheaps && keep_computing); iheap++)
   {
     const uint32_t isamp_heap = iheap * nsamp_per_packet;
     uint32_t base_ochan{0};
-    for (uint32_t ipacket=0; ipacket<packets_per_heap; ipacket++)
+    for (uint32_t ipacket=0; ipacket<packets_per_heap && keep_computing; ipacket++)
     {
       const float scale_factor = get_scale_factor(weights, packet_number);
 
@@ -468,6 +478,15 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
               storage->rebinned_histogram_1d_freq_avg_masked[ipol][I_IDX][value_i_rebin] += 1;
               storage->rebinned_histogram_1d_freq_avg_masked[ipol][Q_IDX][value_q_rebin] += 1;
 
+              // Number clipped samples - masked
+              if (value_i_bin == 0 || value_i_bin == max_bin) {
+                storage->num_clipped_samples_masked[ipol][I_IDX] += 1;
+              }
+
+              if (value_q_bin == 0 || value_q_bin == max_bin) {
+                storage->num_clipped_samples_masked[ipol][Q_IDX] += 1;
+              }
+
               storage->timeseries_masked[ipol][temporal_bin][TS_MAX_IDX] = std::max(storage->timeseries_masked[ipol][temporal_bin][TS_MAX_IDX], power);
               storage->timeseries_masked[ipol][temporal_bin][TS_MIN_IDX] = std::min(storage->timeseries_masked[ipol][temporal_bin][TS_MIN_IDX], power);
               storage->timeseries_masked[ipol][temporal_bin][TS_MEAN_IDX] += (
@@ -484,6 +503,12 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
       base_ochan += nchan_per_packet;
       packet_number++;
     }
+  }
+
+  if (!keep_computing)
+  {
+    SPDLOG_WARN("Processing of statistics was interrupted and the stat storage structure is not valid");
+    return false;
   }
 
   // technically everything after this doesn't have to be in the templated class, it can be in
@@ -531,6 +556,7 @@ void ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
     }
   }
 
+  return true;
 }
 
 auto ska::pst::stat::StatComputer::get_scale_factor(char * weights, uint32_t packet_number) -> float

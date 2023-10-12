@@ -36,41 +36,46 @@
 
 namespace ska::pst::stat::test {
 
-DataBlockTestHelper::DataBlockTestHelper(const std::string& _id, unsigned _num_readers)
+DataBlockTestHelper::DataBlockTestHelper(std::string _id, unsigned _num_readers) : id(std::move(_id)), num_readers(_num_readers)
 {
-  id = _id;
-  num_readers = _num_readers;
-  counter = 0;
 }
 
-void DataBlockTestHelper::set_header_block_nbufs (uint64_t nbufs)
+void DataBlockTestHelper::set_header_block_nbufs(uint64_t nbufs)
 {
   if (db)
+  {
     throw std::runtime_error("DataBlockTestHelper::set_header_block_nbufs ring buffer already created");
+  }
 
   hdr_nbufs = nbufs;
 }
 
-void DataBlockTestHelper::set_header_block_bufsz (uint64_t bufsz)
+void DataBlockTestHelper::set_header_block_bufsz(uint64_t bufsz)
 {
   if (db)
+  {
     throw std::runtime_error("DataBlockTestHelper::set_header_block_bufsz ring buffer already created");
+  }
 
   hdr_bufsz = bufsz;
 }
 
-void DataBlockTestHelper::set_data_block_nbufs (uint64_t nbufs)
+void DataBlockTestHelper::set_data_block_nbufs(uint64_t nbufs)
 {
   if (db)
+  {
     throw std::runtime_error("DataBlockTestHelper::set_data_block_nbufs ring buffer already created");
+  }
 
   dat_nbufs = nbufs;
 }
 
-void DataBlockTestHelper::set_data_block_bufsz (uint64_t bufsz)
+void DataBlockTestHelper::set_data_block_bufsz(uint64_t bufsz)
 {
   if (db)
+  {
     throw std::runtime_error("DataBlockTestHelper::set_data_block_bufsz ring buffer already created");
+  }
 
   dat_bufsz = bufsz;
 }
@@ -100,13 +105,19 @@ void DataBlockTestHelper::enable_reader()
   SPDLOG_DEBUG("ska::pst::stat::test::DataBlockTestHelper::enable reader");
 
   if (reader)
+  {
     throw std::runtime_error("DataBlockTestHelper::enable_reader already enabled");
+  }
 
   if (!db)
+  {
     throw std::runtime_error("DataBlockTestHelper::enable_reader ring buffer not created (call setup first)");
+  }
 
   if (num_readers == 0)
+  {
     throw std::runtime_error("DataBlockTestHelper::enable_reader ring buffer configured with zero readers");
+  }
 
   SPDLOG_DEBUG("ska::pst::stat::test::DataBlockTestHelper::setup construct ska::pst::smrb::DataBlockRead with id='{}'", id);
   reader = std::make_shared<ska::pst::smrb::DataBlockRead>(id);
@@ -119,7 +130,7 @@ void DataBlockTestHelper::enable_reader()
 }
 
 template<typename Accessor>
-void teardown_one (Accessor& accessor)
+void teardown_one(Accessor& accessor)
 {
   if (accessor)
   {
@@ -138,8 +149,8 @@ void teardown_one (Accessor& accessor)
 
 void DataBlockTestHelper::teardown()
 {
-  teardown_one (writer);
-  teardown_one (reader);
+  teardown_one(writer);
+  teardown_one(reader);
 
   if (db)
   {
@@ -148,12 +159,12 @@ void DataBlockTestHelper::teardown()
   db = nullptr;
 }
 
-void DataBlockTestHelper::set_config (const ska::pst::common::AsciiHeader& hdr)
+void DataBlockTestHelper::set_config(const ska::pst::common::AsciiHeader& hdr)
 {
   config = hdr;
 }
 
-void DataBlockTestHelper::set_header (const ska::pst::common::AsciiHeader& hdr)
+void DataBlockTestHelper::set_header(const ska::pst::common::AsciiHeader& hdr)
 {
   header = hdr;
 }
@@ -178,7 +189,7 @@ void DataBlockTestHelper::start()
 
 void DataBlockTestHelper::write_and_close(size_t nblocks, float delay_ms)
 {
-  write(nblocks,delay_ms);
+  write(nblocks, delay_ms);
   writer->close();
   writer->unlock();
 }
@@ -186,11 +197,11 @@ void DataBlockTestHelper::write_and_close(size_t nblocks, float delay_ms)
 void DataBlockTestHelper::write(size_t nblocks, float delay_ms)
 {
   static constexpr int microseconds_per_millisecond = 1000;
-  int delay_us = delay_ms * microseconds_per_millisecond;
+  int delay_us = static_cast<int>(delay_ms * microseconds_per_millisecond);
 
   std::vector<char> data(dat_bufsz, 0);
   char* ptr = &data[0];
-  uint64_t* count_ptr = reinterpret_cast<uint64_t*>(ptr);
+  auto count_ptr = reinterpret_cast<uint64_t*>(ptr);
 
   for (unsigned iblock=0; iblock < nblocks; iblock++)
   {
@@ -203,7 +214,9 @@ void DataBlockTestHelper::write(size_t nblocks, float delay_ms)
     SPDLOG_DEBUG("ska::pst::stat::test::DataBlockTestHelper::write {} data bytes written", dat_bufsz);
 
     if (delay_us)
+    {
       usleep(delay_us);
+    }
 
     if (reader)
     {

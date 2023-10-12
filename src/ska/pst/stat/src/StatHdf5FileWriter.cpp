@@ -44,9 +44,8 @@
 
 
 ska::pst::stat::StatHdf5FileWriter::StatHdf5FileWriter(
-  const ska::pst::common::AsciiHeader& config,
-  std::shared_ptr<StatStorage> storage
-) : StatPublisher(config, std::move(storage))
+  const ska::pst::common::AsciiHeader& config
+) : StatPublisher(config)
 {
   SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::StatHdf5FileWriter");
 }
@@ -102,7 +101,7 @@ auto get_val_if_has (const ska::pst::common::AsciiHeader& config, const char* ke
   }
 }
 
-void ska::pst::stat::StatHdf5FileWriter::publish()
+void ska::pst::stat::StatHdf5FileWriter::publish(std::shared_ptr<StatStorage> storage)
 {
   SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::publish()");
   SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::publish() - config\n{}", config.raw());
@@ -182,6 +181,7 @@ void ska::pst::stat::StatHdf5FileWriter::publish()
     write_3d_vec<uint32_t>(storage->rebinned_histogram_1d_freq_avg_masked, "HISTOGRAM_REBINNED_1D_FREQ_AVG_MASKED", H5::PredType::NATIVE_UINT32, temp_data);
     write_3d_vec<uint32_t>(storage->num_clipped_samples_spectrum, "NUM_CLIPPED_SAMPLES_SPECTRUM", H5::PredType::NATIVE_UINT32, temp_data);
     write_2d_vec<uint32_t>(storage->num_clipped_samples, "NUM_CLIPPED_SAMPLES", H5::PredType::NATIVE_UINT32, temp_data);
+    write_2d_vec<uint32_t>(storage->num_clipped_samples_masked, "NUM_CLIPPED_SAMPLES_MASKED", H5::PredType::NATIVE_UINT32, temp_data);
     write_3d_vec<float>(storage->spectrogram, "SPECTROGRAM", H5::PredType::NATIVE_FLOAT, temp_data);
     write_3d_vec<float>(storage->timeseries, "TIMESERIES", H5::PredType::NATIVE_FLOAT, temp_data);
     write_3d_vec<float>(storage->timeseries_masked, "TIMESERIES_MASKED", H5::PredType::NATIVE_FLOAT, temp_data);

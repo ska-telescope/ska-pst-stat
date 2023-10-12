@@ -45,11 +45,9 @@ namespace ska::pst::stat {
        * @brief Create instance of a ScalarStatPublisher object.
        *
        * @param config the configuration current voltage data stream.
-       * @param storage a shared pointer to the in memory storage of the computed statistics.
        */
       ScalarStatPublisher(
-        const ska::pst::common::AsciiHeader& config,
-        std::shared_ptr<StatStorage> storage
+        const ska::pst::common::AsciiHeader& config
       );
 
       /**
@@ -61,8 +59,9 @@ namespace ska::pst::stat {
       /**
        * @brief publish the computed statistics as a scalar_stats attribute.
        *
+       * @param storage reference to the computed statistics to publish.
        */
-      void publish() override;
+      void publish(std::shared_ptr<StatStorage> storage) override;
 
       /**
        * @brief reset the computed statistics scalar_stats attribute.
@@ -77,9 +76,10 @@ namespace ska::pst::stat {
       StatStorage::scalar_stats_t get_scalar_stats();
 
     private:
-      // mutex for protecting data access
+      //! mutex for protecting data access
       std::mutex scalar_stats_mutex;
-      // contains scalar statistics
+
+      //! contains scalar statistics
       StatStorage::scalar_stats_t scalar_stats;
   };
 } // namespace ska::pst::stat

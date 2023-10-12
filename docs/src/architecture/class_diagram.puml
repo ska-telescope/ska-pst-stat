@@ -37,18 +37,21 @@ class FileProcessor {
 class StatProcessor {
   + StatProcessor(data_config: AsciiHeader, weights_config: AsciiHeader)
   + ~StatProcessor()
-  + process(segment: SegmentProducer::Segment)
+  + add_publisher(std::unique_ptr<StatPublisher>)
+  + bool process(segment: SegmentProducer::Segment)
+  + interrupt()
   - storage: std::shared_ptr<StatStorage>
   - computer: std::unique_ptr<StatComputer>
-  - writer: std::unique_ptr<StatPublisher>
+  - publishers: std::vector<std::unique_ptr<StatPublisher>>
   - config: AsciiHeader
 }
 
 class StatComputer {
   + StatComputer(data_config: AsciiHeader, weights_config: AsciiHeader, storage: StatStorage)
   + ~StatComputer()
-  + compute(segment: SegmentProducer::Segment)
+  + bool compute(segment: SegmentProducer::Segment)
   + initialise()
+  + interrupt()
   - storage: std::shared_ptr<StatStorage>
   - config: AsciiHeader
 }
@@ -57,16 +60,18 @@ class StatStorage {
   + StatStorage(config: AsciiHeader)
   + resize(uint32_t ntime_bins, uint32_t nfreq_bins)
   + reset()
-  + uint32_t get_npol()
-  + uint32_t get_ndim()
-  + uint32_t get_nchan()
-  + uint32_t get_nbin()
-  + uint32_t get_nrebin()
-  + uint32_t get_ntime_bins()
-  + uint32_t get_nfreq_bins()
-  + uint32_t get_ntime_vals()
-  + bool is_storage_resized()
-  + bool is_storage_reset()
+  + uint32_t get_npol() const
+  + uint32_t get_ndim() const
+  + uint32_t get_nchan() const
+  + uint32_t get_nbin() const
+  + uint32_t get_nrebin() const
+  + uint32_t get_ntime_bins() const
+  + uint32_t get_nfreq_bins() const
+  + uint32_t get_ntime_vals() const
+  + double get_total_sample_time() const
+  + void set_total_sample_time(double)
+  + bool is_storage_resized() const
+  + bool is_storage_reset() const
   + mean_frequency_avg: std::vector<std::vector<float>>
   + mean_frequency_avg_masked: std::vector<std::vector<float>>
   + variance_frequency_avg: std::vector<std::vector<float>>
@@ -83,6 +88,7 @@ class StatStorage {
   + rebinned_histogram_1d_freq_avg_masked: std::vector<std::vector<std::vector<uint32_t>>>
   + num_clipped_samples_spectrum: std::vector<std::vector<std::vector<uint32_t>>>
   + num_clipped_samples: std::vector<std::vector<uint32_t>>
+  + num_clipped_samples_masked: std::vector<std::vector<uint32_t>>
   + spectrogram: std::vector<std::vector<std::vector<float>>>
   + timeseries: std::vector<std::vector<std::vector<float>>>
   + timeseries_masked: std::vector<std::vector<std::vector<float>>>
@@ -91,24 +97,24 @@ class StatStorage {
 }
 
 class StatPublisher <<abstract>> {
-  # storage: std::shared_ptr<StatStorage>
   # config: AsciiHeader
-  + StatPublisher(config: AsciiHeader, storage: std::shared_ptr<StatStorage>)
+  + StatPublisher(config: AsciiHeader)
   + ~StatPublisher()
-  {abstract} + publish()
+  {abstract} + publish(std::shared_ptr<StatStorage>)
 }
 
 class ScalarStatPublisher implements StatPublisher {
-  + ScalarStatPublisher(config: AsciiHeader, storage: std::shared_ptr<StatStorage>)
+  + ScalarStatPublisher(config: AsciiHeader)
   + ~ScalarStatPublisher()
-  + publish()
+  + publish(std::shared_ptr<StatStorage>)
   + reset()
+  + scalar_stats_t get_scalar_stats();
 }
 
 class StatHdf5FileWriter implements StatPublisher {
-  + StatHdf5FileWriter(config: AsciiHeader, storage: std::shared_ptr<StatStorage>)
+  + StatHdf5FileWriter(config: AsciiHeader)
   + ~StatHdf5FileWriter()
-  + publish()
+  + publish(std::shared_ptr<StatStorage>)
 }
 
 StatProcessor *-- StatComputer

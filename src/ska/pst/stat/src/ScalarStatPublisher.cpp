@@ -34,9 +34,8 @@
 #include "ska/pst/stat/ScalarStatPublisher.h"
 
 ska::pst::stat::ScalarStatPublisher::ScalarStatPublisher(
-  const ska::pst::common::AsciiHeader& config,
-  std::shared_ptr<StatStorage> storage
-) : StatPublisher(config, std::move(storage))
+  const ska::pst::common::AsciiHeader& config
+) : StatPublisher(config)
 {
   SPDLOG_DEBUG("ska::pst::stat::ScalarStatPublisher::ScalarStatPublisher");
 }
@@ -46,7 +45,7 @@ ska::pst::stat::ScalarStatPublisher::~ScalarStatPublisher()
   SPDLOG_DEBUG("ska::pst::stat::ScalarStatPublisher::~ScalarStatPublisher()");
 }
 
-void ska::pst::stat::ScalarStatPublisher::publish()
+void ska::pst::stat::ScalarStatPublisher::publish(std::shared_ptr<StatStorage> storage)
 {
   SPDLOG_DEBUG("ska::pst::stat::ScalarStatPublisher::publish()");
   std::lock_guard<std::mutex> lock(scalar_stats_mutex);
@@ -54,8 +53,8 @@ void ska::pst::stat::ScalarStatPublisher::publish()
   scalar_stats.mean_frequency_avg_masked = storage->mean_frequency_avg_masked;
   scalar_stats.variance_frequency_avg = storage->variance_frequency_avg;
   scalar_stats.variance_frequency_avg_masked = storage->variance_frequency_avg_masked;
-  scalar_stats.num_clipped_samples_spectrum = storage->num_clipped_samples_spectrum;
   scalar_stats.num_clipped_samples = storage->num_clipped_samples;
+  scalar_stats.num_clipped_samples_masked = storage->num_clipped_samples_masked;
 }
 
 auto ska::pst::stat::ScalarStatPublisher::get_scalar_stats() -> ska::pst::stat::StatStorage::scalar_stats_t
@@ -73,6 +72,6 @@ void ska::pst::stat::ScalarStatPublisher::reset()
   scalar_stats.mean_frequency_avg_masked = {};
   scalar_stats.variance_frequency_avg = {};
   scalar_stats.variance_frequency_avg_masked = {};
-  scalar_stats.num_clipped_samples_spectrum = {};
   scalar_stats.num_clipped_samples = {};
+  scalar_stats.num_clipped_samples_masked = {};
 }
