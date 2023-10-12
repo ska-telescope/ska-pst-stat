@@ -29,12 +29,14 @@
  */
 
 #include "ska/pst/common/utils/SegmentProducer.h"
+#include "ska/pst/stat/StatPublisher.h"
 #include "ska/pst/stat/StatStorage.h"
 #include "ska/pst/stat/StatComputer.h"
 #include "ska/pst/stat/StatHdf5FileWriter.h"
 #include "ska/pst/common/definitions.h"
 
 #include <memory>
+#include <vector>
 
 #ifndef __SKA_PST_STAT_StatProcessor_h
 #define __SKA_PST_STAT_StatProcessor_h
@@ -42,7 +44,7 @@
 namespace ska::pst::stat {
 
   class StatPublisher;
-  
+
   /**
    * @brief A class that does the core computation of statistics per block of data.
    *
@@ -65,14 +67,28 @@ namespace ska::pst::stat {
       virtual ~StatProcessor();
 
       /**
+       * @brief
+       *
+       * @param publisher
+       */
+      void add_publisher(std::unique_ptr<StatPublisher> publisher);
+
+      /**
        * @brief process the current block of data and weights.
        *
        * This method will ensure that the statistics are computed and then published.
        *
-       * @param segment the segment of data and weights for which statistics are computed and published
+       * @param segment the segment of data and weights for which statistics are computed and published.
+       * @return true the segment was fully processed, statistics computed and published.
+       * @return false the segement was interrupted before the statistics could be computed and published.
        */
-      void process(const ska::pst::common::SegmentProducer::Segment& segment);
+      bool process(const ska::pst::common::SegmentProducer::Segment& segment);
 
+      /**
+       * @brief Interrupt the processing of the segment, specifically the statistics computation.
+       *
+       */
+      void interrupt();
 
     protected:
       //! shared pointer a statistics storage, shared also with the computer and publisher
@@ -81,8 +97,8 @@ namespace ska::pst::stat {
       //! unique pointer for the stat computer.
       std::unique_ptr<StatComputer> computer;
 
-      //! unique pointer for the stat publisher.
-      std::unique_ptr<StatPublisher> publisher;
+      //! unique pointer to each of the statistics publishers.
+      std::vector<std::unique_ptr<StatPublisher>> publishers;
 
       //! the configuration for the current stream of voltage data.
       ska::pst::common::AsciiHeader data_config;
@@ -96,10 +112,13 @@ namespace ska::pst::stat {
       //! minimum resolution of the input data stream involving the weights block
       uint32_t weights_resolution;
 
+      //! total number of channels
       uint32_t nchan{0};
 
+      //! the requested number of time bins in the spectrogram
       uint32_t req_time_bins{0};
 
+      //! the requested number of frequency bins in the the spectrogram
       uint32_t req_freq_bins{0};
 
       //! default number of time bins in spectrogram

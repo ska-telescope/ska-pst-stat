@@ -2,7 +2,7 @@ NDIM                 2
 NPOL                 2
 NBIT                 16
 NCHAN                4
-NMASK                2
+NMASK                1
 FREQ_MASK            850:950
 FREQ                 1000
 BW                   400

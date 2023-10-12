@@ -71,10 +71,6 @@ ska::pst::stat::StatProcessor::StatProcessor(
 
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor create new unique StatComputer object");
   computer = std::make_unique<ska::pst::stat::StatComputer>(data_config, weights_config, storage);
-
-  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor create new unique StatHdf5FileWriter object");
-  publisher = std::make_unique<ska::pst::stat::StatHdf5FileWriter>(data_config, storage);
-
 }
 
 ska::pst::stat::StatProcessor::~StatProcessor()
@@ -82,17 +78,27 @@ ska::pst::stat::StatProcessor::~StatProcessor()
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::~StatProcessor()");
 }
 
-void ska::pst::stat::StatProcessor::process(const ska::pst::common::SegmentProducer::Segment& segment)
+void ska::pst::stat::StatProcessor::interrupt()
+{
+  computer->interrupt();
+}
+
+void ska::pst::stat::StatProcessor::add_publisher(std::unique_ptr<StatPublisher> publisher)
+{
+  publishers.push_back(std::move(publisher));
+}
+
+auto ska::pst::stat::StatProcessor::process(const ska::pst::common::SegmentProducer::Segment& segment) -> bool
 {
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process segment.data.size={}", segment.data.size);
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process segment.weights.size={}", segment.weights.size);
 
-  if ( segment.data.block == nullptr )
+  if (segment.data.block == nullptr)
   {
     SPDLOG_ERROR("ska::pst::stat::StatProcessor::process segment.data.block pointer is null");
     throw std::runtime_error("ska::pst::stat::StatProcessor::process segment.data.block pointer is null");
   }
-  if ( segment.weights.block == nullptr )
+  if (segment.weights.block == nullptr)
   {
     SPDLOG_ERROR("ska::pst::stat::StatProcessor::process segment.weights.block pointer is null");
     throw std::runtime_error("ska::pst::stat::StatProcessor::process segment.weights.block pointer is null");
@@ -180,10 +186,17 @@ void ska::pst::stat::StatProcessor::process(const ska::pst::common::SegmentProdu
   computer->initialise();
 
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process computer->process()");
-  computer->compute(segment);
+  bool processing_complete = computer->compute(segment);
 
-  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process publisher->publish()");
-  publisher->publish();
+  if (processing_complete)
+  {
+    SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process publishers->publish()");
+    for (auto &publisher : publishers)
+    {
+      publisher->publish(storage);
+    }
+  }
+  return processing_complete;
 }
 
 auto ska::pst::stat::StatProcessor::calc_bins(uint32_t block_length, uint32_t req_bins) -> uint32_t

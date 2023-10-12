@@ -177,6 +177,7 @@ TEST_F(StatComputerTest, test_compute) // NOLINT
       SPDLOG_DEBUG("StatComputerTest::test_compute - storage->mean_frequency_avg_masked[{}][{}]={}", ipol, idim, storage->mean_frequency_avg_masked[ipol][idim]);
       SPDLOG_DEBUG("StatComputerTest::test_compute - storage->variance_frequency_avg_masked[{}][{}]={}", ipol, idim, storage->variance_frequency_avg_masked[ipol][idim]);
       SPDLOG_DEBUG("StatComputerTest::test_compute - storage->num_clipped_samples[{}][{}]={}", ipol, idim, storage->num_clipped_samples[ipol][idim]);
+      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->num_clipped_samples_masked[{}][{}]={}", ipol, idim, storage->num_clipped_samples_masked[ipol][idim]);
       for (auto ichan = 0; ichan < storage->get_nchan(); ichan++) {
         SPDLOG_TRACE("StatComputerTest::test_compute - storage->mean_spectrum[{}][{}][{}]={}", ipol, idim, ichan, storage->mean_spectrum[ipol][idim][ichan]);
         SPDLOG_TRACE("StatComputerTest::test_compute - storage->variance_spectrum[{}][{}][{}]={}", ipol, idim, ichan, storage->variance_spectrum[ipol][idim][ichan]);
@@ -289,6 +290,7 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
     for (auto idim = 0; idim < ndim; idim++)
     {
       ASSERT_EQ(storage->num_clipped_samples[ipol][idim], 0);
+      ASSERT_EQ(storage->num_clipped_samples_masked[ipol][idim], 0);
       for (auto ichan = 0; ichan < nchan; ichan++)
       {
         ASSERT_EQ(storage->num_clipped_samples_spectrum[ipol][idim][ichan], 0);
@@ -418,16 +420,13 @@ TEST_F(StatComputerTest, test_masked_channels) // NOLINT
   ASSERT_FLOAT_EQ(storage->mean_frequency_avg_masked[1][1], 5.625);
   ASSERT_FLOAT_EQ(storage->variance_frequency_avg_masked[1][1], 190.1166667);
 
-  ASSERT_EQ(storage->num_clipped_samples[0][1], 0);
-  ASSERT_EQ(storage->num_clipped_samples[1][0], 0);
-  ASSERT_EQ(storage->num_clipped_samples[1][1], 0);
-
   // assert no clipping
   for (auto ipol = 0; ipol < npol; ipol++)
   {
     for (auto idim = 0; idim < ndim; idim++)
     {
       ASSERT_EQ(storage->num_clipped_samples[ipol][idim], 0);
+      ASSERT_EQ(storage->num_clipped_samples_masked[ipol][idim], 0);
       for (auto ichan = 0; ichan < nchan; ichan++)
       {
         ASSERT_EQ(storage->num_clipped_samples_spectrum[ipol][idim][ichan], 0);
@@ -681,6 +680,11 @@ TEST_F(StatComputerTest, test_clipped_channels) // NOLINT
   ASSERT_EQ(storage->num_clipped_samples[1][0], 2);
   ASSERT_EQ(storage->num_clipped_samples[1][1], 2);
 
+  ASSERT_EQ(storage->num_clipped_samples_masked[0][0], 2);
+  ASSERT_EQ(storage->num_clipped_samples_masked[0][1], 2);
+  ASSERT_EQ(storage->num_clipped_samples_masked[1][0], 2);
+  ASSERT_EQ(storage->num_clipped_samples_masked[1][1], 2);
+
   // [0,1][0,1][x] are [pol][dim][chan]
   // channel 1
   ASSERT_EQ(storage->num_clipped_samples_spectrum[0][0][0], 1);
@@ -705,6 +709,70 @@ TEST_F(StatComputerTest, test_clipped_channels) // NOLINT
   ASSERT_EQ(storage->num_clipped_samples_spectrum[0][1][3], 1);
   ASSERT_EQ(storage->num_clipped_samples_spectrum[1][0][3], 0);
   ASSERT_EQ(storage->num_clipped_samples_spectrum[1][1][3], 1);
+}
+
+TEST_F(StatComputerTest, test_clipped_masked_channels) // NOLINT
+{
+  data_config.reset();
+  data_config.load_from_file(test_data_file("stat_computer_4chan_8nsamp_masked_config.txt"));
+  weights_config = get_weights_config(data_config);
+  configure(false);
+
+
+  // This is gausian data with mean of 3.14, stddev of 10, rounded to nearest int
+  // There are 4 channels, 2 pols, 2 dims, and 8 samples each (128 values).
+  // Some values have been put in a bin that should be masked
+  std::vector<int16_t> data = {
+    // Pol A - channel 1
+    -32768,  19,  17,   6,  -2,   2,   0,  15,  15,   3,  15,   8, -11, -21, -18,   2,   // NOLINT
+    // Pol A - channel 2
+    -11,   32767,  -3,   5,  -4, -13,  12,  -1,   5,  10,  21,   0,  25,  -2,   0,  12,  // NOLINT
+    // Pol A - channel 3
+      8,  -6,  -32768,  23, -11,  -6,  28,   3,  32,  -2,  17,   6,  -8,   4,  -9,   0,  // NOLINT
+    // Pol A - channel 4
+     12,   6,  -9, 32767,  -5,   0, -12,   1,  12,   9, -18,   8,   9,   2,   0,  -8,    // NOLINT
+    // Pol B - channel 1
+      4,   9,   0,  14,  32767,   0,  17,   2,  -5,   0,   7,  11,   8,  -3,   2,  12,   // NOLINT
+    // Pol B - channel 2
+      8,   8,  19,   3,  13,  32767,  -2, -10, -13,  19,  -1,  16,  -2,   2,   0,  -3,   // NOLINT
+    // Pol B - channel 3
+      1, -23,  -1,  32,   1,  15,   32767,  10,  -1,  20,  -1,   6,  15, -13,  -4,   5,  // NOLINT
+    // Pol B - channel 4
+     -1,   5,  -1,   1,  12,  -3,  -6,  -32768,   0,  -5,  15,  12,  20,  13,  -2,  21   // NOLINT
+  };
+
+  auto data_length = data.size() * sizeof(int16_t);
+  auto data_block = reinterpret_cast<char*>(data.data());
+
+  unsigned weights_length = sizeof(float) + nchan * sizeof(uint16_t);
+  std::vector<char> weights(weights_length);
+  auto scale = reinterpret_cast<float*>(weights.data());
+  auto wt = reinterpret_cast<uint16_t*>(weights.data() + sizeof(float)); // NOLINT
+
+  *scale = 1.0;
+  for (unsigned i=0; i<nchan; i++)
+  {
+    wt[i] = 1; // NOLINT
+  }
+
+  ska::pst::common::SegmentProducer::Segment segment;
+  segment.data.block = data_block;
+  segment.data.size = data_length;
+  segment.weights.block = weights.data();
+  segment.weights.size = weights_length;
+  computer->compute(segment);
+
+  // [0,1][0,1] are [pol][dim]
+  ASSERT_EQ(storage->num_clipped_samples[0][0], 2);
+  ASSERT_EQ(storage->num_clipped_samples[0][1], 2);
+  ASSERT_EQ(storage->num_clipped_samples[1][0], 2);
+  ASSERT_EQ(storage->num_clipped_samples[1][1], 2);
+
+  // as channels 0 and 1 are masked, expect that the number of clipped masked samples is 1
+  ASSERT_EQ(storage->num_clipped_samples_masked[0][0], 1);
+  ASSERT_EQ(storage->num_clipped_samples_masked[0][1], 1);
+  ASSERT_EQ(storage->num_clipped_samples_masked[1][0], 1);
+  ASSERT_EQ(storage->num_clipped_samples_masked[1][1], 1);
 }
 
 TEST_F(StatComputerTest, test_nchan_cannot_be_zero) // NOLINT

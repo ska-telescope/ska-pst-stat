@@ -28,10 +28,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <chrono>
 #include <spdlog/spdlog.h>
 
 #include "ska/pst/common/utils/AsciiHeader.h"
 #include "ska/pst/stat/StatApplicationManager.h"
+#include "ska/pst/stat/ScalarStatPublisher.h"
 
 ska::pst::stat::StatApplicationManager::StatApplicationManager() :
   ska::pst::common::ApplicationManager("stat")
@@ -92,12 +94,12 @@ void ska::pst::stat::StatApplicationManager::validate_configure_beam(const ska::
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::validate_configure_beam complete");
 }
 
-void ska::pst::stat::StatApplicationManager::validate_configure_scan(const ska::pst::common::AsciiHeader& config, ska::pst::common::ValidationContext *context)
+void ska::pst::stat::StatApplicationManager::validate_configure_scan(const ska::pst::common::AsciiHeader& /*config*/, ska::pst::common::ValidationContext* /*context*/)
 {
   SPDLOG_INFO("ska::pst::stat::StatApplicationManager::validate_configure_scan placeholder");
 }
 
-void ska::pst::stat::StatApplicationManager::validate_start_scan(const ska::pst::common::AsciiHeader& config)
+void ska::pst::stat::StatApplicationManager::validate_start_scan(const ska::pst::common::AsciiHeader& /*config*/)
 {
   SPDLOG_INFO("ska::pst::stat::StatApplicationManager::validate_configure_start_scan placeholder");
 }
@@ -130,9 +132,15 @@ void ska::pst::stat::StatApplicationManager::perform_configure_beam()
 void ska::pst::stat::StatApplicationManager::perform_configure_scan()
 {
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan");
+  {
+    std::unique_lock<std::mutex> lock(processing_mutex);
+    keep_processing = true;
+    processing_cond.notify_one();
+  }
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan data_beam_config:\n{}", data_beam_config.raw());
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan weights_beam_config:\n{}", weights_beam_config.raw());
   processor = std::make_unique<StatProcessor>(data_beam_config, weights_beam_config);
+  processor->add_publisher(std::make_unique<ska::pst::stat::ScalarStatPublisher>(data_beam_config));
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan complete");
 }
 
@@ -147,30 +155,53 @@ void ska::pst::stat::StatApplicationManager::perform_scan()
 {
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan");
   bool eod = false;
-  while (!eod)
+  while (!eod && keep_processing)
   {
-    SPDLOG_DEBUG("ska::pst::stat::StreamWriter::perform_scan producer->next_segment()");
+    SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan producer->next_segment()");
     auto segment = producer->next_segment();
-    SPDLOG_DEBUG("ska::pst::stat::StreamWriter::perform_scan opened segment containing {} bytes", segment.data.size);
+    SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan opened segment containing {} bytes", segment.data.size);
 
     if (segment.data.block == nullptr)
     {
-      SPDLOG_DEBUG("ska::pst::stat::StreamWriter::perform_scan encountered end of data");
+      SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan encountered end of data");
       eod = true;
     }
     else
     {
-      SPDLOG_DEBUG("ska::pst::stat::StreamWriter::perform_scan processor->process");
-      processor->process(segment);
-      SPDLOG_DEBUG("ska::pst::stat::StreamWriter::perform_scan processor->process done");
+      SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan processor->process");
+      bool interrupted = processor->process(segment);
+      SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan processor->process interrupted={}", interrupted);
     }
+
+    // use processing_cond to wait on changes to the keep_processing boolean
+    SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan waiting for {} ms on processing_cond", processing_delay);
+    {
+      using namespace std::chrono_literals;
+      std::chrono::milliseconds timeout = processing_delay * 1ms;
+      std::unique_lock<std::mutex> lock(processing_mutex);
+      processing_cond.wait_for(lock, timeout, [&]{return (keep_processing == false);});
+      lock.unlock();
+      processing_cond.notify_one();
+    }
+    SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan keep_processing={}", keep_processing);
   }
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan complete");
 }
 
 void ska::pst::stat::StatApplicationManager::perform_stop_scan()
 {
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_stop_scan placeholder");
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_stop_scan");
+
+  // interrupt any of the statistics computation in the the StatProcessor.
+  processor->interrupt();
+
+  // signal the thread running perform_scan via the processing_cond
+  {
+    std::unique_lock<std::mutex> lock(processing_mutex);
+    SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_stop_scan keep_processing = false");
+    keep_processing = false;
+    processing_cond.notify_one();
+  }
 }
 
 void ska::pst::stat::StatApplicationManager::perform_deconfigure_scan()

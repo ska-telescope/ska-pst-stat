@@ -88,7 +88,7 @@ namespace ska::pst::stat {
         std::vector<std::vector<float>> variance_frequency_avg_masked;
 
         /**
-         * @brief number of clipped input samples (maximum level) for each polarisation, dimension.
+         * @brief number of clipped input samples (maximum level) for each polarisation, dimension, averaged over all channels.
          *
          * First dimension is polarisation (2 dimensions)
          * Second dimension is the real and imaginary components (I and Q).
@@ -96,13 +96,13 @@ namespace ska::pst::stat {
         std::vector<std::vector<uint32_t>> num_clipped_samples;
 
         /**
-         * @brief number of clipped input samples (maximum level) for each polarisation, dimension and channel.
+         * @brief number of clipped input samples (maximum level) for each polarisation, dimension and channel, averaged over all channels,
+         * expect those flagged for RFI.
          *
          * First dimension is polarisation (2 dimensions)
          * Second dimension is the real and imaginary components (I and Q).
-         * Third dimension is the channel number.
          */
-        std::vector<std::vector<std::vector<uint32_t>>> num_clipped_samples_spectrum;
+        std::vector<std::vector<uint32_t>> num_clipped_samples_masked;
 
       } scalar_stats_t;
 
@@ -278,12 +278,22 @@ namespace ska::pst::stat {
       std::vector<std::vector<std::vector<uint32_t>>> num_clipped_samples_spectrum;
 
       /**
-       * @brief number of clipped input samples (maximum level) for each polarisation, dimension.
+       * @brief number of clipped input samples (maximum level) for each polarisation, dimension,
+       * averaged over all channels.
        *
        * First dimension is polarisation (2 dimensions)
        * Second dimension is the real and imaginary components (I and Q).
        */
       std::vector<std::vector<uint32_t>> num_clipped_samples;
+
+      /**
+       * @brief number of clipped input samples (maximum level) for each polarisation, dimension,
+       * avereaged over all channels, except those flagged for RFI.
+       *
+       * First dimension is polarisation (2 dimensions)
+       * Second dimension is the real and imaginary components (I and Q).
+       */
+      std::vector<std::vector<uint32_t>> num_clipped_samples_masked;
 
       /**
        * @brief the timestamp offsets for each temporal bin.
@@ -341,61 +351,61 @@ namespace ska::pst::stat {
        *
        * @return uint32_t number of polarisations
        */
-      uint32_t get_npol() { return npol; };
+      uint32_t get_npol() const { return npol; };
 
       /**
        * @brief Get the number of dimensions used in the storage
        *
        * @return uint32_t number of dimensions
        */
-      uint32_t get_ndim () { return ndim; };
+      uint32_t get_ndim() const { return ndim; };
 
       /**
        * @brief Get the number of channels used in the storage
        *
        * @return uint32_t number of channels
        */
-      uint32_t get_nchan() { return nchan; };
+      uint32_t get_nchan() const { return nchan; };
 
       /**
        * @brief Get the number of input state bins used in the storage
        *
        * @return uint32_t number of input state bins
        */
-      uint32_t get_nbin() { return nbin; };
+      uint32_t get_nbin() const { return nbin; };
 
       /**
        * @brief Get the number of rebinned input states used in the storage
        *
        * @return uint32_t number of rebinned input states
        */
-      uint32_t get_nrebin() { return nrebin; };
+      uint32_t get_nrebin() const { return nrebin; };
 
       /**
        * @brief Get the number of temporal bins used in the spectrogram and timeseries storage
        *
        * @return uint32_t number of temporal bins
        */
-      uint32_t get_ntime_bins() { return ntime_bins; };
+      uint32_t get_ntime_bins() const { return ntime_bins; };
 
       /**
        * @brief Get the number of spectral bins used in the spectrogram storage
        *
        * @return uint32_t number of spectral bins
        */
-      uint32_t get_nfreq_bins() { return nfreq_bins; };
+      uint32_t get_nfreq_bins() const { return nfreq_bins; };
 
       /**
        * @brief Get the number of temporal bin dimenions in the timeseries storage [3]
        *
        * @return uint32_t number of temporal bins dimensions
        */
-      uint32_t get_ntime_vals() { return ntime_vals; };
+      uint32_t get_ntime_vals() const { return ntime_vals; };
 
       /**
        * @brief Get the length, in seconds, of the total time used to calculate statistics.
        */
-      double get_total_sample_time() { return total_sample_time; };
+      double get_total_sample_time() const { return total_sample_time; };
 
       /**
        * @brief Set the length, in seconds, of the total time used to calculate statistics.
@@ -408,7 +418,7 @@ namespace ska::pst::stat {
        * @return true storage has been resized
        * @return false storage has not been resized
        */
-      bool is_storage_resized() { return storage_resized; }
+      bool is_storage_resized() const { return storage_resized; }
 
       /**
        * @brief Get flag for whether the storage has been reset
@@ -416,7 +426,7 @@ namespace ska::pst::stat {
        * @return true storage has been reset
        * @return false storage has not been reset
        */
-      bool is_storage_reset() { return storage_reset; }
+      bool is_storage_reset() const { return storage_reset; }
 
     private:
 

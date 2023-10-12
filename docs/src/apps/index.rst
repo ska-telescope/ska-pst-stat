@@ -55,6 +55,5 @@ To generate a stats file that can be used with this script, use the ska_pst_gene
 
     # This command will generate the HDF5 statistics file
     ska_pst_stat_file_proc -d data/2023-02-14-22:15:37_0000000000000000_000000.dada -w weights/2023-02-14-22:15:37_0000000000000000_000000.dada
-Data files
 
     # the generated HDF5 statistics file will then be produced in the /tmp/stat directory.
