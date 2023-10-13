@@ -161,13 +161,23 @@ void ska::pst::stat::StatHdf5FileWriter::publish(std::shared_ptr<StatStorage> st
     uint64_t obs_offset = 0;
 
     // directory to which STAT files should be written, provided on the command line
-    std::filesystem::path output_path(config.get_val("STAT_BASE_PATH"));
+    std::filesystem::path base_path(config.get_val("STAT_BASE_PATH"));
+
+    // scan sub-directory for all data products from the scan
+    std::filesystem::path scan_path("SCAN_" + config.get_val("SCAN_ID"));
+
+    std::filesystem::path stream("monitoring_stats");
 
     // file name (with no directory prefix) using FileWriter for consistent nameing
     std::filesystem::path filename = ska::pst::common::FileWriter::get_filename(utc_start, obs_offset, file_number);
 
+
+
     // full path to the STAT output file
-    std::filesystem::path output_file = output_path / filename.replace_extension("h5");
+    std::filesystem::path output_file = base_path / scan_path / stream / filename.replace_extension("h5");
+
+    // ensure the parent directory exists
+    create_directories(output_file.parent_path());
 
     stat_filename = output_file.generic_string();
   }

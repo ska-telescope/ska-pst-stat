@@ -76,8 +76,6 @@ class StatApplicationManagerTest : public ::testing::Test
     ska::pst::common::AsciiHeader scan_config;
     ska::pst::common::AsciiHeader start_scan_config;
 
-    ska::pst::common::AsciiHeader data_scan_config;
-    ska::pst::common::AsciiHeader weights_scan_config;
     ska::pst::common::AsciiHeader data_header;
     ska::pst::common::AsciiHeader weights_header;
 

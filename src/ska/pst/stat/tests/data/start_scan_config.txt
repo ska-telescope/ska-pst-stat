@@ -1,0 +1,3 @@
+# Stat Start Configuration
+
+# Note this configuration is deliberately empty

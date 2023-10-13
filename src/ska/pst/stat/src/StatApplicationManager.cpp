@@ -40,6 +40,7 @@ ska::pst::stat::StatApplicationManager::StatApplicationManager(const std::string
 {
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::StatApplicationManager stat_base_path={}", stat_base_path);
   initialise();
+  processing_state = Idle;
 }
 
 ska::pst::stat::StatApplicationManager::~StatApplicationManager()
@@ -87,7 +88,6 @@ void ska::pst::stat::StatApplicationManager::validate_configure_scan(const ska::
   // Iterate through the vector and validate existince of required data header keys
   for (const std::string& config_key : scan_config_keys)
   {
-    SPDLOG_INFO("ska::pst::stat::StatApplicationManager::validate_configure_scan assessing config_key={}", config_key);
     if (config.has(config_key))
     {
       SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::validate_configure_scan {}={}", config_key, config.get_val(config_key));
@@ -116,28 +116,8 @@ void ska::pst::stat::StatApplicationManager::perform_configure_beam()
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam");
 
   // ska::pst::common::ApplicationManager has written beam configuration parameters to beam_config
-  std::string data_key = beam_config.get_val("DATA_KEY");
-  std::string weights_key = beam_config.get_val("WEIGHTS_KEY");
-  if (beam_config.has("STAT_PROC_DELAY"))
-  {
-    processing_delay = beam_config.get_uint32("STAT_PROC_DELAY");
-    SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam setting processing_delay={} ms", processing_delay);
-  }
-
-  // Construct the SMRB segment producer
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam SmrbSegmentProducer({}, {})", data_key, weights_key);
-  producer = std::make_unique<ska::pst::smrb::SmrbSegmentProducer>(data_key, weights_key);
-
-  // Connect to the SMRB segment producer
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam producer->connect({})", timeout);
-  producer->connect(timeout);
-
-  // Acquire the data and weights beam configuration from the SMRB segment producer
-  data_beam_config.clone(producer->get_data_header());
-  weights_beam_config.clone(producer->get_weights_header());
-  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_configure_beam data_beam_config:\n{}", data_beam_config.raw());
-  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_configure_beam weights_beam_config:\n{}", weights_beam_config.raw());
-
+  data_key = beam_config.get_val("DATA_KEY");
+  weights_key = beam_config.get_val("WEIGHTS_KEY");
 
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam complete");
 }
@@ -145,34 +125,25 @@ void ska::pst::stat::StatApplicationManager::perform_configure_beam()
 void ska::pst::stat::StatApplicationManager::perform_configure_scan()
 {
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan");
+
+  // Construct the SMRB segment producer
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam SmrbSegmentProducer({}, {})", data_key, weights_key);
+  producer = std::make_unique<ska::pst::smrb::SmrbSegmentProducer>(data_key, weights_key);
+
+  if (scan_config.has("STAT_PROC_DELAY"))
   {
-    std::unique_lock<std::mutex> lock(processing_mutex);
-    keep_processing = true;
-    processing_cond.notify_one();
+    processing_delay = scan_config.get_uint32("STAT_PROC_DELAY");
+    SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan setting processing_delay={} ms", processing_delay);
   }
 
-  // set the base_path and suffix for statistics recording in the beam configuration
-  data_beam_config.set_val("STAT_BASE_PATH", stat_base_path);
-
   // set configuration parameters for the StatProcessor
-  data_beam_config.set_val("STAT_REQ_TIME_BINS", scan_config.get_val("STAT_REQ_TIME_BINS"));
-  data_beam_config.set_val("STAT_REQ_FREQ_BINS", scan_config.get_val("STAT_REQ_FREQ_BINS"));
-  data_beam_config.set_val("STAT_NREBIN", scan_config.get_val("STAT_NREBIN"));
+  req_time_bins = scan_config.get_uint32("STAT_REQ_TIME_BINS");
+  req_freq_bins = scan_config.get_uint32("STAT_REQ_FREQ_BINS");
+  num_rebin = scan_config.get_uint32("STAT_NREBIN");
 
-  // ensure the STAT_OUTPUT_FILENAME is not present in the beam_config
-  data_beam_config.del("STAT_OUTPUT_FILENAME");
-
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan data_beam_config:\n{}", data_beam_config.raw());
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan weights_beam_config:\n{}", weights_beam_config.raw());
-  processor = std::make_unique<ska::pst::stat::StatProcessor>(data_beam_config, weights_beam_config);
-
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::ctor add shared ScalarStatPublisher publisher to processor");
-  scalar_publisher = std::make_shared<ska::pst::stat::ScalarStatPublisher>(data_beam_config);
-  processor->add_publisher(scalar_publisher);
-
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::ctor add shared StatHdf5FileWriter publisher to processor");
-  hdf5_publisher = std::make_shared<StatHdf5FileWriter>(data_beam_config);
-  processor->add_publisher(hdf5_publisher);
+  // Connect to the SMRB segment producer, this triggers the read_config command on the SMRBs
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan producer->connect({})", timeout);
+  producer->connect(timeout);
 
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan complete");
 }
@@ -180,7 +151,46 @@ void ska::pst::stat::StatApplicationManager::perform_configure_scan()
 void ska::pst::stat::StatApplicationManager::perform_start_scan()
 {
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_start_scan");
+
+  // calling open on the producer will read the complete header from the SMRBs
   producer->open();
+
+  // Acquire the data and weights beam configuration from the SMRB segment producer
+  data_header.clone(producer->get_data_header());
+  weights_header.clone(producer->get_weights_header());
+  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_start_scan data_header:\n{}", data_header.raw());
+  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_start_scan weights_header:\n{}", weights_header.raw());
+
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_start_scan SCAN_ID={}", data_header.get_val("SCAN_ID"));
+
+  // set the base_path and suffix for statistics recording in the beam configuration
+  data_header.set_val("STAT_BASE_PATH", stat_base_path);
+
+  data_header.set("STAT_REQ_TIME_BINS", req_time_bins);
+  data_header.set("STAT_REQ_FREQ_BINS", req_freq_bins);
+  data_header.set("STAT_NREBIN", num_rebin);
+
+  // ensure the STAT_OUTPUT_FILENAME is not present in the beam_config
+  data_header.del("STAT_OUTPUT_FILENAME");
+
+  processor = std::make_unique<ska::pst::stat::StatProcessor>(data_header, weights_header);
+
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::ctor add shared ScalarStatPublisher publisher to processor");
+  scalar_publisher = std::make_shared<ska::pst::stat::ScalarStatPublisher>(data_header);
+  processor->add_publisher(scalar_publisher);
+
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::ctor add shared StatHdf5FileWriter publisher to processor");
+  hdf5_publisher = std::make_shared<StatHdf5FileWriter>(data_header);
+  processor->add_publisher(hdf5_publisher);
+
+  // ensure processing will execute
+  {
+    std::unique_lock<std::mutex> lock(processing_mutex);
+    keep_processing = true;
+    processing_cond.notify_one();
+  }
+
+  processing_state = Processing;
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_start_scan complete");
 }
 
@@ -201,10 +211,13 @@ void ska::pst::stat::StatApplicationManager::perform_scan()
     }
     else
     {
+      processing_state = Processing;
       SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan processor->process");
       bool processing_complete = processor->process(segment);
       SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan processor->process processing_complete={}", processing_complete);
     }
+
+    processing_state = Waiting;
 
     // use processing_cond to wait on changes to the keep_processing boolean
     SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan waiting for {} ms on processing_cond", processing_delay);
@@ -218,6 +231,17 @@ void ska::pst::stat::StatApplicationManager::perform_scan()
     }
     SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan keep_processing={}", keep_processing);
   }
+
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan closing producer connection");
+  producer->close();
+
+  // beam_config cleanup
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan data_beam_config.reset()");
+  data_header.reset();
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan weights_beam_config.reset()");
+  weights_header.reset();
+  processing_state = Idle;
+
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan complete");
 }
 
@@ -239,21 +263,15 @@ void ska::pst::stat::StatApplicationManager::perform_stop_scan()
 
 void ska::pst::stat::StatApplicationManager::perform_deconfigure_scan()
 {
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_deconfigure_scan");
-  producer->close();
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_deconfigure_scan producer->disconnect()");
+  producer->disconnect();
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_deconfigure_scan done");
 }
 
 void ska::pst::stat::StatApplicationManager::perform_deconfigure_beam()
 {
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_deconfigure_beam");
-  producer->disconnect();
 
-  // beam_config cleanup
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_deconfigure_beam data_beam_config.reset()");
-  data_beam_config.reset();
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_deconfigure_beam weights_beam_config.reset()");
-  weights_beam_config.reset();
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_deconfigure_beam done");
 }
 

@@ -30,10 +30,12 @@
 
 #include <cmath>
 #include <vector>
+#include <filesystem>
 #include <spdlog/spdlog.h>
 
 #include "ska/pst/stat/testutils/GtestMain.h"
 #include "ska/pst/smrb/DataBlockRead.h"
+#include "ska/pst/common/utils/FileWriter.h"
 
 #include "ska/pst/stat/tests/StatApplicationManagerTest.h"
 
@@ -56,14 +58,15 @@ void StatApplicationManagerTest::setup_data_block()
   static uint64_t header_bufsz = beam_config.get_uint64("HB_BUFSZ");
   static uint64_t data_nbufs = beam_config.get_uint64("DB_NBUFS");
   static uint64_t weights_nbufs = beam_config.get_uint64("WB_NBUFS");
+
   static constexpr uint64_t bufsz_factor = 16;
   static constexpr unsigned nreaders = 1;
   static constexpr int device = -1;
-  weights_bufsz = weights_header.get_uint64("RESOLUTION") * bufsz_factor;
   data_bufsz = data_header.get_uint64("RESOLUTION") * bufsz_factor;
+  weights_bufsz = weights_header.get_uint64("RESOLUTION") * bufsz_factor;
 
-  weights_helper = std::make_unique<DataBlockTestHelper>(beam_config.get_val("WEIGHTS_KEY"), 1);
   data_helper = std::make_unique<DataBlockTestHelper>(beam_config.get_val("DATA_KEY"), 1);
+  weights_helper = std::make_unique<DataBlockTestHelper>(beam_config.get_val("WEIGHTS_KEY"), 1);
 
   weights_helper->set_data_block_bufsz(weights_bufsz);
   data_helper->set_data_block_bufsz(data_bufsz);
@@ -77,8 +80,8 @@ void StatApplicationManagerTest::setup_data_block()
   weights_helper->set_header_block_bufsz(header_bufsz);
   data_helper->set_header_block_bufsz(header_bufsz);
 
-  weights_helper->set_config(weights_scan_config);
-  data_helper->set_config(data_scan_config);
+  weights_helper->set_config(weights_header);
+  data_helper->set_config(data_header);
 
   weights_helper->set_header(weights_header);
   data_helper->set_header(data_header);
@@ -91,6 +94,7 @@ void StatApplicationManagerTest::setup_data_block()
 
   weights_helper->start();
   data_helper->start();
+
   SPDLOG_TRACE("weights_helper->config:\n{}",weights_helper->config.raw());
   SPDLOG_TRACE("weights_helper->header:\n{}",weights_helper->header.raw());
   SPDLOG_TRACE("data_helper->config:\n{}",data_helper->config.raw());
@@ -120,16 +124,14 @@ void StatApplicationManagerTest::tear_down_data_block()
 void StatApplicationManagerTest::SetUp()
 {
   beam_config.load_from_file(test_data_file("beam_config.txt"));
-  scan_config.load_from_file(test_data_file("config.txt"));
-  start_scan_config.load_from_file(test_data_file("config.txt"));
+  scan_config.load_from_file(test_data_file("scan_config.txt"));
+  start_scan_config.load_from_file(test_data_file("start_scan_config.txt"));
 
-  data_scan_config.load_from_file(test_data_file("data_config.txt"));
-  weights_scan_config.load_from_file(test_data_file("weights_config.txt"));
+  // data_scan_config.load_from_file(test_data_file("data_config.txt"));
+  // weights_scan_config.load_from_file(test_data_file("weights_config.txt"));
 
   data_header.load_from_file(test_data_file("data_header_LowAA0.5.txt"));
   weights_header.load_from_file(test_data_file("weights_header_LowAA0.5.txt"));
-  data_scan_config.append_header(data_header);
-  weights_scan_config.append_header(weights_header);
 
   setup_data_block();
 }
@@ -265,6 +267,63 @@ TEST_F(StatApplicationManagerTest, test_start_stop_scan) // NOLINT
   sm->deconfigure_beam();
   ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
   SPDLOG_TRACE("test_start_stop_scan sm->deconfigure_beam complete");
+}
+
+TEST_F(StatApplicationManagerTest, test_configure_from_file) // NOLINT
+{
+  sm = std::make_unique<ska::pst::stat::StatApplicationManager>(stat_base_path);
+  ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
+
+  sm->configure_from_file(test_data_file("config.txt"));
+  ASSERT_EQ(ska::pst::common::Scanning, sm->get_state());
+  SPDLOG_TRACE("test_start_stop_scan sm->start_scan complete");
+
+  static constexpr float delay_ms = 1000;
+  size_t constexpr test_nblocks = 4;
+  std::thread data_thread = std::thread(&DataBlockTestHelper::write_and_close, data_helper.get(), test_nblocks, delay_ms);
+  std::thread weights_thread = std::thread(&DataBlockTestHelper::write_and_close, weights_helper.get(), test_nblocks, delay_ms);
+  data_thread.join();
+  weights_thread.join();
+
+  SPDLOG_DEBUG("Busy waiting for the processing to be complete");
+  static constexpr uint64_t max_to_wait = 60 * ska::pst::common::microseconds_per_second;
+  unsigned waited_so_far = 0;
+  while (sm->get_processing_state() == ska::pst::stat::StatApplicationManager::ProcessingState::Processing && waited_so_far < max_to_wait)
+  {
+    usleep(ska::pst::common::microseconds_per_decisecond);
+    waited_so_far += ska::pst::common::microseconds_per_decisecond;
+  }
+
+  StatStorage::scalar_stats_t ss = sm->get_scalar_stats();
+  for (unsigned ipol=0; ipol<ss.mean_frequency_avg.size(); ipol++)
+  {
+    for (unsigned idim=0; idim<ss.mean_frequency_avg[ipol].size(); idim++)
+    {
+      ASSERT_EQ(ss.mean_frequency_avg[ipol][idim], 0);
+      ASSERT_EQ(ss.variance_frequency_avg[ipol][idim], 0);
+      ASSERT_EQ(ss.num_clipped_samples[ipol][idim], 0);
+    }
+  }
+
+  std::string utc_start = data_header.get_val("UTC_START");
+  uint64_t obs_offset = data_header.get_uint64("OBS_OFFSET");
+  uint64_t file_number = 0;
+  std::filesystem::path filename = ska::pst::common::FileWriter::get_filename(utc_start, obs_offset, file_number);
+  std::filesystem::path output_path(stat_base_path + "/SCAN_" + data_header.get_val("SCAN_ID") + "/monitoring_stats");
+  std::filesystem::path stat_file = output_path / filename.replace_extension("h5");
+  ASSERT_TRUE(std::filesystem::exists(stat_file));
+
+  sm->stop_scan();
+  ASSERT_EQ(ska::pst::common::ScanConfigured, sm->get_state());
+
+  sm->deconfigure_scan();
+  ASSERT_EQ(ska::pst::common::BeamConfigured, sm->get_state());
+
+  sm->deconfigure_beam();
+  ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
+
+  sm->quit();
+  ASSERT_EQ(ska::pst::common::Unknown, sm->get_state());
 }
 
 } // namespace ska::pst::stat::test

@@ -53,6 +53,18 @@ namespace ska::pst::stat {
   class StatApplicationManager : public ska::pst::common::ApplicationManager
   {
     public:
+
+      /**
+       * @brief Enumeration of statistics processor's state
+       *
+       */
+      enum ProcessingState {
+        Unknown,
+        Idle,
+        Processing,
+        Waiting,
+      };
+
       /**
        * @brief Create instance of a Stat Application Manager object.
        *
@@ -179,7 +191,17 @@ namespace ska::pst::stat {
        */
       StatStorage::scalar_stats_t get_scalar_stats();
 
+      /**
+       * @brief Get the processing state of the application manager
+       *
+       * @return State processing state of the application manager
+       */
+      ProcessingState get_processing_state() { return processing_state; };
+
     private:
+
+      //! Current processing state of the application manager
+      ProcessingState processing_state{Unknown};
 
       //! directory to which stat HDF5 files will be written.
       std::string stat_base_path;
@@ -193,15 +215,30 @@ namespace ska::pst::stat {
       //! flag to indicate if processing of statistics should be contining
       bool keep_processing{true};
 
+      //! hexidecimal shared memory key for the data ring buffer
+      std::string data_key;
+
+      //! hexidecimal shared memory key for the weights ring buffer
+      std::string weights_key;
+
+      //! requested number of time bins for statistics
+      uint32_t req_time_bins{0};
+
+      //! requested number of freq bins for statistics
+      uint32_t req_freq_bins{0};
+
+      //! number of bins to re-bin the large histograms into
+      uint32_t num_rebin{0};
+
       //! Coordinates thread interactions on the keep_processing attribute
       std::condition_variable processing_cond;
 
       //! Protect the keep_processing condition variable
       std::mutex processing_mutex;
 
-      //! allocated configuration for beam of data stream and weights stream
-      ska::pst::common::AsciiHeader data_beam_config;
-      ska::pst::common::AsciiHeader weights_beam_config;
+      //! received headers from the segment of data and weights
+      ska::pst::common::AsciiHeader data_header;
+      ska::pst::common::AsciiHeader weights_header;
 
       //! shared pointer a statistics processor
       std::shared_ptr<StatProcessor> processor;
