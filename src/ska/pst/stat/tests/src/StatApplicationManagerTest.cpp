@@ -52,14 +52,10 @@ StatApplicationManagerTest::StatApplicationManagerTest()
 
 void StatApplicationManagerTest::setup_data_block()
 {
-
-  weights_key = beam_config.get_val("WEIGHTS_KEY");
-  data_key = beam_config.get_val("DATA_KEY");
-
-  static uint64_t header_nbufs = scan_config.get_uint64("HB_NBUFS");
-  static uint64_t header_bufsz = scan_config.get_uint64("HB_BUFSZ");
-  static uint64_t data_nbufs = data_scan_config.get_uint64("DB_NBUFS");
-  static uint64_t weights_nbufs = weights_scan_config.get_uint64("WB_NBUFS");
+  static uint64_t header_nbufs = beam_config.get_uint64("HB_NBUFS");
+  static uint64_t header_bufsz = beam_config.get_uint64("HB_BUFSZ");
+  static uint64_t data_nbufs = beam_config.get_uint64("DB_NBUFS");
+  static uint64_t weights_nbufs = beam_config.get_uint64("WB_NBUFS");
   static constexpr uint64_t bufsz_factor = 16;
   static constexpr unsigned nreaders = 1;
   static constexpr int device = -1;
@@ -146,13 +142,13 @@ void StatApplicationManagerTest::TearDown()
 
 TEST_F(StatApplicationManagerTest, test_construct_delete) // NOLINT
 {
-  sm = std::make_unique<ska::pst::stat::StatApplicationManager>();
+  sm = std::make_unique<ska::pst::stat::StatApplicationManager>(stat_base_path);
   ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
 }
 
 TEST_F(StatApplicationManagerTest, test_configure_deconfigure_beam) // NOLINT
 {
-  sm = std::make_unique<ska::pst::stat::StatApplicationManager>();
+  sm = std::make_unique<ska::pst::stat::StatApplicationManager>(stat_base_path);
   ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
 
   sm->configure_beam(beam_config);
@@ -170,7 +166,7 @@ TEST_F(StatApplicationManagerTest, test_configure_deconfigure_beam) // NOLINT
 
 TEST_F(StatApplicationManagerTest, test_multiple_configure_deconfigure_beam) // NOLINT
 {
-  sm = std::make_unique<ska::pst::stat::StatApplicationManager>();
+  sm = std::make_unique<ska::pst::stat::StatApplicationManager>(stat_base_path);
   ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
 
   sm->configure_beam(beam_config);
@@ -188,7 +184,7 @@ TEST_F(StatApplicationManagerTest, test_multiple_configure_deconfigure_beam) // 
 
 TEST_F(StatApplicationManagerTest, test_configure_deconfigure_scan) // NOLINT
 {
-  sm = std::make_unique<ska::pst::stat::StatApplicationManager>();
+  sm = std::make_unique<ska::pst::stat::StatApplicationManager>(stat_base_path);
   ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
 
   sm->configure_beam(beam_config);
@@ -206,7 +202,7 @@ TEST_F(StatApplicationManagerTest, test_configure_deconfigure_scan) // NOLINT
 
 TEST_F(StatApplicationManagerTest, test_multiple_configure_deconfigure_scan) // NOLINT
 {
-  sm = std::make_unique<ska::pst::stat::StatApplicationManager>();
+  sm = std::make_unique<ska::pst::stat::StatApplicationManager>(stat_base_path);
   ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
 
   sm->configure_beam(beam_config);
@@ -231,7 +227,7 @@ TEST_F(StatApplicationManagerTest, test_multiple_configure_deconfigure_scan) // 
 TEST_F(StatApplicationManagerTest, test_start_stop_scan) // NOLINT
 {
   SPDLOG_TRACE("test_start_stop_scan create StatApplicationManager");
-  sm = std::make_unique<ska::pst::stat::StatApplicationManager>();
+  sm = std::make_unique<ska::pst::stat::StatApplicationManager>(stat_base_path);
   ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
 
   SPDLOG_TRACE("test_start_stop_scan sm->configure_beam");

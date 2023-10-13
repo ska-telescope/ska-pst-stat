@@ -85,7 +85,7 @@ void ska::pst::stat::StatProcessor::interrupt()
   computer->interrupt();
 }
 
-void ska::pst::stat::StatProcessor::add_publisher(std::unique_ptr<StatPublisher> publisher)
+void ska::pst::stat::StatProcessor::add_publisher(std::shared_ptr<StatPublisher> publisher)
 {
   publishers.push_back(std::move(publisher));
 }
@@ -138,8 +138,8 @@ auto ska::pst::stat::StatProcessor::process(const ska::pst::common::SegmentProdu
 
   auto num_data_heaps = segment.data.size / data_resolution;
   auto num_weights_heaps = segment.weights.size / weights_resolution;
-  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process num_data_heaps={}", num_data_heaps);
-  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process num_weights_heaps={}", num_weights_heaps);
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process num_data_heaps={} size={} resolution={}", num_data_heaps, segment.data.size, data_resolution);
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process num_weights_heaps={} size={} resolution={}", num_weights_heaps, segment.weights.size, weights_resolution);
   if (num_data_heaps == 0)
   {
     SPDLOG_ERROR("ska::pst::stat::StatProcessor::process segment.data.size \% data_resolution={}", (segment.data.size % data_resolution));

@@ -40,6 +40,7 @@
 #include <algorithm>
 
 #include "ska/pst/stat/StatHdf5FileWriter.h"
+#include "ska/pst/common/utils/FileWriter.h"
 #include "ska/pst/common/definitions.h"
 
 
@@ -86,7 +87,7 @@ auto ska::pst::stat::StatHdf5FileWriter::get_hdf5_header_datatype() -> H5::CompT
 }
 
 template<typename T>
-auto get_val_if_has (const ska::pst::common::AsciiHeader& config, const char* key, T default_value) -> T
+auto get_val_if_has(const ska::pst::common::AsciiHeader& config, const char* key, T default_value) -> T
 {
   if (config.has(key))
   {
@@ -104,7 +105,7 @@ auto get_val_if_has (const ska::pst::common::AsciiHeader& config, const char* ke
 void ska::pst::stat::StatHdf5FileWriter::publish(std::shared_ptr<StatStorage> storage)
 {
   SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::publish()");
-  SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::publish() - config\n{}", config.raw());
+  SPDLOG_TRACE("ska::pst::stat::StatHdf5FileWriter::publish() - config\n{}", config.raw());
 
   auto npol = storage->get_npol();
   auto ndim = storage->get_ndim();
@@ -148,7 +149,29 @@ void ska::pst::stat::StatHdf5FileWriter::publish(std::shared_ptr<StatStorage> st
   write_1d_vec_header(storage->timeseries_bins, header.timeseries_bins);
 
   std::vector<char> temp_data;
-  std::string stat_filename = config.get_val("STAT_OUTPUT_FILENAME");
+  std::string stat_filename;
+  if (config.has("STAT_OUTPUT_FILENAME"))
+  {
+    stat_filename = config.get_val("STAT_OUTPUT_FILENAME");
+  }
+  else
+  {
+    // ideally the obs offset would be provided by the SMRB Segment Producer so that the StatProcessor can set
+    // this value in the StatStorage class. #TODO
+    uint64_t obs_offset = 0;
+
+    // directory to which STAT files should be written, provided on the command line
+    std::filesystem::path output_path(config.get_val("STAT_BASE_PATH"));
+
+    // file name (with no directory prefix) using FileWriter for consistent nameing
+    std::filesystem::path filename = ska::pst::common::FileWriter::get_filename(utc_start, obs_offset, file_number);
+
+    // full path to the STAT output file
+    std::filesystem::path output_file = output_path / filename.replace_extension("h5");
+
+    stat_filename = output_file.generic_string();
+  }
+
   try
   {
     SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::publish opening file: {}", stat_filename);
@@ -187,6 +210,7 @@ void ska::pst::stat::StatHdf5FileWriter::publish(std::shared_ptr<StatStorage> st
     write_3d_vec<float>(storage->timeseries_masked, "TIMESERIES_MASKED", H5::PredType::NATIVE_FLOAT, temp_data);
 
     file->close();
+    file_number++;
   }
   catch (H5::Exception& exc)
   {

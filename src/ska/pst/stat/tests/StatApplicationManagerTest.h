@@ -95,6 +95,7 @@ class StatApplicationManagerTest : public ::testing::Test
     std::vector<char> weights_to_write;
 
     std::unique_ptr<ska::pst::stat::StatApplicationManager> sm{nullptr};
+    std::string stat_base_path{"/tmp"};
 
 };
 } // namespace ska::pst::stat::test

@@ -54,6 +54,7 @@ ska::pst::stat::FileProcessor::FileProcessor(
   // test that the data and weights files start at the same heap offset
   assert_equal_heap_offsets(data_config, weights_config);
 
+  // set the STAT_OUTPUT_FILENAME to over-ride the auto-generated output filename
   data_config.set("STAT_OUTPUT_FILENAME", get_output_filename(data_filename));
 
   set_defaults(data_config);
@@ -61,7 +62,8 @@ ska::pst::stat::FileProcessor::FileProcessor(
   processor = std::make_shared<StatProcessor>(data_config, weights_config);
 
   SPDLOG_DEBUG("ska::pst::stat::FileProcessor::ctor add unique StatHdf5FileWriter publisher to processor");
-  processor->add_publisher(std::make_unique<ska::pst::stat::StatHdf5FileWriter>(data_config));
+  publisher = std::make_shared<StatHdf5FileWriter>(data_config);
+  processor->add_publisher(publisher);
 }
 
 ska::pst::stat::FileProcessor::~FileProcessor()

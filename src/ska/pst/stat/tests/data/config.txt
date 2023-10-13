@@ -8,8 +8,9 @@ RESOLUTION              5308416
 
 UDP_NSAMP               32
 STAT_OUTPUT_FILENAME    /tmp/stat.h5
-STAT_REQ_TIME_BINS      4
-STAT_REQ_FREQ_BINS      4
+STAT_REQ_TIME_BINS      256
+STAT_REQ_FREQ_BINS      256
+STAT_PROC_DELAY         500
 
 EB_ID               eb-m001-20240804-0123456
 SCAN_ID             1138
@@ -21,5 +22,8 @@ TSAMP               207.36
 HB_NBUFS            4
 HB_BUFSZ            4096
 
-DB_NBUFS            8
-WB_NBUFS            8
+DB_NBUFS            4
+DB_BUFSZ            10616832
+
+WB_NBUFS            4
+WB_BUFSZ            89856
