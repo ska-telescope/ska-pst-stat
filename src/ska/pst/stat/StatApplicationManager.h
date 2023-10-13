@@ -219,7 +219,7 @@ namespace ska::pst::stat {
       const std::vector<std::string> beam_config_keys = {"DATA_KEY", "WEIGHTS_KEY"};
 
       //! List of mandatory scan config keys
-      const std::vector<std::string> scan_config_keys = {};
+      const std::vector<std::string> scan_config_keys = {"STAT_REQ_FREQ_BINS", "STAT_REQ_TIME_BINS", "STAT_NREBIN"};
   };
 
 } // namespace ska::pst::stat

@@ -138,11 +138,6 @@ void ska::pst::stat::StatApplicationManager::perform_configure_beam()
   SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_configure_beam data_beam_config:\n{}", data_beam_config.raw());
   SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_configure_beam weights_beam_config:\n{}", weights_beam_config.raw());
 
-  // set the base_path and suffix for statistics recording in the beam configuration
-  data_beam_config.set_val("STAT_BASE_PATH", stat_base_path);
-
-  // ensure the STAT_OUTPUT_FILENAME is not present in the beam_config
-  data_beam_config.del("STAT_OUTPUT_FILENAME");
 
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam complete");
 }
@@ -155,6 +150,18 @@ void ska::pst::stat::StatApplicationManager::perform_configure_scan()
     keep_processing = true;
     processing_cond.notify_one();
   }
+
+  // set the base_path and suffix for statistics recording in the beam configuration
+  data_beam_config.set_val("STAT_BASE_PATH", stat_base_path);
+
+  // set configuration parameters for the StatProcessor
+  data_beam_config.set_val("STAT_REQ_TIME_BINS", scan_config.get_val("STAT_REQ_TIME_BINS"));
+  data_beam_config.set_val("STAT_REQ_FREQ_BINS", scan_config.get_val("STAT_REQ_FREQ_BINS"));
+  data_beam_config.set_val("STAT_NREBIN", scan_config.get_val("STAT_NREBIN"));
+
+  // ensure the STAT_OUTPUT_FILENAME is not present in the beam_config
+  data_beam_config.del("STAT_OUTPUT_FILENAME");
+
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan data_beam_config:\n{}", data_beam_config.raw());
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan weights_beam_config:\n{}", weights_beam_config.raw());
   processor = std::make_unique<ska::pst::stat::StatProcessor>(data_beam_config, weights_beam_config);
