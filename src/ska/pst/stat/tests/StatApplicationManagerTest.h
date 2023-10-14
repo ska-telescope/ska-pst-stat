@@ -88,6 +88,8 @@ class StatApplicationManagerTest : public ::testing::Test
 
     uint64_t data_bufsz{0};
     uint64_t weights_bufsz{0};
+    std::string data_key;
+    std::string weights_key;
 
     std::vector<char> data_to_write;
     std::vector<char> weights_to_write;

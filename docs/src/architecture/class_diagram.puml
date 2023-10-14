@@ -22,6 +22,7 @@ class StatApplicationManager {
   + perform_end_scan()
   + perform_deconfigure_scan()
   + perform_deconfigure_beam()
+  + set_timeout()
   - processor: std::shared_ptr<StatProcessor>
   - producer: std::shared_ptr<SmrbSegmentProducer>
 }

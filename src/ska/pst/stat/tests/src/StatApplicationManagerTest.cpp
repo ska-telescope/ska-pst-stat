@@ -53,10 +53,13 @@ StatApplicationManagerTest::StatApplicationManagerTest()
 void StatApplicationManagerTest::setup_data_block()
 {
 
-  static uint64_t header_nbufs = beam_config.get_uint64("HB_NBUFS");
-  static uint64_t header_bufsz = beam_config.get_uint64("HB_BUFSZ");
-  static uint64_t data_nbufs = beam_config.get_uint64("DB_NBUFS");
-  static uint64_t weights_nbufs = beam_config.get_uint64("WB_NBUFS");
+  weights_key = beam_config.get_val("WEIGHTS_KEY");
+  data_key = beam_config.get_val("DATA_KEY");
+
+  static uint64_t header_nbufs = scan_config.get_uint64("HB_NBUFS");
+  static uint64_t header_bufsz = scan_config.get_uint64("HB_BUFSZ");
+  static uint64_t data_nbufs = data_scan_config.get_uint64("DB_NBUFS");
+  static uint64_t weights_nbufs = weights_scan_config.get_uint64("WB_NBUFS");
   static constexpr uint64_t bufsz_factor = 16;
   static constexpr unsigned nreaders = 1;
   static constexpr int device = -1;
@@ -129,8 +132,8 @@ void StatApplicationManagerTest::SetUp()
 
   data_header.load_from_file(test_data_file("data_header_LowAA0.5.txt"));
   weights_header.load_from_file(test_data_file("weights_header_LowAA0.5.txt"));
-  beam_config.append_header(data_header);
-  beam_config.append_header(weights_header);
+  data_scan_config.append_header(data_header);
+  weights_scan_config.append_header(weights_header);
 
   setup_data_block();
 }

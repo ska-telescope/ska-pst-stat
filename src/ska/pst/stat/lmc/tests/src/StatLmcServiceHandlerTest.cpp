@@ -49,7 +49,6 @@ StatLmcServiceHandlerTest::StatLmcServiceHandlerTest()
 {
 }
 
-
 void StatLmcServiceHandlerTest::setup_data_block()
 {
   weights_key = beam_config.get_val("WEIGHTS_KEY");
@@ -360,7 +359,7 @@ TEST_F(StatLmcServiceHandlerTest, configure_deconfigure_scan) // NOLINT
   SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_deconfigure_scan - beam deconfigured");
 }
 
-// TODO: Review logic flow. Configure scan has cached config from configure beam
+// TODO(jesmigel): Review logic flow. Configure scan has cached config from configure beam
 TEST_F(StatLmcServiceHandlerTest, configure_scan_with_invalid_configuration) // NOLINT
 {
     SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_with_invalid_configuration - configuring beam");
@@ -611,7 +610,7 @@ TEST_F(StatLmcServiceHandlerTest, stop_scan_when_not_scanning_should_throw_excep
     }
 }
 
-// TODO: Update at AT3-422
+// TODO(jesmigel): Update at AT3-422
 TEST_F(StatLmcServiceHandlerTest, get_monitor_data) // NOLINT
 {
   // configure beam
@@ -655,7 +654,7 @@ TEST_F(StatLmcServiceHandlerTest, get_monitor_data) // NOLINT
   SPDLOG_TRACE("StatLmcServiceHandlerTest::get_monitor_data - beam deconfigured");
 }
 
-// TODO: Update at AT3-422
+// TODO(jesmigel): Update at AT3-422
 TEST_F(StatLmcServiceHandlerTest, get_env) // NOLINT
 {
     SPDLOG_TRACE("StatLmcServiceHandlerTest::get_env - beam deconfigured");
@@ -751,5 +750,4 @@ TEST_F(StatLmcServiceHandlerTest, reset_from_runtime_error_state) // NOLINT
 }
 
 
-} // namespace sks::pst::stat:test
-
+} // namespace ska::pst::stat::test

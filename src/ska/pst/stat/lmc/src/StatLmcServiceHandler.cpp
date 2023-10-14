@@ -307,7 +307,7 @@ void ska::pst::stat::StatLmcServiceHandler::get_scan_configuration(
     const auto &curr_scan_configuration = stat->get_scan_configuration();
     auto *stat_scan_configuration = configuration->mutable_stat();
 
-    // TODO: JC. Confirm
+    // TODO(jesmigel): confirm set functions
     // stat_scan_configuration->set_ functions
 }
 
@@ -416,7 +416,7 @@ void ska::pst::stat::StatLmcServiceHandler::get_monitor_data(
 
     auto *stat_monitor_data = data->mutable_stat();
 
-    // TODO: implement get_scalar_stats in StatApplicationManager
+    // TODO(jesmigel): implement get_scalar_stats in StatApplicationManager
     // const auto &stats = stat->get_scalar_stats();
     float placeholder = 0.0;
     stat_monitor_data->set_mean_frequency_avg(0, placeholder);
