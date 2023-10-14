@@ -153,6 +153,12 @@ namespace ska::pst::stat {
        */
       void perform_terminate();
 
+      /**
+       * @brief Set the timeout for connecting to the DataBlockView object.
+       *
+       */
+      void set_timeout(int _timeout) { timeout = _timeout; }
+
     private:
       //! timeout to wait when attempting to connect to the DataBlockView object.
       int timeout{120};
@@ -168,10 +174,17 @@ namespace ska::pst::stat {
       std::shared_ptr<ska::pst::smrb::SmrbSegmentProducer> producer;
 
       //! List of mandatory data config keys
-      const std::vector<std::string> data_config_keys = {"DATA_KEY", "RESOLUTION", "NCHAN"};
+      const std::vector<std::string> data_config_keys = {"DATA_KEY"};
 
       //! List of mandatory weights config keys
-      const std::vector<std::string> weights_config_keys = {"WEIGHTS_KEY", "RESOLUTION"};
+      const std::vector<std::string> weights_config_keys = {"WEIGHTS_KEY"};
+
+
+      //! List of mandatory data config keys
+      const std::vector<std::string> data_smrb_keys = {"RESOLUTION", "NCHAN"};
+
+      //! List of mandatory weights config keys
+      const std::vector<std::string> weights_smrb_keys = {"RESOLUTION", "NCHAN"};
   };
 
 } // namespace ska::pst::stat

@@ -57,7 +57,8 @@ ska::pst::stat::StatComputer::StatComputer(
   const ska::pst::common::AsciiHeader& _weights_config,
   std::shared_ptr<StatStorage> storage
 ) : data_config(_data_config), weights_config(_weights_config), storage(std::move(storage)) {
-  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer");
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer data_config:\n{}", data_config.raw());
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer weights_config:\n{}", weights_config.raw());
 
   ndim = data_config.get_uint32("NDIM");
   SPDLOG_DEBUG("ska::pst::stat::StatComputer::StatComputer - ndim={}", ndim);

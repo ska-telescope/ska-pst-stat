@@ -49,6 +49,7 @@ StatApplicationManagerTest::StatApplicationManagerTest()
 {
 }
 
+
 void StatApplicationManagerTest::setup_data_block()
 {
 
@@ -77,8 +78,8 @@ void StatApplicationManagerTest::setup_data_block()
   weights_helper->set_header_block_bufsz(header_bufsz);
   data_helper->set_header_block_bufsz(header_bufsz);
 
-  weights_helper->set_config(data_scan_config);
-  data_helper->set_config(weights_scan_config);
+  weights_helper->set_config(weights_scan_config);
+  data_helper->set_config(data_scan_config);
 
   weights_helper->set_header(weights_header);
   data_helper->set_header(data_header);
@@ -95,7 +96,6 @@ void StatApplicationManagerTest::setup_data_block()
   SPDLOG_TRACE("weights_helper->header:\n{}",weights_helper->header.raw());
   SPDLOG_TRACE("data_helper->config:\n{}",data_helper->config.raw());
   SPDLOG_TRACE("data_helper->header:\n{}",data_helper->header.raw());
-
 }
 
 void StatApplicationManagerTest::write_bytes_to_data_writer(uint64_t bytes_to_write)
@@ -120,7 +120,7 @@ void StatApplicationManagerTest::tear_down_data_block()
 
 void StatApplicationManagerTest::SetUp()
 {
-  beam_config.load_from_file(test_data_file("config.txt"));
+  beam_config.load_from_file(test_data_file("beam_config.txt"));
   scan_config.load_from_file(test_data_file("config.txt"));
   start_scan_config.load_from_file(test_data_file("config.txt"));
 

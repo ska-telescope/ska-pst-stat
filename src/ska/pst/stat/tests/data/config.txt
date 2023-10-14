@@ -18,9 +18,6 @@ UTC_START           2023-08-07-15:41:00
 PICOSECONDS         1234
 TSAMP               207.36
 
-DATA_KEY            a000
-WEIGHTS_KEY         a002
-
 HB_NBUFS            4
 HB_BUFSZ            4096
 
