@@ -59,6 +59,9 @@ ska::pst::stat::FileProcessor::FileProcessor(
   set_defaults(data_config);
 
   processor = std::make_shared<StatProcessor>(data_config, weights_config);
+
+  SPDLOG_DEBUG("ska::pst::stat::FileProcessor::ctor add unique StatHdf5FileWriter publisher to processor");
+  processor->add_publisher(std::make_unique<ska::pst::stat::StatHdf5FileWriter>(data_config));
 }
 
 ska::pst::stat::FileProcessor::~FileProcessor()

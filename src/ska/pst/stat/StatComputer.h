@@ -51,7 +51,8 @@ namespace ska::pst::stat {
       /**
        * @brief Create instance of a Stat Computer object.
        *
-       * @param config the configuration current voltage data stream.
+       * @param data_config the configuration current data stream involving the data block.
+       * @param weights_config the configuration current data stream involving the weights block.
        * @param storage a shared pointer to the in memory storage of the computed statistics.
        */
       StatComputer(
@@ -70,9 +71,10 @@ namespace ska::pst::stat {
        * @brief compute the statistics for block of data.
        *
        * @param segment the segment of data and weights for which statistics are computed
+       * @return true all of the input samples were processed, the stored statistics are valid
+       * @return false input sampling was interrupted, the stored statistics are invalid
        */
-      void compute(const ska::pst::common::SegmentProducer::Segment& segment);
-
+      bool compute(const ska::pst::common::SegmentProducer::Segment& segment);
 
       /**
        * @brief initialise the StatComputer class in readiness for computing data.
@@ -81,6 +83,12 @@ namespace ska::pst::stat {
        * there the size of data may not be as expected.
        */
       void initialise();
+
+      /**
+       * @brief interrupt the computation of statistics from the segment.
+       *
+       */
+      void interrupt();
 
     private:
       //! shared pointer a statistics storage, shared between the processor and publisher
@@ -98,8 +106,11 @@ namespace ska::pst::stat {
       //! used to check state if the instance has been initialised
       bool initialised{false};
 
+      //! flag that can be set to interrupt computing statistics
+      bool keep_computing{true};
+
       template <typename T>
-      void compute_samples(T* data, char* weights, uint32_t nheaps);
+      bool compute_samples(T* data, char* weights, uint32_t nheaps);
 
       //! get scale factor for current packet
       auto get_scale_factor(char * weights, uint32_t packet_number) -> float;

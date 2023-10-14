@@ -31,6 +31,9 @@
 #include "ska/pst/stat/StatProcessor.h"
 #include "ska/pst/common/utils/FileSegmentProducer.h"
 
+#include <memory>
+#include <vector>
+
 #ifndef __SKA_PST_STAT_FileProcessor_h
 #define __SKA_PST_STAT_FileProcessor_h
 

@@ -1,14 +1,16 @@
 @startuml PST STAT Processor
 actor Client
-Client -> StatProcessor: StatProcessor(data_config, weights_config)
+Client -> StatProcessor: processor = StatProcessor(config)
 activate StatProcessor
 activate StatComputer
-activate StatPublisher
+StatProcessor -> StatStorage: storage = StatStorage()
 activate StatStorage
-StatProcessor -> StatStorage: create
-StatProcessor -> StatComputer: StatComputer(config, *storage)
-StatProcessor -> StatPublisher: StatPublisher(config, *storage)
+StatProcessor -> StatComputer: computer = StatComputer(config, storage)
 Client <-- StatProcessor
+Client -> StatPublisher : publisher = StatPublisher(config)
+activate StatPublisher
+Client <-- StatPublisher
+Client -> StatProcessor: append(publisher)
 loop while has data
   Client -> StatProcessor: process(segment)
   StatProcessor -> StatStorage: reset()
@@ -16,8 +18,7 @@ loop while has data
   StatProcessor -> StatComputer: process(segment)
   StatComputer --> StatStorage: updates
   StatProcessor <-- StatComputer
-  StatProcessor -> StatPublisher: publish()
-  StatPublisher --> StatStorage: reads from
+  StatProcessor -> StatPublisher: publish(storage)
   StatProcessor <-- StatPublisher
   Client <-- StatProcessor
 end

@@ -246,10 +246,10 @@ TEST_F(StatApplicationManagerTest, test_start_stop_scan) // NOLINT
   ASSERT_EQ(ska::pst::common::Scanning, sm->get_state());
   SPDLOG_TRACE("test_start_stop_scan sm->start_scan complete");
 
-  static constexpr float delay_ms = 10;
-  size_t constexpr test_nblocks = 64;
-  std::thread data_thread = std::thread(&DataBlockTestHelper::write_and_close, data_helper.get(), delay_ms, test_nblocks);
-  std::thread weights_thread = std::thread(&DataBlockTestHelper::write_and_close, weights_helper.get(), delay_ms, test_nblocks);
+  static constexpr float delay_ms = 1000;
+  size_t constexpr test_nblocks = 4;
+  std::thread data_thread = std::thread(&DataBlockTestHelper::write_and_close, data_helper.get(), test_nblocks, delay_ms);
+  std::thread weights_thread = std::thread(&DataBlockTestHelper::write_and_close, weights_helper.get(), test_nblocks, delay_ms);
   data_thread.join();
   weights_thread.join();
 
@@ -267,7 +267,5 @@ TEST_F(StatApplicationManagerTest, test_start_stop_scan) // NOLINT
   ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
   SPDLOG_TRACE("test_start_stop_scan sm->deconfigure_beam complete");
 }
-
-
 
 } // namespace ska::pst::stat::test

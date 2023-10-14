@@ -87,6 +87,7 @@ void ska::pst::stat::StatStorage::resize(uint32_t _ntime_bins, uint32_t _nfreq_b
 
   resize_3d(num_clipped_samples_spectrum, npol, ndim, nchan);
   resize_2d(num_clipped_samples, npol, ndim);
+  resize_2d(num_clipped_samples_masked, npol, ndim);
 
   resize_1d(timeseries_bins, ntime_bins);
   resize_1d(frequency_bins, nfreq_bins);
@@ -132,6 +133,7 @@ void ska::pst::stat::StatStorage::reset()
 
   reset_3d(num_clipped_samples_spectrum);
   reset_2d(num_clipped_samples);
+  reset_2d(num_clipped_samples_masked);
 
   reset_1d(timeseries_bins);
   reset_1d(frequency_bins);

@@ -50,7 +50,7 @@ class DataBlockTestHelper
 {
   public:
 
-    DataBlockTestHelper(const std::string& id = "dada", unsigned num_readers = 1);
+    DataBlockTestHelper(std::string id = "dada", unsigned num_readers = 1);
 
     void set_header_block_nbufs(uint64_t hdr_nbufs);
     void set_header_block_bufsz(uint64_t hdr_bufsz);
@@ -89,7 +89,7 @@ class DataBlockTestHelper
     uint64_t dat_bufsz{1048576};
     unsigned num_readers{1};
 
-    uint64_t counter;
+    uint64_t counter{0};
 };
 
 } // ska::pst::stat::test

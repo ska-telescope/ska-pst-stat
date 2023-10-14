@@ -49,9 +49,8 @@ namespace ska::pst::stat {
        * @brief Create instance of a Stat Publisher object.
        *
        * @param config the configuration current voltage data stream.
-       * @param storage a shared pointer to the in memory storage of the computed statistics.
        */
-      StatPublisher(const ska::pst::common::AsciiHeader& config, std::shared_ptr<StatStorage> storage);
+      StatPublisher(const ska::pst::common::AsciiHeader& config);
 
       /**
        * @brief Destroy the Stat Publisher object.
@@ -61,12 +60,12 @@ namespace ska::pst::stat {
 
       /**
        * @brief publish the current statistics to configured endpoint/location.
+       *
+       * @param storage reference to the computed statistics to publish.
        */
-      virtual void publish() = 0;
+      virtual void publish(std::shared_ptr<StatStorage> storage) = 0;
 
     protected:
-      //! shared pointer a statistics storage, shared also with the stat process or computer
-      std::shared_ptr<StatStorage> storage;
 
       //! the configuration for the current stream of voltage data.
       ska::pst::common::AsciiHeader config;

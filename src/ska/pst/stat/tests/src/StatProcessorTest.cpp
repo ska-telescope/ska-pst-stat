@@ -34,17 +34,27 @@
 #include <string>
 #include <vector>
 #include <cstdlib>
+#include <memory>
 
+#include "ska/pst/common/definitions.h"
 #include "ska/pst/common/utils/AsciiHeader.h"
 #include "ska/pst/common/utils/Timer.h"
 #include "ska/pst/stat/testutils/GtestMain.h"
 
+#include "ska/pst/stat/ScalarStatPublisher.h"
 #include "ska/pst/stat/tests/StatProcessorTest.h"
 
 
 auto main(int argc, char* argv[]) -> int
 {
   return ska::pst::stat::test::gtest_main(argc, argv);
+}
+
+void delay_and_interrupt(std::shared_ptr<ska::pst::stat::StatProcessor> sp, unsigned delay_ms) // NOLINT
+{
+  unsigned delay_us = delay_ms * ska::pst::common::microseconds_per_millisecond;
+  usleep(delay_us);
+  sp->interrupt();
 }
 
 namespace ska::pst::stat::test {
@@ -80,8 +90,6 @@ void ska::pst::stat::test::StatProcessorTest::init_segment()
   segment.weights.size = weights_block.size();
 }
 
-
-
 void StatProcessorTest::SetUp()
 {
   init_config();
@@ -93,12 +101,10 @@ void StatProcessorTest::TearDown()
   clear_config();
 }
 
-
-
 TEST_F(StatProcessorTest, test_construct_delete) // NOLINT
 {
   sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
-  SPDLOG_INFO("data_config:\n{}", sp->get_data_config().raw());
+  SPDLOG_TRACE("data_config:\n{}", sp->get_data_config().raw());
   ASSERT_EQ(sp->get_data_config().get_uint32("NPOL"), data_config.get_uint32("NPOL"));
   ASSERT_EQ(sp->get_data_config().get_uint32("NDIM"), data_config.get_uint32("NDIM"));
   ASSERT_EQ(sp->get_data_config().get_uint32("NCHAN"), data_config.get_uint32("NCHAN"));
@@ -108,7 +114,7 @@ TEST_F(StatProcessorTest, test_construct_delete) // NOLINT
   ASSERT_EQ(sp->get_data_config().get_val("STAT_OUTPUT_FILENAME"), data_config.get_val("STAT_OUTPUT_FILENAME"));
   ASSERT_EQ(sp->get_data_config().get_uint32("STAT_REQ_TIME_BINS"), data_config.get_uint32("STAT_REQ_TIME_BINS"));
   ASSERT_EQ(sp->get_data_config().get_uint32("STAT_REQ_FREQ_BINS"), data_config.get_uint32("STAT_REQ_FREQ_BINS"));
-  SPDLOG_INFO("weights_config:\n{}", sp->get_weights_config().raw());
+  SPDLOG_TRACE("weights_config:\n{}", sp->get_weights_config().raw());
   ASSERT_EQ(sp->get_weights_config().get_uint32("NPOL"), weights_config.get_uint32("NPOL"));
   ASSERT_EQ(sp->get_weights_config().get_uint32("NDIM"), weights_config.get_uint32("NDIM"));
   ASSERT_EQ(sp->get_weights_config().get_uint32("NCHAN"), weights_config.get_uint32("NCHAN"));
@@ -130,6 +136,9 @@ TEST_F(StatProcessorTest, test_process_multiple_heaps) // NOLINT
 {
   sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
 
+  // ensure a simple publisher can be added
+  ASSERT_NO_THROW(sp->add_publisher(std::make_unique<ska::pst::stat::ScalarStatPublisher>(data_config)));
+
   // 2 to 4 heaps
   auto nheaps = 2 + (rand() % 3);
 
@@ -146,6 +155,39 @@ TEST_F(StatProcessorTest, test_process_multiple_heaps) // NOLINT
   segment.weights.size = weights_length;
 
   ASSERT_NO_THROW(sp->process(segment));
+}
+
+TEST_F(StatProcessorTest, test_process_interrupt) // NOLINT
+{
+  sp = std::make_shared<TestStatProcessor>(data_config, weights_config);
+  sp->add_publisher(std::make_unique<ska::pst::stat::ScalarStatPublisher>(data_config));
+
+  // 2 to 4 heaps
+  auto nheaps = 2 + (rand() % 3);
+
+  size_t data_length = nheaps * get_data_length();
+  std::vector<char> data_block(data_length);
+
+  size_t weights_length = nheaps * get_weights_length();
+  std::vector<char> weights_block(weights_length);
+
+  ska::pst::common::SegmentProducer::Segment segment;
+  segment.data.block = data_block.data();
+  segment.data.size = data_length;
+  segment.weights.block = weights_block.data();
+  segment.weights.size = weights_length;
+
+  SPDLOG_DEBUG("StatProcessorTest::test_process_interrupt processing first segment");
+  bool processing_complete = sp->process(segment);
+  ASSERT_TRUE(processing_complete);
+
+  static constexpr unsigned delay_ms = 100;
+  std::thread interrupt_thread = std::thread(&delay_and_interrupt, sp, delay_ms);
+
+  SPDLOG_DEBUG("StatProcessorTest::test_process_interrupt processing second segment");
+  processing_complete = sp->process(segment);
+  ASSERT_FALSE(processing_complete);
+  interrupt_thread.join();
 }
 
 TEST_F(StatProcessorTest, test_constructor_threshold_overrides) // NOLINT

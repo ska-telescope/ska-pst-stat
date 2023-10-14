@@ -80,7 +80,7 @@ void StatHdf5FileWriterTest::initialise(const std::string& config_file)
   auto nfreq_bins = config.get_uint32("STAT_REQ_FREQ_BINS");
   storage->resize(ntime_bins, nfreq_bins);
 
-  writer = std::make_shared<StatHdf5FileWriter>(config, storage);
+  writer = std::make_shared<StatHdf5FileWriter>(config);
 
   populate_storage();
 }
@@ -109,6 +109,7 @@ void StatHdf5FileWriterTest::populate_storage()
   populate_3d_vec<uint32_t>(storage->rebinned_histogram_1d_freq_avg_masked);
   populate_3d_vec<uint32_t>(storage->num_clipped_samples_spectrum);
   populate_2d_vec<uint32_t>(storage->num_clipped_samples);
+  populate_2d_vec<uint32_t>(storage->num_clipped_samples_masked);
   populate_3d_vec<float>(storage->spectrogram);
   populate_3d_vec<float>(storage->timeseries);
   populate_3d_vec<float>(storage->timeseries_masked);
@@ -174,6 +175,7 @@ void StatHdf5FileWriterTest::validate_hdf5_file(const std::shared_ptr<H5::H5File
   assert_3d_vec<uint32_t>(storage->rebinned_histogram_1d_freq_avg_masked, file, "HISTOGRAM_REBINNED_1D_FREQ_AVG_MASKED", H5::PredType::NATIVE_UINT32);
   assert_3d_vec<uint32_t>(storage->num_clipped_samples_spectrum, file, "NUM_CLIPPED_SAMPLES_SPECTRUM", H5::PredType::NATIVE_UINT32);
   assert_2d_vec<uint32_t>(storage->num_clipped_samples, file, "NUM_CLIPPED_SAMPLES", H5::PredType::NATIVE_UINT32);
+  assert_2d_vec<uint32_t>(storage->num_clipped_samples_masked, file, "NUM_CLIPPED_SAMPLES_MASKED", H5::PredType::NATIVE_UINT32);
   assert_3d_vec<float>(storage->spectrogram, file, "SPECTROGRAM", H5::PredType::NATIVE_FLOAT);
   assert_3d_vec<float>(storage->timeseries, file, "TIMESERIES", H5::PredType::NATIVE_FLOAT);
   assert_3d_vec<float>(storage->timeseries_masked, file, "TIMESERIES_MASKED", H5::PredType::NATIVE_FLOAT);
@@ -182,7 +184,7 @@ void StatHdf5FileWriterTest::validate_hdf5_file(const std::shared_ptr<H5::H5File
 TEST_F(StatHdf5FileWriterTest, test_generates_correct_data) // NOLINT
 {
   initialise();
-  writer->publish();
+  writer->publish(storage);
 
   std::shared_ptr<H5::H5File> file = std::make_shared<H5::H5File>(config.get_val("STAT_OUTPUT_FILENAME"), H5F_ACC_RDONLY);
 

@@ -92,6 +92,7 @@ void ScalarStatPublisherTest::populate_storage()
   populate_3d_vec<uint32_t>(storage->rebinned_histogram_1d_freq_avg_masked);
   populate_3d_vec<uint32_t>(storage->num_clipped_samples_spectrum);
   populate_2d_vec<uint32_t>(storage->num_clipped_samples);
+  populate_2d_vec<uint32_t>(storage->num_clipped_samples_masked);
   populate_3d_vec<float>(storage->spectrogram);
   populate_3d_vec<float>(storage->timeseries);
   populate_3d_vec<float>(storage->timeseries_masked);
@@ -112,26 +113,27 @@ void ScalarStatPublisherTest::initialise(const std::string& config_file)
   auto nfreq_bins = config.get_uint32("STAT_REQ_FREQ_BINS");
   storage->resize(ntime_bins, nfreq_bins);
 
-  scalar_stat_publisher = std::make_shared<ska::pst::stat::ScalarStatPublisher>(config, storage);
+  scalar_stat_publisher = std::make_shared<ska::pst::stat::ScalarStatPublisher>(config);
 
   populate_storage();
 }
 
 TEST_F(ScalarStatPublisherTest, test_construct_delete) // NOLINT
 {
-  std::shared_ptr<ska::pst::stat::ScalarStatPublisher> ssp = std::make_shared<ska::pst::stat::ScalarStatPublisher>(config, storage);
+  std::shared_ptr<ska::pst::stat::ScalarStatPublisher> ssp = std::make_shared<ska::pst::stat::ScalarStatPublisher>(config);
 }
 
 TEST_F(ScalarStatPublisherTest, test_controlled_process_and_read_data) // NOLINT
 {
   populate_storage();
-  scalar_stat_publisher->publish();
+  scalar_stat_publisher->publish(storage);
   ska::pst::stat::StatStorage::scalar_stats_t copied_scalar_stat = scalar_stat_publisher->get_scalar_stats();
   ASSERT_EQ(copied_scalar_stat.mean_frequency_avg, storage->mean_frequency_avg);
   ASSERT_EQ(copied_scalar_stat.mean_frequency_avg_masked, storage->mean_frequency_avg_masked);
   ASSERT_EQ(copied_scalar_stat.variance_frequency_avg, storage->variance_frequency_avg);
   ASSERT_EQ(copied_scalar_stat.variance_frequency_avg_masked, storage->variance_frequency_avg_masked);
   ASSERT_EQ(copied_scalar_stat.num_clipped_samples, storage->num_clipped_samples);
+  ASSERT_EQ(copied_scalar_stat.num_clipped_samples_masked, storage->num_clipped_samples_masked);
 }
 
 TEST_F(ScalarStatPublisherTest, test_threaded_process_and_read_data) // NOLINT
@@ -152,7 +154,7 @@ TEST_F(ScalarStatPublisherTest, test_threaded_process_and_read_data) // NOLINT
         populate_storage();
 
         // Simulate concurrent execution of publish() in multiple threads
-        scalar_stat_publisher->publish();
+        scalar_stat_publisher->publish(storage);
 
         // Simulate concurrent execution of get_scalar_stats() in multiple threads
         auto copied_scalar_stat = scalar_stat_publisher->get_scalar_stats();
@@ -162,8 +164,8 @@ TEST_F(ScalarStatPublisherTest, test_threaded_process_and_read_data) // NOLINT
         ASSERT_EQ(copied_scalar_stat.mean_frequency_avg_masked, storage->mean_frequency_avg_masked);
         ASSERT_EQ(copied_scalar_stat.variance_frequency_avg, storage->variance_frequency_avg);
         ASSERT_EQ(copied_scalar_stat.variance_frequency_avg_masked, storage->variance_frequency_avg_masked);
-        ASSERT_EQ(copied_scalar_stat.num_clipped_samples_spectrum, storage->num_clipped_samples_spectrum);
         ASSERT_EQ(copied_scalar_stat.num_clipped_samples, storage->num_clipped_samples);
+        ASSERT_EQ(copied_scalar_stat.num_clipped_samples_masked, storage->num_clipped_samples_masked);
       }
     });
   }
@@ -177,7 +179,7 @@ TEST_F(ScalarStatPublisherTest, test_threaded_process_and_read_data) // NOLINT
 TEST_F(ScalarStatPublisherTest, test_controlled_reset) // NOLINT
 {
   populate_storage();
-  scalar_stat_publisher->publish();
+  scalar_stat_publisher->publish(storage);
   scalar_stat_publisher->reset();
   ska::pst::stat::StatStorage::scalar_stats_t copied_scalar_stat = scalar_stat_publisher->get_scalar_stats();
   ASSERT_EQ(copied_scalar_stat.mean_frequency_avg.size(), 0);
@@ -185,6 +187,7 @@ TEST_F(ScalarStatPublisherTest, test_controlled_reset) // NOLINT
   ASSERT_EQ(copied_scalar_stat.variance_frequency_avg.size(), 0);
   ASSERT_EQ(copied_scalar_stat.variance_frequency_avg_masked.size(), 0);
   ASSERT_EQ(copied_scalar_stat.num_clipped_samples.size(), 0);
+  ASSERT_EQ(copied_scalar_stat.num_clipped_samples_masked.size(), 0);
 }
 
 
@@ -206,7 +209,7 @@ TEST_F(ScalarStatPublisherTest, test_threaded_reset) // NOLINT
         populate_storage();
 
         // Simulate concurrent execution of publish() in multiple threads
-        scalar_stat_publisher->publish();
+        scalar_stat_publisher->publish(storage);
 
         // Simulate reset after publish
         scalar_stat_publisher->reset();
@@ -220,6 +223,7 @@ TEST_F(ScalarStatPublisherTest, test_threaded_reset) // NOLINT
         ASSERT_EQ(copied_scalar_stat.variance_frequency_avg.size(), 0);
         ASSERT_EQ(copied_scalar_stat.variance_frequency_avg_masked.size(), 0);
         ASSERT_EQ(copied_scalar_stat.num_clipped_samples.size(), 0);
+        ASSERT_EQ(copied_scalar_stat.num_clipped_samples_masked.size(), 0);
       }
     });
   }

@@ -32,8 +32,11 @@
 #include "ska/pst/common/statemodel/ApplicationManager.h"
 #include "ska/pst/smrb/SmrbSegmentProducer.h"
 #include "ska/pst/stat/StatProcessor.h"
+
 #include <string>
 #include <memory>
+#include <vector>
+#include <mutex>
 
 #ifndef __SKA_PST_STAT_StatApplicationManager_h
 #define __SKA_PST_STAT_StatApplicationManager_h
@@ -85,8 +88,7 @@ namespace ska::pst::stat {
       /**
        * @brief Start scan as described by the configuration parameters
        *
-       * @param config star scan configuration containing the bytes_per_second and scan_len_max
-       * @param context A validation context where errors should be added.
+       * @param config start scan configuration
        */
       void validate_start_scan(const ska::pst::common::AsciiHeader& config);
 
@@ -160,8 +162,20 @@ namespace ska::pst::stat {
       void set_timeout(int _timeout) { timeout = _timeout; }
 
     private:
-      //! timeout to wait when attempting to connect to the DataBlockView object.
+      //! timeout, in seconds, to wait when attempting to connect to the DataBlockView object.
       int timeout{120};
+
+      //! delay, in milliseconds, to wait between processing data from the producer
+      unsigned processing_delay{5000};
+
+      //! flag to indicate if processing of statistics should be contining
+      bool keep_processing{true};
+
+      //! Coordinates thread interactions on the keep_processing attribute
+      std::condition_variable processing_cond;
+
+      //! Protect the keep_processing condition variable
+      std::mutex processing_mutex;
 
       //! allocated configuration for beam of data stream and weights stream
       ska::pst::common::AsciiHeader data_beam_config;
