@@ -72,6 +72,8 @@ class StatLmcServiceHandlerTest : public ::testing::Test
     // helper methods for common repeated code.
     void setup_data_block();
     void tear_down_data_block();
+    void write_bytes_to_data_writer(uint64_t bytes_to_write);
+    void write_bytes_to_weights_writer(uint64_t bytes_to_write);
 
     void configure_beam();
     void configure_scan();
@@ -96,6 +98,14 @@ class StatLmcServiceHandlerTest : public ::testing::Test
 
     std::shared_ptr<ska::pst::stat::StatLmcServiceHandler> handler{nullptr};
     std::shared_ptr<ska::pst::stat::StatApplicationManager> _stat{nullptr};
+
+    std::unique_ptr<ska::pst::smrb::DataBlockCreate> _dbc_data{nullptr};
+    std::unique_ptr<ska::pst::smrb::DataBlockWrite> _writer_data{nullptr};
+    std::unique_ptr<ska::pst::smrb::DataBlockCreate> _dbc_weights{nullptr};
+    std::unique_ptr<ska::pst::smrb::DataBlockWrite> _writer_weights{nullptr};
+
+    float delay_ms = 1000;
+    int test_nblocks = 4;
 
 };
 
