@@ -28,6 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <memory>
+#include <grpc++/grpc++.h>
 #include <gtest/gtest.h>
 #include "ska/pst/smrb/DataBlockCreate.h"
 #include "ska/pst/smrb/DataBlockWrite.h"
@@ -35,68 +37,72 @@
 #include "ska/pst/common/utils/AsciiHeader.h"
 #include "ska/pst/stat/testutils/DataBlockTestHelper.h"
 
+#include "ska/pst/stat/lmc/StatLmcServiceHandler.h"
+
 #include "ska/pst/stat/StatApplicationManager.h"
 
-#ifndef SKA_PST_STAT_TESTS_StatApplicationManagerTest_h
-#define SKA_PST_STAT_TESTS_StatApplicationManagerTest_h
+#ifndef SKA_PST_STAT_TESTS_StatLmcServiceHandlerTest_h
+#define SKA_PST_STAT_TESTS_StatLmcServiceHandlerTest_h
 
-namespace ska::pst::stat::test {
+namespace ska {
+namespace pst {
+namespace stat {
+namespace test {
 
 /**
- * @brief Test the StatApplicationManagerTest class
+ * @brief Unit testing the handler against a Stat Application Manager Manager.
  *
  * @details
  *
  */
-
-class StatApplicationManagerTest : public ::testing::Test
+class StatLmcServiceHandlerTest : public ::testing::Test
 {
   protected:
     void SetUp() override;
-
     void TearDown() override;
 
-    ska::pst::common::AsciiHeader config;
-    ska::pst::common::AsciiHeader header;
+
+
   public:
-    StatApplicationManagerTest();
+    StatLmcServiceHandlerTest();
+    ~StatLmcServiceHandlerTest() = default;
 
-    ~StatApplicationManagerTest() = default;
-    std::unique_ptr<DataBlockTestHelper> data_helper;
-    std::unique_ptr<DataBlockTestHelper> weights_helper;
-
-    void write_bytes_to_data_writer(uint64_t bytes_to_write);
-    void write_bytes_to_weights_writer(uint64_t bytes_to_write);
-
+    // helper methods for common repeated code.
     void setup_data_block();
-    void setup_db_test_helper();
     void tear_down_data_block();
 
+    void configure_beam();
+    void configure_scan();
+    void start_scan();
+
+    uint64_t data_bufsz;
+    uint64_t weights_bufsz;
+    std::string data_key;
+    std::string weights_key;
     ska::pst::common::AsciiHeader beam_config;
     ska::pst::common::AsciiHeader scan_config;
     ska::pst::common::AsciiHeader start_scan_config;
 
     ska::pst::common::AsciiHeader data_scan_config;
     ska::pst::common::AsciiHeader weights_scan_config;
+
     ska::pst::common::AsciiHeader data_header;
     ska::pst::common::AsciiHeader weights_header;
 
-    std::unique_ptr<ska::pst::smrb::DataBlockCreate> _dbc_data{nullptr};
-    std::unique_ptr<ska::pst::smrb::DataBlockWrite> _writer_data{nullptr};
-    std::unique_ptr<ska::pst::smrb::DataBlockCreate> _dbc_weights{nullptr};
-    std::unique_ptr<ska::pst::smrb::DataBlockWrite> _writer_weights{nullptr};
+    std::unique_ptr<DataBlockTestHelper> data_helper;
+    std::unique_ptr<DataBlockTestHelper> weights_helper;
 
-    uint64_t data_bufsz{0};
-    uint64_t weights_bufsz{0};
-    std::string data_key;
-    std::string weights_key;
+    std::shared_ptr<ska::pst::stat::StatLmcServiceHandler> handler{nullptr};
+    std::shared_ptr<ska::pst::stat::StatApplicationManager> _stat{nullptr};
 
-    std::vector<char> data_to_write;
-    std::vector<char> weights_to_write;
-
-    std::unique_ptr<ska::pst::stat::StatApplicationManager> sm{nullptr};
+    float delay_ms = 1000;
+    int test_nblocks = 4;
 
 };
+
+}
+}
+}
 } // namespace ska::pst::stat::test
 
-#endif // SKA_PST_STAT_TESTS_StatApplicationManagerTest_h
+#endif // SKA_PST_STAT_TESTS_StatLmcServiceHandlerTest_h

@@ -68,7 +68,6 @@ void ska::pst::stat::StatApplicationManager::configure_from_file(const std::stri
 void ska::pst::stat::StatApplicationManager::validate_configure_beam(const ska::pst::common::AsciiHeader& config, ska::pst::common::ValidationContext *context)
 {
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::validate_configure_beam config={}", config.raw());
-
   // Iterate through the vector and validate existince of required data header keys
   for (const std::string& config_key : data_config_keys) {
       if (config.has(config_key))
@@ -96,7 +95,27 @@ void ska::pst::stat::StatApplicationManager::validate_configure_beam(const ska::
 
 void ska::pst::stat::StatApplicationManager::validate_configure_scan(const ska::pst::common::AsciiHeader& /*config*/, ska::pst::common::ValidationContext* /*context*/)
 {
-  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::validate_configure_scan placeholder");
+  SPDLOG_INFO("ska::pst::stat::StatApplicationManager::validate_configure_scan");
+  // Iterate through the vector and validate existince of desired data smrb keys
+  for (const std::string& config_key : data_smrb_keys) {
+      if (data_beam_config.has(config_key))
+      {
+        SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::validate_configure_scan data {}={}", config_key, data_beam_config.get_val(config_key));
+      } else {
+        SPDLOG_WARN("ska::pst::stat::StatApplicationManager::validate_configure_scan data key missing: {}", config_key);
+      }
+  }
+  // Iterate through the vector and validate existince of desired weights smrb keys
+  for (const std::string& config_key : weights_smrb_keys) {
+      if (weights_beam_config.has(config_key))
+      {
+        SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::validate_configure_scan data {}={}", config_key, weights_beam_config.get_val(config_key));
+      } else {
+        SPDLOG_WARN("ska::pst::stat::StatApplicationManager::validate_configure_scan weights key missing: {}", config_key);
+      }
+  }
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::validate_configure_scan complete");
+
 }
 
 void ska::pst::stat::StatApplicationManager::validate_start_scan(const ska::pst::common::AsciiHeader& /*config*/)

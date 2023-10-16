@@ -40,6 +40,8 @@ ska::pst::stat::StatProcessor::StatProcessor(
 ) : data_config(_data_config), weights_config(_weights_config), req_time_bins(default_ntime_bins), req_freq_bins(default_nfreq_bins)
 
 {
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor data_config:\n{}", data_config.raw());
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor weights_config:\n{}", weights_config.raw());
   data_resolution = data_config.get_uint32("RESOLUTION");
   weights_resolution = weights_config.get_uint32("RESOLUTION");
   if (data_config.has("STAT_REQ_TIME_BINS"))

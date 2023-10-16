@@ -1,0 +1,2 @@
+DATA_KEY            a000
+WEIGHTS_KEY         a010
