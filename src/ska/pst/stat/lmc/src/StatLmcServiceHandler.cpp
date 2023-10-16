@@ -435,13 +435,12 @@ void ska::pst::stat::StatLmcServiceHandler::get_monitor_data(
 }
 
 void ska::pst::stat::StatLmcServiceHandler::get_env(
-  ska::pst::lmc::GetEnvironmentResponse* response
+  ska::pst::lmc::GetEnvironmentResponse* /*response*/
 ) noexcept
 {
   SPDLOG_TRACE("ska::pst::stat::StatLmcServiceHandler::get_env()");
-  auto values = response->mutable_values();
-
-  auto stats = stat->get_scalar_stats();
+  // auto values = response->mutable_values();
+  // auto stats = stat->get_scalar_stats();
 }
 
 void ska::pst::stat::StatLmcServiceHandler::go_to_runtime_error(

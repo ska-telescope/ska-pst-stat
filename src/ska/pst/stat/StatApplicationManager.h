@@ -70,7 +70,7 @@ namespace ska::pst::stat {
        *
        * @param base_path directory to which stat hdf5 files will be written.
        */
-      StatApplicationManager(const std::string& base_path);
+      StatApplicationManager(std::string base_path);
 
       /**
        * @brief Destroy the Stat Application Manager object.

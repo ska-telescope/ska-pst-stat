@@ -293,9 +293,9 @@ TEST_F(StatApplicationManagerTest, test_configure_from_file) // NOLINT
   }
 
   StatStorage::scalar_stats_t ss = sm->get_scalar_stats();
-  for (unsigned ipol=0; ipol<ss.mean_frequency_avg.size(); ipol++)
+  for (unsigned ipol=0; ipol<ss.mean_frequency_avg.size(); ipol++) // NOLINT
   {
-    for (unsigned idim=0; idim<ss.mean_frequency_avg[ipol].size(); idim++)
+    for (unsigned idim=0; idim<ss.mean_frequency_avg[ipol].size(); idim++) // NOLINT
     {
       // disable asserts due to gitlab inconsistency
       // ASSERT_EQ(ss.mean_frequency_avg[ipol][idim], 0);

@@ -157,7 +157,7 @@ void ska::pst::stat::StatHdf5FileWriter::publish(std::shared_ptr<StatStorage> st
   }
   else
   {
-    uint64_t obs_offset = static_cast<uint64_t>(storage->get_utc_start_offset_bytes());
+    auto obs_offset = static_cast<uint64_t>(storage->get_utc_start_offset_bytes());
 
     // construct the required output path of
     std::filesystem::path filename = get_output_filename(utc_start, obs_offset, file_number);
@@ -215,18 +215,18 @@ void ska::pst::stat::StatHdf5FileWriter::publish(std::shared_ptr<StatStorage> st
   }
 }
 
-std::filesystem::path ska::pst::stat::StatHdf5FileWriter::get_output_filename(
-  const std::string& utc_start, uint64_t obs_offset, uint64_t file_number)
+auto ska::pst::stat::StatHdf5FileWriter::get_output_filename(
+  const std::string& utc_start, uint64_t obs_offset, uint64_t file_number) -> std::filesystem::path
 {
   return construct_output_filename(
     config.get_val("STAT_BASE_PATH"), config.get_val("EB_ID"), config.get_val("SCAN_ID"),
     config.get_val("TELESCOPE"), utc_start, obs_offset, file_number);
 }
 
-std::filesystem::path ska::pst::stat::StatHdf5FileWriter::construct_output_filename(
+auto ska::pst::stat::StatHdf5FileWriter::construct_output_filename(
   const std::string& stat_base, const std::string& eb_id,
   const std::string& scan_id, const std::string& telescope,
-  const std::string& utc_start, uint64_t obs_offset, uint64_t file_number)
+  const std::string& utc_start, uint64_t obs_offset, uint64_t file_number) -> std::filesystem::path
 {
 
   std::map<std::string, std::string> subsystem_path_map {

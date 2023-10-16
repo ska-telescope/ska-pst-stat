@@ -72,8 +72,8 @@ class StatLmcServiceHandlerTest : public ::testing::Test
     void configure_scan();
     void start_scan();
 
-    uint64_t data_bufsz;
-    uint64_t weights_bufsz;
+    uint64_t data_bufsz{0};
+    uint64_t weights_bufsz{0};
     std::string data_key;
     std::string weights_key;
     ska::pst::common::AsciiHeader beam_config;

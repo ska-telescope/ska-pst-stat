@@ -36,12 +36,11 @@
 #include "ska/pst/common/utils/AsciiHeader.h"
 #include "ska/pst/stat/StatApplicationManager.h"
 
-ska::pst::stat::StatApplicationManager::StatApplicationManager(const std::string& base_path) :
-  ska::pst::common::ApplicationManager("stat"), stat_base_path(base_path)
+ska::pst::stat::StatApplicationManager::StatApplicationManager(std::string base_path) :
+  ska::pst::common::ApplicationManager("stat"), stat_base_path(std::move(base_path))
 {
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::StatApplicationManager stat_base_path={}", stat_base_path);
   initialise();
-  processing_state = Idle;
 }
 
 ska::pst::stat::StatApplicationManager::~StatApplicationManager()
@@ -133,7 +132,7 @@ void ska::pst::stat::StatApplicationManager::perform_configure_beam()
 
   // ensure the shared memory key is valid
   try {
-    key_t valid_key = ska::pst::smrb::DataBlock::parse_psrdada_key(data_key);
+    ska::pst::smrb::DataBlock::parse_psrdada_key(data_key);
   }
   catch (std::runtime_error& exc)
   {
@@ -142,7 +141,7 @@ void ska::pst::stat::StatApplicationManager::perform_configure_beam()
   }
 
   try {
-    key_t valid_key = ska::pst::smrb::DataBlock::parse_psrdada_key(weights_key);
+    ska::pst::smrb::DataBlock::parse_psrdada_key(weights_key);
   }
   catch (std::runtime_error& exc)
   {

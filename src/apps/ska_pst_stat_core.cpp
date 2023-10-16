@@ -46,8 +46,8 @@
 
 void usage();
 void signal_handler(int signal_value);
-bool scalar_stats_different(ska::pst::stat::StatStorage::scalar_stats_t a, ska::pst::stat::StatStorage::scalar_stats_t b);
-bool signal_received = false;
+auto scalar_stats_different(const ska::pst::stat::StatStorage::scalar_stats_t& a, const ska::pst::stat::StatStorage::scalar_stats_t& b) -> bool;
+bool signal_received = false; // NOLINT
 
 auto main(int argc, char *argv[]) -> int
 {
@@ -99,7 +99,7 @@ auto main(int argc, char *argv[]) -> int
         break;
 
       case 't':
-        duration = static_cast<int64_t>(atoi(optarg)) * ska::pst::common::microseconds_per_second;
+        duration = static_cast<int64_t>(atoi(optarg) * ska::pst::common::microseconds_per_second);
         break;
 
       case 'v':
@@ -242,7 +242,9 @@ void signal_handler(int signal_value)
   signal_received = true;
 }
 
-bool scalar_stats_different(ska::pst::stat::StatStorage::scalar_stats_t a, ska::pst::stat::StatStorage::scalar_stats_t b)
+auto scalar_stats_different(
+  const ska::pst::stat::StatStorage::scalar_stats_t& a,
+  const ska::pst::stat::StatStorage::scalar_stats_t& b) -> bool
 {
   bool same = (
     (a.mean_frequency_avg == b.mean_frequency_avg) &&

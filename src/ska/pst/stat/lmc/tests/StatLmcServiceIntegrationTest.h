@@ -94,8 +94,8 @@ class StatLmcServiceIntegrationTest : public ::testing::Test
 
     float delay_ms = 1000;
     int test_nblocks = 4;
-    uint64_t data_bufsz;
-    uint64_t weights_bufsz;
+    uint64_t data_bufsz{0};
+    uint64_t weights_bufsz{0};
     std::string data_key;
     std::string weights_key;
     ska::pst::common::AsciiHeader beam_config;
