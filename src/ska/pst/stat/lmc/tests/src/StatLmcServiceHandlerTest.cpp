@@ -109,18 +109,6 @@ void StatLmcServiceHandlerTest::tear_down_data_block()
   SPDLOG_TRACE("tear_down_data_block teardown complete");
 }
 
-void StatLmcServiceHandlerTest::write_bytes_to_data_writer(uint64_t bytes_to_write)
-{
-  std::vector<char> data(bytes_to_write);
-  _writer_data->write_data(&data[0], data.size());
-}
-
-void StatLmcServiceHandlerTest::write_bytes_to_weights_writer(uint64_t bytes_to_write)
-{
-  std::vector<char> data(bytes_to_write);
-  _writer_weights->write_data(&data[0], data.size());
-}
-
 void StatLmcServiceHandlerTest::SetUp()
 {
   beam_config.load_from_file(test_data_file("beam_config.txt"));
@@ -155,20 +143,19 @@ void StatLmcServiceHandlerTest::TearDown()
 
 void StatLmcServiceHandlerTest::configure_beam()
 {
-    ska::pst::lmc::BeamConfiguration request;
-    auto stat_resources_request = request.mutable_stat();
-    SPDLOG_DEBUG("beam_config: {}", beam_config.raw());
-    SPDLOG_DEBUG("beam_config: {}", beam_config.raw());
-    stat_resources_request->set_data_key(beam_config.get_val("DATA_KEY"));
-    stat_resources_request->set_weights_key(beam_config.get_val("WEIGHTS_KEY"));
-    handler->configure_beam(request);
+  ska::pst::lmc::BeamConfiguration request;
+  auto stat_resources_request = request.mutable_stat();
+  SPDLOG_DEBUG("beam_config: {}", beam_config.raw());
+  stat_resources_request->set_data_key(beam_config.get_val("DATA_KEY"));
+  stat_resources_request->set_weights_key(beam_config.get_val("WEIGHTS_KEY"));
+  handler->configure_beam(request);
 }
 
 void StatLmcServiceHandlerTest::configure_scan()
 {
-    ska::pst::lmc::ScanConfiguration request;
-    auto stat_resources_request = request.mutable_stat();
-    handler->configure_scan(request);
+  ska::pst::lmc::ScanConfiguration request;
+  auto stat_resources_request = request.mutable_stat();
+  handler->configure_scan(request);
 }
 
 void StatLmcServiceHandlerTest::start_scan()
@@ -215,116 +202,116 @@ TEST_F(StatLmcServiceHandlerTest, configure_deconfigure_beam) // NOLINT
 
 TEST_F(StatLmcServiceHandlerTest, configure_beam_again_should_throw_exception) // NOLINT
 {
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_beam_again_should_throw_exception - configuring beam");
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_beam_again_should_throw_exception - configuring beam");
 
-    EXPECT_FALSE(handler->is_beam_configured()); // NOLINT
+  EXPECT_FALSE(handler->is_beam_configured()); // NOLINT
 
+  configure_beam();
+
+  EXPECT_TRUE(handler->is_beam_configured()); // NOLINT
+  EXPECT_TRUE(_stat->is_beam_configured()); // NOLINT
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_beam_again_should_throw_exception - beam configured");
+
+  try {
     configure_beam();
-
-    EXPECT_TRUE(handler->is_beam_configured()); // NOLINT
-    EXPECT_TRUE(_stat->is_beam_configured()); // NOLINT
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_beam_again_should_throw_exception - beam configured");
-
-    try {
-        configure_beam();
-        FAIL() << " expected configure_beam to throw exception due to beam configured already.\n";
-    } catch (ska::pst::common::LmcServiceException& ex) {
-        EXPECT_EQ(std::string(ex.what()), "Beam already configured for STAT.CORE.");
-        EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::CONFIGURED_FOR_BEAM_ALREADY);
-        EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
-    }
+    FAIL() << " expected configure_beam to throw exception due to beam configured already.\n";
+  } catch (ska::pst::common::LmcServiceException& ex) {
+    EXPECT_EQ(std::string(ex.what()), "Beam already configured for STAT.CORE.");
+    EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::CONFIGURED_FOR_BEAM_ALREADY);
+    EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
+  }
 }
 
 TEST_F(StatLmcServiceHandlerTest, configure_beam_with_invalid_configuration) // NOLINT
 {
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_beam_with_invalid_configuration - configuring beam");
-    beam_config.set_val("DATA_KEY", "abcd");
-    _stat->set_timeout(1);
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_beam_with_invalid_configuration - configuring beam");
+  beam_config.set_val("DATA_KEY", "abcd");
+  _stat->set_timeout(1);
 
+  EXPECT_FALSE(handler->is_beam_configured());
+  try {
+    configure_beam();
+    FAIL() << " expected configure_beam to throw exception due to invalid configuration.\n";
+  } catch (std::exception& ex) {
+    SPDLOG_DEBUG("StatLmcServiceHandlerTest::configure_beam_with_invalid_configuration exception thrown as expected: {}", ex.what());
+    EXPECT_EQ(_stat->get_state(), ska::pst::common::State::RuntimeError);
     EXPECT_FALSE(handler->is_beam_configured());
-    try {
-        configure_beam();
-        FAIL() << " expected configure_beam to throw exception due to invalid configuration.\n";
-    } catch (std::exception& ex) {
-        SPDLOG_DEBUG("StatLmcServiceHandlerTest::configure_beam_with_invalid_configuration exception thrown as expected: {}", ex.what());
-        EXPECT_EQ(_stat->get_state(), ska::pst::common::State::RuntimeError);
-        EXPECT_FALSE(handler->is_beam_configured());
-    }
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_beam_with_invalid_configuration test done");
+  }
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_beam_with_invalid_configuration test done");
 }
 
 TEST_F(StatLmcServiceHandlerTest, configure_beam_should_have_stat_object) // NOLINT
 {
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_beam_should_have_stat_object - configuring beam");
-    EXPECT_FALSE(handler->is_beam_configured()); // NOLINT
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_beam_should_have_stat_object - configuring beam");
+  EXPECT_FALSE(handler->is_beam_configured()); // NOLINT
 
-    ska::pst::lmc::BeamConfiguration beam_configuration;
-    beam_configuration.mutable_test();
+  ska::pst::lmc::BeamConfiguration beam_configuration;
+  beam_configuration.mutable_test();
 
-    try {
-        handler->configure_beam(beam_configuration);
-        FAIL() << " expected configure_beam to throw exception due not having STAT.CORE field.\n";
-    } catch (ska::pst::common::LmcServiceException& ex) {
-        EXPECT_EQ(std::string(ex.what()), "Expected a STAT.CORE beam configuration object, but none were provided.");
-        EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::INVALID_REQUEST);
-        EXPECT_EQ(ex.status_code(), grpc::StatusCode::INVALID_ARGUMENT);
-    }
+  try {
+  handler->configure_beam(beam_configuration);
+  FAIL() << " expected configure_beam to throw exception due not having STAT.CORE field.\n";
+  } catch (ska::pst::common::LmcServiceException& ex) {
+  EXPECT_EQ(std::string(ex.what()), "Expected a STAT.CORE beam configuration object, but none were provided.");
+    EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::INVALID_REQUEST);
+    EXPECT_EQ(ex.status_code(), grpc::StatusCode::INVALID_ARGUMENT);
+  }
 }
 
 TEST_F(StatLmcServiceHandlerTest, get_beam_configuration_when_not_beam_configured) // NOLINT
 {
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::get_beam_configuration_when_not_beam_configured - getting beam configuration");
-    EXPECT_FALSE(handler->is_beam_configured());
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::get_beam_configuration_when_not_beam_configured - getting beam configuration");
+  EXPECT_FALSE(handler->is_beam_configured());
 
-    ska::pst::lmc::BeamConfiguration response;
-    try {
-        handler->get_beam_configuration(&response);
-    } catch (ska::pst::common::LmcServiceException& ex) {
-        EXPECT_EQ(std::string(ex.what()), "STAT.CORE not configured for beam.");
-        EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::NOT_CONFIGURED_FOR_BEAM);
-        EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
-    }
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::get_beam_configuration_when_not_beam_configured - beam not configured");
+  ska::pst::lmc::BeamConfiguration response;
+  try {
+    handler->get_beam_configuration(&response);
+  } catch (ska::pst::common::LmcServiceException& ex) {
+    EXPECT_EQ(std::string(ex.what()), "STAT.CORE not configured for beam.");
+    EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::NOT_CONFIGURED_FOR_BEAM);
+    EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
+  }
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::get_beam_configuration_when_not_beam_configured - beam not configured");
 }
 
 TEST_F(StatLmcServiceHandlerTest, deconfigure_beam_when_not_beam_configured) // NOLINT
 {
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::deconfigure_beam_when_not_beam_configured - deconfiguring beam");
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::deconfigure_beam_when_not_beam_configured - deconfiguring beam");
 
-    EXPECT_FALSE(handler->is_beam_configured()); // NOLINT
+  EXPECT_FALSE(handler->is_beam_configured()); // NOLINT
 
-    try {
-        handler->deconfigure_beam();
-        FAIL() << " expected deconfigure_beam to throw exception due to beam not configured.\n";
-    } catch (ska::pst::common::LmcServiceException& ex) {
-        EXPECT_EQ(std::string(ex.what()), "STAT.CORE not configured for beam.");
-        EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::NOT_CONFIGURED_FOR_BEAM);
-        EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
-    }
+  try {
+    handler->deconfigure_beam();
+    FAIL() << " expected deconfigure_beam to throw exception due to beam not configured.\n";
+  } catch (ska::pst::common::LmcServiceException& ex) {
+    EXPECT_EQ(std::string(ex.what()), "STAT.CORE not configured for beam.");
+    EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::NOT_CONFIGURED_FOR_BEAM);
+    EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
+  }
 }
 
 TEST_F(StatLmcServiceHandlerTest, deconfigure_beam_when_scan_configured) // NOLINT
 {
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::deconfigure_beam_when_scan_configured - configuring beam");
-    configure_beam();
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::deconfigure_beam_when_scan_configured - beam configured");
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::deconfigure_beam_when_scan_configured - configuring beam");
+  configure_beam();
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::deconfigure_beam_when_scan_configured - beam configured");
 
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::deconfigure_beam_when_scan_configured - configuring scan");
-    EXPECT_FALSE(handler->is_scan_configured());
-    configure_scan();
-    EXPECT_TRUE(handler->is_scan_configured());
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::deconfigure_beam_when_scan_configured - scan configured");
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::deconfigure_beam_when_scan_configured - configuring scan");
+  EXPECT_FALSE(handler->is_scan_configured());
+  configure_scan();
+  EXPECT_TRUE(handler->is_scan_configured());
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::deconfigure_beam_when_scan_configured - scan configured");
 
-    try {
-        handler->deconfigure_beam();
-        FAIL() << " expected deconfigure_beam to throw exception due having scan configuration.\n";
-    } catch (ska::pst::common::LmcServiceException& ex) {
-        SPDLOG_TRACE("StatLmcServiceHandlerTest::deconfigure_beam_when_scan_configured exception occured as expected");
-        EXPECT_EQ(std::string(ex.what()), "STAT.CORE is configured for scan but trying to deconfigure beam.");
-        EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::INVALID_REQUEST);
-        EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
-    }
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::deconfigure_beam_when_scan_configured done");
+  try {
+    handler->deconfigure_beam();
+    FAIL() << " expected deconfigure_beam to throw exception due having scan configuration.\n";
+  } catch (ska::pst::common::LmcServiceException& ex) {
+    SPDLOG_TRACE("StatLmcServiceHandlerTest::deconfigure_beam_when_scan_configured exception occured as expected");
+    EXPECT_EQ(std::string(ex.what()), "STAT.CORE is configured for scan but trying to deconfigure beam.");
+    EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::INVALID_REQUEST);
+    EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
+  }
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::deconfigure_beam_when_scan_configured done");
 }
 
 TEST_F(StatLmcServiceHandlerTest, configure_deconfigure_scan) // NOLINT
@@ -362,121 +349,121 @@ TEST_F(StatLmcServiceHandlerTest, configure_deconfigure_scan) // NOLINT
 // TODO(jesmigel): Review logic flow. Configure scan has cached config from configure beam
 TEST_F(StatLmcServiceHandlerTest, configure_scan_with_invalid_configuration) // NOLINT
 {
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_with_invalid_configuration - configuring beam");
-    configure_beam();
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_with_invalid_configuration - beam configured");
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_with_invalid_configuration - configuring beam");
+  configure_beam();
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_with_invalid_configuration - beam configured");
 
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_with_invalid_configuration - configuring scan");
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_with_invalid_configuration - configuring scan");
+  EXPECT_FALSE(handler->is_scan_configured());
+  static constexpr double bad_double = 0;
+
+  /*
+  handler->deconfigure_beam();
+  tear_down_data_block();
+  data_header.set("BYTES_PER_SECOND", bad_double);
+  setup_data_block();
+  configure_beam();
+
+  try {
+    configure_scan();
+    FAIL() << " expected configure_scan to throw exception due to not having beam configured.\n";
+  } catch (std::exception& ex) {
+    EXPECT_EQ(_stat->get_state(), ska::pst::common::State::BeamConfigured);
     EXPECT_FALSE(handler->is_scan_configured());
-    static constexpr double bad_double = 0;
+    EXPECT_TRUE(handler->is_beam_configured());
 
-    /*
+    SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_with_invalid_configuration deconfiguring beam");
     handler->deconfigure_beam();
-    tear_down_data_block();
-    data_header.set("BYTES_PER_SECOND", bad_double);
-    setup_data_block();
-    configure_beam();
-
-    try {
-        configure_scan();
-        FAIL() << " expected configure_scan to throw exception due to not having beam configured.\n";
-    } catch (std::exception& ex) {
-        EXPECT_EQ(_stat->get_state(), ska::pst::common::State::BeamConfigured);
-        EXPECT_FALSE(handler->is_scan_configured());
-        EXPECT_TRUE(handler->is_beam_configured());
-
-        SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_with_invalid_configuration deconfiguring beam");
-        handler->deconfigure_beam();
-        EXPECT_EQ(_stat->get_state(), ska::pst::common::State::Idle);
-        SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_with_invalid_configuration deconfiguring beam");
-    }
-    */
+    EXPECT_EQ(_stat->get_state(), ska::pst::common::State::Idle);
+    SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_with_invalid_configuration deconfiguring beam");
+  }
+  */
 }
 
 TEST_F(StatLmcServiceHandlerTest, configure_scan_when_not_beam_configured) // NOLINT
 {
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_when_not_beam_configured - configuring scan");
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_when_not_beam_configured - configuring scan");
 
-    try {
-        configure_scan();
-        FAIL() << " expected configure_scan to throw exception due to not having beam configured.\n";
-    } catch (ska::pst::common::LmcServiceException& ex) {
-        EXPECT_EQ(std::string(ex.what()), "STAT.CORE not configured for beam.");
-        EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::NOT_CONFIGURED_FOR_BEAM);
-        EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
-    }
+  try {
+    configure_scan();
+    FAIL() << " expected configure_scan to throw exception due to not having beam configured.\n";
+  } catch (ska::pst::common::LmcServiceException& ex) {
+    EXPECT_EQ(std::string(ex.what()), "STAT.CORE not configured for beam.");
+    EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::NOT_CONFIGURED_FOR_BEAM);
+    EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
+  }
 }
 
 TEST_F(StatLmcServiceHandlerTest, configure_scan_again_should_throw_exception) // NOLINT
 {
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_again_should_throw_exception - configuring beam");
-    EXPECT_FALSE(handler->is_beam_configured()); // NOLINT
-    configure_beam();
-    EXPECT_TRUE(handler->is_beam_configured()); // NOLINT
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_again_should_throw_exception - beam configured");
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_again_should_throw_exception - configuring beam");
+  EXPECT_FALSE(handler->is_beam_configured()); // NOLINT
+  configure_beam();
+  EXPECT_TRUE(handler->is_beam_configured()); // NOLINT
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_again_should_throw_exception - beam configured");
 
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_again_should_throw_exception - configuring scan");
-    EXPECT_FALSE(handler->is_scan_configured());
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_again_should_throw_exception - configuring scan");
+  EXPECT_FALSE(handler->is_scan_configured());
+  configure_scan();
+  EXPECT_TRUE(handler->is_scan_configured());
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_again_should_throw_exception - scan configured");
+
+  try {
     configure_scan();
-    EXPECT_TRUE(handler->is_scan_configured());
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_again_should_throw_exception - scan configured");
-
-    try {
-        configure_scan();
-        FAIL() << " expected configure_scan to throw exception due to scan already configured.\n";
-    } catch (ska::pst::common::LmcServiceException& ex) {
-        EXPECT_EQ(std::string(ex.what()), "Scan already configured for STAT.CORE.");
-        EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::CONFIGURED_FOR_SCAN_ALREADY);
-        EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
-    }
+    FAIL() << " expected configure_scan to throw exception due to scan already configured.\n";
+  } catch (ska::pst::common::LmcServiceException& ex) {
+    EXPECT_EQ(std::string(ex.what()), "Scan already configured for STAT.CORE.");
+    EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::CONFIGURED_FOR_SCAN_ALREADY);
+    EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
+  }
 }
 
 TEST_F(StatLmcServiceHandlerTest, configure_scan_should_have_stat_object) // NOLINT
 {
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_should_have_dsp_object - configuring beam");
-    configure_beam();
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_should_have_dsp_object - beam configured");
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_should_have_stat_object - configuring beam");
+  configure_beam();
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_should_have_stat_object - beam configured");
 
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_should_have_dsp_object - configuring scan");
-    try {
-        ska::pst::lmc::ScanConfiguration configuration;
-        configuration.mutable_test();
-        handler->configure_scan(configuration);
-        FAIL() << " expected configure_scan to throw exception due not having STAT.CORE field.\n";
-    } catch (ska::pst::common::LmcServiceException& ex) {
-        EXPECT_EQ(std::string(ex.what()), "Expected a STAT.CORE scan configuration object, but none were provided.");
-        EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::INVALID_REQUEST);
-        EXPECT_EQ(ex.status_code(), grpc::StatusCode::INVALID_ARGUMENT);
-    }
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_should_have_stat_object - configuring scan");
+  try {
+    ska::pst::lmc::ScanConfiguration configuration;
+    configuration.mutable_test();
+    handler->configure_scan(configuration);
+    FAIL() << " expected configure_scan to throw exception due not having STAT.CORE field.\n";
+  } catch (ska::pst::common::LmcServiceException& ex) {
+    EXPECT_EQ(std::string(ex.what()), "Expected a STAT.CORE scan configuration object, but none were provided.");
+    EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::INVALID_REQUEST);
+    EXPECT_EQ(ex.status_code(), grpc::StatusCode::INVALID_ARGUMENT);
+  }
 }
 
 TEST_F(StatLmcServiceHandlerTest, deconfigure_scan_when_not_configured) // NOLINT
 {
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::deconfigure_scan_when_not_configured - deconfiguring scan");
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::deconfigure_scan_when_not_configured - deconfiguring scan");
 
-    try {
-        handler->deconfigure_scan();
-        FAIL() << " expected deconfigure_scan to throw exception due to beam not configured.\n";
-    } catch (ska::pst::common::LmcServiceException& ex) {
-        EXPECT_EQ(std::string(ex.what()), "Scan not currently configured for STAT.CORE.");
-        EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::NOT_CONFIGURED_FOR_SCAN);
-        EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
-    }
+  try {
+    handler->deconfigure_scan();
+    FAIL() << " expected deconfigure_scan to throw exception due to beam not configured.\n";
+  } catch (ska::pst::common::LmcServiceException& ex) {
+    EXPECT_EQ(std::string(ex.what()), "Scan not currently configured for STAT.CORE.");
+    EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::NOT_CONFIGURED_FOR_SCAN);
+    EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
+  }
 }
 
 TEST_F(StatLmcServiceHandlerTest, get_scan_configuration_when_not_configured) // NOLINT
 {
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::get_scan_configuration_when_not_configured - getting scan configuration"); // NOLINT
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::get_scan_configuration_when_not_configured - getting scan configuration"); // NOLINT
 
-    try {
-        ska::pst::lmc::ScanConfiguration scan_configuration;
-        handler->get_scan_configuration(&scan_configuration);
-        FAIL() << " expected deconfigure_beam to throw exception due to beam not configured.\n";
-    } catch (ska::pst::common::LmcServiceException& ex) {
-        EXPECT_EQ(std::string(ex.what()), "Not currently configured for STAT.CORE.");
-        EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::NOT_CONFIGURED_FOR_SCAN);
-        EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
-    }
+  try {
+    ska::pst::lmc::ScanConfiguration scan_configuration;
+    handler->get_scan_configuration(&scan_configuration);
+    FAIL() << " expected deconfigure_beam to throw exception due to beam not configured.\n";
+  } catch (ska::pst::common::LmcServiceException& ex) {
+    EXPECT_EQ(std::string(ex.what()), "Scan Not currently configured for STAT.CORE.");
+    EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::NOT_CONFIGURED_FOR_SCAN);
+    EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
+  }
 }
 
 TEST_F(StatLmcServiceHandlerTest, start_scan_stop_scan) // NOLINT
@@ -510,7 +497,7 @@ TEST_F(StatLmcServiceHandlerTest, start_scan_stop_scan) // NOLINT
   SPDLOG_TRACE("StatLmcServiceHandlerTest::start_scan_stop_scan - scan ended");
 }
 
-TEST_F(StatLmcServiceHandlerTest, start_scan_when_scanning) // NOLINT
+TEST_F(StatLmcServiceHandlerTest, start_scan_when_scanning_should_throw_exception) // NOLINT
 {
   SPDLOG_TRACE("StatLmcServiceHandlerTest::start_scan_when_scanning - configuring beam");
   configure_beam();
@@ -535,79 +522,46 @@ TEST_F(StatLmcServiceHandlerTest, start_scan_when_scanning) // NOLINT
   usleep(ska::pst::common::microseconds_per_decisecond);
 
   try {
-      start_scan();
+    start_scan();
   } catch (ska::pst::common::LmcServiceException& ex) {
-      EXPECT_EQ(std::string(ex.what()), "STAT.CORE is already scanning.");
-      EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::ALREADY_SCANNING);
-      EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
+    EXPECT_EQ(std::string(ex.what()), "STAT.CORE is already scanning.");
+    EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::ALREADY_SCANNING);
+    EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
   }
 }
 
 TEST_F(StatLmcServiceHandlerTest, start_scan_when_not_configured_should_throw_exception) // NOLINT
 {
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::start_scan_when_not_configured_should_throw_exception - configuring beam");
-    configure_beam();
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::start_scan_when_not_configured_should_throw_exception - beam configured");
-
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::start_scan_when_not_configured_should_throw_exception - start scan");
-    EXPECT_FALSE(handler->is_scan_configured());
-
-    try {
-        start_scan();
-        FAIL() << " expected start_scan to throw exception due to scan not being configured.\n";
-    } catch (ska::pst::common::LmcServiceException& ex) {
-        EXPECT_EQ(std::string(ex.what()), "Not currently configured for STAT.CORE.");
-        EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::NOT_CONFIGURED_FOR_SCAN);
-        EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
-    }
-}
-
-TEST_F(StatLmcServiceHandlerTest, start_scan_again_should_throw_exception) // NOLINT
-{
-  SPDLOG_TRACE("StatLmcServiceHandlerTest::start_scan_again_should_throw_exception - configuring beam");
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::start_scan_when_not_configured_should_throw_exception - configuring beam");
   configure_beam();
-  SPDLOG_TRACE("StatLmcServiceHandlerTest::start_scan_again_should_throw_exception - beam configured");
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::start_scan_when_not_configured_should_throw_exception - beam configured");
 
-  SPDLOG_TRACE("StatLmcServiceHandlerTest::start_scan_again_should_throw_exception - configuring scan");
-  configure_scan();
-  SPDLOG_TRACE("StatLmcServiceHandlerTest::start_scan_again_should_throw_exception - scan configured");
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::start_scan_when_not_configured_should_throw_exception - start scan");
+  EXPECT_FALSE(handler->is_scan_configured());
 
-  SPDLOG_TRACE("StatLmcServiceHandlerTest::start_scan_again_should_throw_exception - start scan");
-  EXPECT_FALSE(handler->is_scanning());
-  start_scan();
-  EXPECT_TRUE(handler->is_scanning());
-
-  std::thread data_thread = std::thread(&DataBlockTestHelper::write_and_close, data_helper.get(), test_nblocks, delay_ms);
-  std::thread weights_thread = std::thread(&DataBlockTestHelper::write_and_close, weights_helper.get(), test_nblocks, delay_ms);
-  data_thread.join();
-  weights_thread.join();
-
-  // sleep for bit, want to wait so we can stop.
-  SPDLOG_TRACE("StatLmcServiceHandlerTest::start_scan_again_should_throw_exception - scanning");
-  usleep(ska::pst::common::microseconds_per_decisecond);
   try {
-      start_scan();
-      FAIL() << " expected start_scan to throw exception due to already scanning.\n";
+    start_scan();
+    FAIL() << " expected start_scan to throw exception due to scan not being configured.\n";
   } catch (ska::pst::common::LmcServiceException& ex) {
-      EXPECT_EQ(std::string(ex.what()), "STAT.CORE is already scanning.");
-      EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::ALREADY_SCANNING);
-      EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
+    EXPECT_EQ(std::string(ex.what()), "Scan not currently configured for STAT.CORE.");
+    EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::NOT_CONFIGURED_FOR_SCAN);
+    EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
   }
 }
 
 TEST_F(StatLmcServiceHandlerTest, stop_scan_when_not_scanning_should_throw_exception) // NOLINT
 {
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::stop_scan_when_not_scanning_should_throw_exception - end scan");
-    EXPECT_FALSE(handler->is_scanning());
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::stop_scan_when_not_scanning_should_throw_exception - end scan");
+  EXPECT_FALSE(handler->is_scanning());
 
-    try {
-        handler->stop_scan();
-        FAIL() << " expected stop_scan to throw exception due to not currently scanning.\n";
-    } catch (ska::pst::common::LmcServiceException& ex) {
-        EXPECT_EQ(std::string(ex.what()), "Received stop_scan request when STAT.CORE is not scanning.");
-        EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::NOT_SCANNING);
-        EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
-    }
+  try {
+    handler->stop_scan();
+    FAIL() << " expected stop_scan to throw exception due to not currently scanning.\n";
+  } catch (ska::pst::common::LmcServiceException& ex) {
+    EXPECT_EQ(std::string(ex.what()), "Received stop_scan request when STAT.CORE is not scanning.");
+    EXPECT_EQ(ex.error_code(), ska::pst::lmc::ErrorCode::NOT_SCANNING);
+    EXPECT_EQ(ex.status_code(), grpc::StatusCode::FAILED_PRECONDITION);
+  }
 }
 
 // TODO(jesmigel): Update at AT3-422
@@ -657,69 +611,69 @@ TEST_F(StatLmcServiceHandlerTest, get_monitor_data) // NOLINT
 // TODO(jesmigel): Update at AT3-422
 TEST_F(StatLmcServiceHandlerTest, get_env) // NOLINT
 {
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::get_env - beam deconfigured");
-    ska::pst::lmc::GetEnvironmentResponse response;
-    handler->get_env(&response);
-    // auto scalar_stats = _stat->get_scalar_stats();
-    /*
-    EXPECT_EQ(response.values().size(), 2);
-    auto values = response.values();
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::get_env - beam deconfigured");
+  ska::pst::lmc::GetEnvironmentResponse response;
+  handler->get_env(&response);
+  // auto scalar_stats = _stat->get_scalar_stats();
+  /*
+  EXPECT_EQ(response.values().size(), 2);
+  auto values = response.values();
 
-    EXPECT_EQ(values.count("disk_capacity"), 1);
-    EXPECT_TRUE(values["disk_capacity"].has_unsigned_int_value());
-    // EXPECT_EQ(values["disk_capacity"].unsigned_int_value(), scalar_stats.capacity);
+  EXPECT_EQ(values.count("disk_capacity"), 1);
+  EXPECT_TRUE(values["disk_capacity"].has_unsigned_int_value());
+  // EXPECT_EQ(values["disk_capacity"].unsigned_int_value(), scalar_stats.capacity);
 
 
-    EXPECT_EQ(values.count("disk_available_bytes"), 1);
-    EXPECT_TRUE(values["disk_available_bytes"].has_unsigned_int_value());
-    // EXPECT_EQ(values["disk_available_bytes"].unsigned_int_value(), scalar_stats.available);
-    */
+  EXPECT_EQ(values.count("disk_available_bytes"), 1);
+  EXPECT_TRUE(values["disk_available_bytes"].has_unsigned_int_value());
+  // EXPECT_EQ(values["disk_available_bytes"].unsigned_int_value(), scalar_stats.available);
+  */
 }
 
 TEST_F(StatLmcServiceHandlerTest, go_to_runtime_error) // NOLINT
 {
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::go_to_runtime_error");
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::go_to_runtime_error");
 
-    try {
-        throw std::runtime_error("this is a test error");
-    } catch (...) {
-        handler->go_to_runtime_error(std::current_exception());
+  try {
+    throw std::runtime_error("this is a test error");
+  } catch (...) {
+    handler->go_to_runtime_error(std::current_exception());
+  }
+
+  ASSERT_EQ(ska::pst::common::RuntimeError, _stat->get_state());
+  ASSERT_EQ(ska::pst::common::RuntimeError, handler->get_application_manager_state());
+
+  try {
+    if (handler->get_application_manager_exception()) {
+    std::rethrow_exception(handler->get_application_manager_exception());
+    } else {
+    // the exception should be set and not null
+    ASSERT_FALSE(true);
     }
-
-    ASSERT_EQ(ska::pst::common::RuntimeError, _stat->get_state());
-    ASSERT_EQ(ska::pst::common::RuntimeError, handler->get_application_manager_state());
-
-    try {
-        if (handler->get_application_manager_exception()) {
-            std::rethrow_exception(handler->get_application_manager_exception());
-        } else {
-            // the exception should be set and not null
-            ASSERT_FALSE(true);
-        }
-    } catch (const std::exception& exc) {
-        ASSERT_EQ("this is a test error", std::string(exc.what()));
-    }
+  } catch (const std::exception& exc) {
+    ASSERT_EQ("this is a test error", std::string(exc.what()));
+  }
 }
 
 TEST_F(StatLmcServiceHandlerTest, reset_non_runtime_error_state) // NOLINT
 {
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::reset_non_runtime_error_state - configuring beam");
-    configure_beam();
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::reset_non_runtime_error_state - beam configured");
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::reset_non_runtime_error_state - configuring beam");
+  configure_beam();
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::reset_non_runtime_error_state - beam configured");
 
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::reset_non_runtime_error_state - configuring scan");
-    EXPECT_FALSE(handler->is_scan_configured());
-    configure_scan();
-    EXPECT_TRUE(handler->is_scan_configured());
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::reset_non_runtime_error_state - scan configured");
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::reset_non_runtime_error_state - configuring scan");
+  EXPECT_FALSE(handler->is_scan_configured());
+  configure_scan();
+  EXPECT_TRUE(handler->is_scan_configured());
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::reset_non_runtime_error_state - scan configured");
 
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::reset_non_runtime_error_state - resetting");
-    handler->reset();
-    EXPECT_TRUE(handler->is_scan_configured());
-    EXPECT_TRUE(handler->is_beam_configured());
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::reset_non_runtime_error_state - resetting");
+  handler->reset();
+  EXPECT_TRUE(handler->is_scan_configured());
+  EXPECT_TRUE(handler->is_beam_configured());
 
-    EXPECT_EQ(ska::pst::common::State::ScanConfigured, handler->get_application_manager_state());
-    SPDLOG_TRACE("StatLmcServiceHandlerTest::reset_non_runtime_error_state - reset");
+  EXPECT_EQ(ska::pst::common::State::ScanConfigured, handler->get_application_manager_state());
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::reset_non_runtime_error_state - reset");
 }
 
 TEST_F(StatLmcServiceHandlerTest, reset_from_runtime_error_state) // NOLINT
@@ -735,9 +689,9 @@ TEST_F(StatLmcServiceHandlerTest, reset_from_runtime_error_state) // NOLINT
   SPDLOG_TRACE("StatLmcServiceHandlerTest::reset_from_runtime_error_state - scan configured");
 
   try {
-      throw std::runtime_error("force fault state");
+    throw std::runtime_error("force fault state");
   } catch (...) {
-      handler->go_to_runtime_error(std::current_exception());
+    handler->go_to_runtime_error(std::current_exception());
   }
 
   SPDLOG_TRACE("StatLmcServiceHandlerTest::reset_from_runtime_error_state - resetting");
@@ -748,6 +702,5 @@ TEST_F(StatLmcServiceHandlerTest, reset_from_runtime_error_state) // NOLINT
   EXPECT_EQ(ska::pst::common::State::Idle, handler->get_application_manager_state());
   SPDLOG_TRACE("StatLmcServiceHandlerTest::reset_from_runtime_error_state - reset");
 }
-
 
 } // namespace ska::pst::stat::test

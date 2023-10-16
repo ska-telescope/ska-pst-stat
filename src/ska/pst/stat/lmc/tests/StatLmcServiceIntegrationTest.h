@@ -39,8 +39,8 @@
 #include "ska/pst/stat/StatApplicationManager.h"
 #include "ska/pst/stat/lmc/StatLmcServiceHandler.h"
 
-#ifndef SKA_PST_STAT_TESTS_StatLmcServiceHandlerTest_h
-#define SKA_PST_STAT_TESTS_StatLmcServiceHandlerTest_h
+#ifndef SKA_PST_STAT_TESTS_StatLmcServiceIntegrationTest_h
+#define SKA_PST_STAT_TESTS_StatLmcServiceIntegrationTest_h
 
 namespace ska {
 namespace pst {
@@ -114,11 +114,6 @@ class StatLmcServiceIntegrationTest : public ::testing::Test
     std::unique_ptr<DataBlockTestHelper> data_helper;
     std::unique_ptr<DataBlockTestHelper> weights_helper;
 
-    std::unique_ptr<ska::pst::smrb::DataBlockCreate> _dbc_data{nullptr};
-    std::unique_ptr<ska::pst::smrb::DataBlockWrite> _writer_data{nullptr};
-    std::unique_ptr<ska::pst::smrb::DataBlockCreate> _dbc_weights{nullptr};
-    std::unique_ptr<ska::pst::smrb::DataBlockWrite> _writer_weights{nullptr};
-
     int _port = 0;
     std::shared_ptr<ska::pst::common::LmcService> _service{nullptr};
     std::shared_ptr<ska::pst::stat::StatLmcServiceHandler> _handler{nullptr};
@@ -132,4 +127,4 @@ class StatLmcServiceIntegrationTest : public ::testing::Test
 } // namespace pst
 } // namespace ska
 
-#endif // SKA_PST_STAT_TESTS_StatLmcServiceHandlerTest_h
+#endif // SKA_PST_STAT_TESTS_StatLmcServiceIntegrationTest_h

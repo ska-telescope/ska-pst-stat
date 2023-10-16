@@ -113,18 +113,6 @@ void StatLmcServiceIntegrationTest::tear_down_data_block()
   SPDLOG_TRACE("tear_down_data_block teardown complete");
 }
 
-void StatLmcServiceIntegrationTest::write_bytes_to_data_writer(uint64_t bytes_to_write)
-{
-  std::vector<char> data(bytes_to_write);
-  _writer_data->write_data(&data[0], data.size());
-}
-
-void StatLmcServiceIntegrationTest::write_bytes_to_weights_writer(uint64_t bytes_to_write)
-{
-  std::vector<char> data(bytes_to_write);
-  _writer_weights->write_data(&data[0], data.size());
-}
-
 void StatLmcServiceIntegrationTest::SetUp()
 {
   SPDLOG_TRACE("StatLmcServiceIntegrationTest::SetUp()");

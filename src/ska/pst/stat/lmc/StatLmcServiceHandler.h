@@ -28,8 +28,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __SKA_PST_StatLmcServiceHandler_h
-#define __SKA_PST_StatLmcServiceHandler_h
+#ifndef __SKA_PST_STAT_StatLmcServiceHandler_h
+#define __SKA_PST_STAT_StatLmcServiceHandler_h
 
 #include <memory>
 
@@ -80,12 +80,12 @@ namespace ska::pst::stat {
             /**
              * @brief Handle configuring the service to be a part of a beam.
              *
-             * This implementation expects that there is an stst sub-field in the resources
+             * This implementation expects that there is an stat sub-field in the resources
              * request and calls the \ref StatApplicationManager.configure_beam method, which expects
              * keys for the data and weights ring buffers.
              *
              * @param configuration the configuration for the beam. This message has oneof field should
-             *      be the stst sub-field message.
+             *      be the stat sub-field message.
              * @throws ska::pst::common::LmcServiceException if resources had already been assigned.
              */
             void configure_beam(const ska::pst::lmc::BeamConfiguration &resources) override;
@@ -103,7 +103,7 @@ namespace ska::pst::stat {
             /**
              * @brief Handle getting the current beam configuration for the service.
              *
-             * This will return the current beam configuration for the disk manager.
+             * This will return the current beam configuration for the stat application manager.
              *
              * @param resources the out protobuf message to used to return beam configuration details.
              * @throws ska::pst::common::LmcServiceException if manager is not beam configured.
@@ -122,12 +122,12 @@ namespace ska::pst::stat {
              * @brief Handle configuring the service for a scan.
              *
              * This will configure the \ref StatApplicationManager for a scan. This implementation
-             * expects that the stst sub-message is set on the configuration parameter.
+             * expects that the stat sub-message is set on the configuration parameter.
              *
-             * @param configuration a protobuf message that should have the stst sub-message set.
+             * @param configuration a protobuf message that should have the stat sub-message set.
              * @throws ska::pst::common::LmcServiceException if manager is not beam configured,
-             *      configuration parameter doesn't have a a stst sub-message, or that the
-             *      disk manager is already configured for a scan.
+             *      configuration parameter doesn't have a a stat sub-message, or that the
+             *      stat application manager is already configured for a scan.
              */
             void configure_scan(const ska::pst::lmc::ScanConfiguration &configuration) override;
 
@@ -143,7 +143,7 @@ namespace ska::pst::stat {
             /**
              * @brief Handle getting the current scan configuration for the service.
              *
-             * This will return a stst sub-field message with the current scan configuration.
+             * This will return a stat sub-field message with the current scan configuration.
              *
              * @param configuration the out protobuf message to used to return scan configuration details.
              * @throws ska::pst::common::LmcServiceException if manager is configured for a scan.
@@ -161,9 +161,8 @@ namespace ska::pst::stat {
             /**
              * @brief Handle initiating a scan.
              *
-             * This will call \ref StatApplicationManager.start_scan that will
-             * initial a scan, including reading the ring buffers and writing
-             * voltages to disk.
+             * This will call \ref StatApplicationManager.start_scan that will initial a scan,
+             * including reading the ring buffers and computing and publishing statistics.
              *
              * @throws ska::pst::common::LmcServiceException if manager is configured for a scan, or
              *      is already scanning.
@@ -190,7 +189,7 @@ namespace ska::pst::stat {
             /**
              * @brief Check if the service is currenting performing a scan.
              *
-             * @return true if the \ref DiskManger is scanning.
+             * @return true if the \ref StatApplicationManager is scanning.
              */
             bool is_scanning() const noexcept override;
 
@@ -199,8 +198,9 @@ namespace ska::pst::stat {
              * @brief Handle getting the monitoring data for the service.
              *
              * This will get the current monitoring data for STAT.CORE. This includes
-             * the total capacity, available capacity, the amount of bytes written in as
-             * scan, and the current write rate.
+             * the following scalar statistics: mean_frequency_avg, mean_frequency_avg_masked,
+             * variance_frequency_avg, variance_frequency_avg_masked, num_clipped_samples,
+             * and num_clipped_samples_masked.
              *
              * @param data Pointer to the protobuf message to return. This will set the stat
              *      sub-message with the monitoring data.
@@ -211,9 +211,9 @@ namespace ska::pst::stat {
             /**
              * @brief Return environment variables back to the client.
              *
-             * This implementation returns disk_capacity and disk_available_bytes as
-             * unsigned int values.  The disk_capacity is the total size of the volumne
-             * while disk_available_bytes is amount of disk space left on the volumne
+             * This implementation returns mean_frequency_avg, mean_frequency_avg_masked,
+             * variance_frequency_avg, variance_frequency_avg_masked, num_clipped_samples,
+             * and num_clipped_samples_masked.
              *
              * @param data Pointer to a protobuf message message that includes the a map to populate.
              */
@@ -243,4 +243,4 @@ namespace ska::pst::stat {
 
 } // namespace ska::pst::stat
 
-#endif // __SKA_PST_StatLmcServiceHandler_h
+#endif // __SKA_PST_STAT_StatLmcServiceHandler_h
