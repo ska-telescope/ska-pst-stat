@@ -150,7 +150,7 @@ namespace ska::pst::stat {
 
       /**
        * @brief Construct the filename path for an output HDF5 filename. The filename will be constructed as
-       * <stat_base>/<eb_id>/<pst-low|pst-mid>/<scan_id>/monitoring_stats/<utc_start>_<obs_offset>_<file_number>.h5
+       * [stat_base]/[eb_id]/[pst-low|pst-mid]/[scan_id]/monitoring_stats/[utc_start]_[obs_offset]_[file_number].h5
        *
        * @param stat_base base directory to which files should be written
        * @param eb_id execution block id of the scan

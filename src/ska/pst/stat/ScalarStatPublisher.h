@@ -38,6 +38,12 @@
 #define SKA_PST_STAT_ScalarStatPublisher_h
 
 namespace ska::pst::stat {
+
+  /**
+   * @brief Concrete statistics publisher that only publishes scalar statistics, buffering
+   * the result locally.
+   *
+   */
   class ScalarStatPublisher : public StatPublisher
   {
     public:
@@ -46,9 +52,7 @@ namespace ska::pst::stat {
        *
        * @param config the configuration current voltage data stream.
        */
-      ScalarStatPublisher(
-        const ska::pst::common::AsciiHeader& config
-      );
+      ScalarStatPublisher(const ska::pst::common::AsciiHeader& config);
 
       /**
        * @brief Destroy the ScalarStatPublisher object.
