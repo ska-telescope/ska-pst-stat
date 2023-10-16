@@ -32,6 +32,7 @@
 #include "ska/pst/stat/StatPublisher.h"
 
 #include <spdlog/spdlog.h>
+#include <filesystem>
 #include <H5Cpp.h>
 #include <memory>
 #include <string>
@@ -136,6 +137,33 @@ namespace ska::pst::stat {
        *
        */
       auto get_hdf5_header_datatype() -> H5::CompType;
+
+      /**
+       * @brief Return the full filesystem path to the HDF5 output filename.
+       *
+       * @param utc_start start utc of the scan
+       * @param obs_offset byte offset of the data segement stat storage
+       * @param file_number file sequence number produced by the publisher
+       * @return std::filesystem::path full path to output file name to be created.
+       */
+      std::filesystem::path get_output_filename(const std::string& utc_start, uint64_t obs_offset, uint64_t file_number);
+
+      /**
+       * @brief Construct the filename path for an output HDF5 filename. The filename will be constructed as
+       * <stat_base>/<eb_id>/<pst-low|pst-mid>/<scan_id>/monitoring_stats/<utc_start>_<obs_offset>_<file_number>.h5
+       *
+       * @param stat_base base directory to which files should be written
+       * @param eb_id execution block id of the scan
+       * @param scan_id id of the scan
+       * @param telescope telescope on which the scan is performed, must be SKALow or SKAMid
+       * @param utc_start start utc of the scan
+       * @param obs_offset byte offset of the first data sample in the segment
+       * @param file_number file sequence number produced by the publisher
+       * @return std::filesystem::path absolute path to the output filename
+       */
+      static std::filesystem::path construct_output_filename(const std::string& stat_base, const std::string& eb_id,
+        const std::string& scan_id, const std::string& telescope,
+        const std::string& utc_start, uint64_t obs_offset, uint64_t file_number);
 
     private:
 
@@ -244,6 +272,7 @@ namespace ska::pst::stat {
       }
 
       std::shared_ptr<H5::H5File> file{nullptr};
+
   };
 
 } // namespace ska::pst::stat

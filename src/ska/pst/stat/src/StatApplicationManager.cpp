@@ -30,6 +30,7 @@
 
 #include <chrono>
 #include <filesystem>
+#include <stdexcept>
 #include <spdlog/spdlog.h>
 
 #include "ska/pst/common/utils/AsciiHeader.h"
@@ -100,7 +101,18 @@ void ska::pst::stat::StatApplicationManager::validate_configure_scan(const ska::
 
 void ska::pst::stat::StatApplicationManager::validate_start_scan(const ska::pst::common::AsciiHeader& config)
 {
-  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::validate_configure_start_scan config={}", config.raw());
+  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::validate_start_scan config={}", config.raw());
+  // Iterate through the vector and validate existince of required keys
+  for (const std::string& config_key : startscan_config_keys)
+  {
+    if (config.has(config_key))
+    {
+      SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::validate_start_scan {}={}", config_key, config.get_val(config_key));
+    } else {
+      throw std::runtime_error("required field " + config_key + " missing in start scan configuration");
+    }
+  }
+  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::validate_start_scan complete");
 }
 
 void ska::pst::stat::StatApplicationManager::perform_initialise()
@@ -130,11 +142,8 @@ void ska::pst::stat::StatApplicationManager::perform_configure_scan()
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam SmrbSegmentProducer({}, {})", data_key, weights_key);
   producer = std::make_unique<ska::pst::smrb::SmrbSegmentProducer>(data_key, weights_key);
 
-  if (scan_config.has("STAT_PROC_DELAY"))
-  {
-    processing_delay = scan_config.get_uint32("STAT_PROC_DELAY");
-    SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan setting processing_delay={} ms", processing_delay);
-  }
+  processing_delay = scan_config.get_uint32("STAT_PROC_DELAY_MS");
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan setting processing_delay={} ms", processing_delay);
 
   // set configuration parameters for the StatProcessor
   req_time_bins = scan_config.get_uint32("STAT_REQ_TIME_BINS");
@@ -161,7 +170,17 @@ void ska::pst::stat::StatApplicationManager::perform_start_scan()
   SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_start_scan data_header:\n{}", data_header.raw());
   SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_start_scan weights_header:\n{}", weights_header.raw());
 
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_start_scan SCAN_ID={}", data_header.get_val("SCAN_ID"));
+  // check that the SCAN_ID and EB_ID in the header's match the scan configuration
+  if (data_header.get_val("SCAN_ID") != startscan_config.get_val("SCAN_ID"))
+  {
+    throw std::runtime_error("SCAN_ID mismatch between data header and startscan_config");
+  }
+  if (data_header.get_val("EB_ID") != scan_config.get_val("EB_ID"))
+  {
+    throw std::runtime_error("EB_ID mismatch between data header and startscan_config");
+  }
+
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_start_scan SCAN_ID={} EB_ID={}", data_header.get_val("SCAN_ID"), data_header.get_val("EB_ID"));
 
   // set the base_path and suffix for statistics recording in the beam configuration
   data_header.set_val("STAT_BASE_PATH", stat_base_path);

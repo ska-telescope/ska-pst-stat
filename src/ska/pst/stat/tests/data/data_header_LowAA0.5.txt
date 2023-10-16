@@ -37,7 +37,7 @@ DATA_GENERATOR        GaussianNoise
 UTC_START             2023-02-14-22:15:37
 PICOSECONDS           0
 FILE_NUMBER           0
-SCAN_ID               1
+SCAN_ID               12345
 EB_ID                 eb-m001-20230921-12345
 NORMAL_DIST_MEAN      0
 NORMAL_DIST_STDDEV    10

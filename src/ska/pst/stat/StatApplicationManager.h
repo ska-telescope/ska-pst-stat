@@ -256,7 +256,10 @@ namespace ska::pst::stat {
       const std::vector<std::string> beam_config_keys = {"DATA_KEY", "WEIGHTS_KEY"};
 
       //! List of mandatory scan config keys
-      const std::vector<std::string> scan_config_keys = {"STAT_REQ_FREQ_BINS", "STAT_REQ_TIME_BINS", "STAT_NREBIN"};
+      const std::vector<std::string> scan_config_keys = {"EB_ID", "STAT_PROC_DELAY_MS", "STAT_REQ_FREQ_BINS", "STAT_REQ_TIME_BINS", "STAT_NREBIN"};
+
+      //! List of mandatory start scan config keys
+      const std::vector<std::string> startscan_config_keys = {"SCAN_ID"};
   };
 
 } // namespace ska::pst::stat

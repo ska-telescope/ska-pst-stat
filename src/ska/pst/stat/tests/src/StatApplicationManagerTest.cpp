@@ -303,12 +303,11 @@ TEST_F(StatApplicationManagerTest, test_configure_from_file) // NOLINT
     }
   }
 
-  std::string utc_start = data_header.get_val("UTC_START");
-  uint64_t obs_offset = data_header.get_uint64("OBS_OFFSET");
   uint64_t file_number = 0;
-  std::filesystem::path filename = ska::pst::common::FileWriter::get_filename(utc_start, obs_offset, file_number);
-  std::filesystem::path output_path(stat_base_path + "/SCAN_" + data_header.get_val("SCAN_ID") + "/monitoring_stats");
-  std::filesystem::path stat_file = output_path / filename.replace_extension("h5");
+  std::filesystem::path stat_file = StatHdf5FileWriter::construct_output_filename(
+    stat_base_path, data_header.get_val("EB_ID"), data_header.get_val("SCAN_ID"), data_header.get_val("TELESCOPE"),
+    data_header.get_val("UTC_START"), data_header.get_uint64("OBS_OFFSET"), file_number);
+
   ASSERT_TRUE(std::filesystem::exists(stat_file));
 
   sm->stop_scan();
