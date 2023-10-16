@@ -33,8 +33,8 @@
 #include "ska/pst/common/utils/AsciiHeader.h"
 #include "ska/pst/stat/StatStorage.h"
 
-#ifndef __SKA_PST_STAT_StatPublisher_h
-#define __SKA_PST_STAT_StatPublisher_h
+#ifndef SKA_PST_STAT_StatPublisher_h
+#define SKA_PST_STAT_StatPublisher_h
 
 namespace ska::pst::stat {
 
@@ -74,4 +74,4 @@ namespace ska::pst::stat {
 
 } // namespace ska::pst::stat
 
-#endif // __SKA_PST_STAT_StatPublisher_h
+#endif // SKA_PST_STAT_StatPublisher_h

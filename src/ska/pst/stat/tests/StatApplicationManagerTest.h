@@ -58,6 +58,7 @@ class StatApplicationManagerTest : public ::testing::Test
 
     ska::pst::common::AsciiHeader config;
     ska::pst::common::AsciiHeader header;
+
   public:
     StatApplicationManagerTest();
 

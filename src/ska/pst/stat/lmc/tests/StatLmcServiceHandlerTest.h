@@ -44,10 +44,7 @@
 #ifndef SKA_PST_STAT_TESTS_StatLmcServiceHandlerTest_h
 #define SKA_PST_STAT_TESTS_StatLmcServiceHandlerTest_h
 
-namespace ska {
-namespace pst {
-namespace stat {
-namespace test {
+namespace ska::pst::stat::test {
 
 /**
  * @brief Unit testing the handler against a Stat Application Manager Manager.
@@ -97,12 +94,10 @@ class StatLmcServiceHandlerTest : public ::testing::Test
 
     float delay_ms = 1000;
     int test_nblocks = 4;
+    std::string stat_base_path = "/tmp";
 
 };
 
-}
-}
-}
 } // namespace ska::pst::stat::test
 
 #endif // SKA_PST_STAT_TESTS_StatLmcServiceHandlerTest_h

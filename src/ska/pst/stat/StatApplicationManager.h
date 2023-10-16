@@ -41,8 +41,8 @@
 #include <vector>
 #include <mutex>
 
-#ifndef __SKA_PST_STAT_StatApplicationManager_h
-#define __SKA_PST_STAT_StatApplicationManager_h
+#ifndef SKA_PST_STAT_StatApplicationManager_h
+#define SKA_PST_STAT_StatApplicationManager_h
 
 namespace ska::pst::stat {
 
@@ -264,4 +264,4 @@ namespace ska::pst::stat {
 
 } // namespace ska::pst::stat
 
-#endif // __SKA_PST_STAT_StatApplicationManager_h
+#endif // SKA_PST_STAT_StatApplicationManager_h

@@ -34,8 +34,8 @@
 #include <spdlog/spdlog.h>
 #include <memory>
 
-#ifndef __SKA_PST_STAT_ScalarStatPublisher_h
-#define __SKA_PST_STAT_ScalarStatPublisher_h
+#ifndef SKA_PST_STAT_ScalarStatPublisher_h
+#define SKA_PST_STAT_ScalarStatPublisher_h
 
 namespace ska::pst::stat {
   class ScalarStatPublisher : public StatPublisher
@@ -84,4 +84,4 @@ namespace ska::pst::stat {
   };
 } // namespace ska::pst::stat
 
-#endif // __SKA_PST_STAT_ScalarStatPublisher_h
+#endif // SKA_PST_STAT_ScalarStatPublisher_h

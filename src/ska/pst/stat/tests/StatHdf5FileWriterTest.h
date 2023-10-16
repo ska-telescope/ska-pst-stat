@@ -48,165 +48,165 @@ namespace ska::pst::stat::test {
  */
 class StatHdf5FileWriterTest : public ::testing::Test
 {
-    protected:
-      void SetUp() override;
+  protected:
+    void SetUp() override;
 
-      void TearDown() override;
+    void TearDown() override;
 
-      std::shared_ptr<StatStorage> storage{nullptr};
+    std::shared_ptr<StatStorage> storage{nullptr};
 
-      ska::pst::common::AsciiHeader config;
+    ska::pst::common::AsciiHeader config;
 
-      void populate_storage();
+    void populate_storage();
 
-      void validate_hdf5_file(const std::shared_ptr<H5::H5File>& file);
+    void validate_hdf5_file(const std::shared_ptr<H5::H5File>& file);
 
-      std::shared_ptr<StatHdf5FileWriter> writer{nullptr};
+    std::shared_ptr<StatHdf5FileWriter> writer{nullptr};
 
-    public:
-        StatHdf5FileWriterTest();
+  public:
+      StatHdf5FileWriterTest();
 
-        ~StatHdf5FileWriterTest() = default;
+      ~StatHdf5FileWriterTest() = default;
 
-        void initialise(const std::string& config_file = "data_config.txt");
+      void initialise(const std::string& config_file = "data_config.txt");
 
-    private:
+  private:
 
-      //! random number engine based on Mersenne Twister algorithm
-      std::mt19937 generator;
+    //! random number engine based on Mersenne Twister algorithm
+    std::mt19937 generator;
 
-      template<typename T>
-      void populate_1d_vec(std::vector<T>& vec)
+    template<typename T>
+    void populate_1d_vec(std::vector<T>& vec)
+    {
+      std::uniform_int_distribution<uint32_t> uniform_dist(1, 1000);
+      for (auto i = 0; i < vec.size(); i++)
       {
-        std::uniform_int_distribution<uint32_t> uniform_dist(1, 1000);
-        for (auto i = 0; i < vec.size(); i++)
-        {
-          vec[i] = static_cast<T>(uniform_dist(generator));
+        vec[i] = static_cast<T>(uniform_dist(generator));
+      }
+    }
+
+    template<typename T>
+    void populate_2d_vec(std::vector<std::vector<T>>& vec)
+    {
+      for (auto i = 0; i < vec.size(); i++)
+      {
+        populate_1d_vec(vec[i]);
+      }
+    }
+
+    template<typename T>
+    void populate_3d_vec(std::vector<std::vector<std::vector<T>>>& vec)
+    {
+      for (auto i = 0; i < vec.size(); i++)
+      {
+        populate_2d_vec(vec[i]);
+      }
+    }
+
+    template<typename T>
+    void assert_1d_vec_header(const std::vector<T>& vec, const hvl_t& header_value)
+    {
+      ASSERT_EQ(header_value.len, vec.size());
+      T *data_ptr = reinterpret_cast<T *>(header_value.p);
+      std::vector<T> data_vec = std::vector(data_ptr, data_ptr + header_value.len); // NOLINT
+      ASSERT_THAT(data_vec, ::testing::ElementsAreArray(vec));
+    }
+
+    template<typename T>
+    void assert_1d_vec(const std::vector<T>& vec, std::shared_ptr<H5::H5File> file, std::string data_set_name, const H5::PredType& hd5_type)
+    {
+      SPDLOG_DEBUG("Asserting {} stored in file correctly with dimensions of [{}]", data_set_name, vec.size());
+      H5::DataSet dataset = file->openDataSet(data_set_name);
+      H5::DataSpace dataspace = dataset.getSpace();
+
+      ASSERT_EQ(1, dataspace.getSimpleExtentNdims());
+      hsize_t dims[1];
+      dataspace.getSimpleExtentDims(dims);
+      ASSERT_EQ(dims[0], vec.size());
+
+      std::vector<T> data_out(dims[0]);
+      dataset.read(data_out.data(), hd5_type);
+
+      validate_1d_vec(vec, data_out.data(), dims);
+    }
+
+    template<typename T>
+    void assert_2d_vec(const std::vector<std::vector<T>>& vec, std::shared_ptr<H5::H5File> file, std::string data_set_name, const H5::PredType& hd5_type)
+    {
+      SPDLOG_DEBUG("Asserting {} stored in file correctly with dimensions of [{}, {}]", data_set_name, vec.size(), vec[0].size());
+      H5::DataSet dataset = file->openDataSet(data_set_name);
+      H5::DataSpace dataspace = dataset.getSpace();
+
+      ASSERT_EQ(2, dataspace.getSimpleExtentNdims());
+      hsize_t dims[2];
+      dataspace.getSimpleExtentDims(dims);
+      ASSERT_EQ(dims[0], vec.size());
+      ASSERT_EQ(dims[1], vec[0].size());
+
+      std::vector<T> data_out(dims[0] * dims[1]);
+      dataset.read(data_out.data(), hd5_type);
+
+      validate_2d_vec(vec, data_out.data(), dims);
+    }
+
+    template<typename T>
+    void assert_3d_vec(const std::vector<std::vector<std::vector<T>>>& vec, std::shared_ptr<H5::H5File> file, std::string data_set_name, const H5::PredType& hd5_type)
+    {
+      SPDLOG_DEBUG("Asserting {} stored in file correctly with dimensions of [{}, {}, {}]", data_set_name, vec.size(), vec[0].size(), vec[0][0].size());
+      H5::DataSet dataset = file->openDataSet(data_set_name);
+      H5::DataSpace dataspace = dataset.getSpace();
+
+      ASSERT_EQ(3, dataspace.getSimpleExtentNdims());
+      hsize_t dims[3];
+      dataspace.getSimpleExtentDims(dims);
+      ASSERT_EQ(dims[0], vec.size());
+      ASSERT_EQ(dims[1], vec[0].size());
+      ASSERT_EQ(dims[2], vec[0][0].size());
+
+      std::vector<T> data_out(dims[0] * dims[1] * dims[2]);
+      dataset.read(data_out.data(), hd5_type);
+
+      validate_3d_vec(vec, data_out.data(), dims);
+    }
+
+    template<typename T>
+    void validate_1d_vec(const std::vector<T>& vec, T* hdf5_data, hsize_t *dims)
+    {
+      ASSERT_EQ(vec.size(), dims[0]);
+      SPDLOG_DEBUG("validate_1d_vec asserting vector of dimensions [{}]", dims[0]);
+      ASSERT_THAT(std::vector<T>(hdf5_data, hdf5_data + dims[0]), ::testing::ElementsAreArray(vec));
+    }
+
+    template<typename T>
+    void validate_2d_vec(const std::vector<std::vector<T>>& vec, T* hdf5_data, hsize_t *dims)
+    {
+      ASSERT_EQ(vec.size(), dims[0]);
+      ASSERT_EQ(vec[0].size(), dims[1]);
+
+      SPDLOG_DEBUG("validate_2d_vec asserting vector of dimensions [{}, {}]", dims[0], dims[1]);
+      uint64_t offset{0};
+      for (auto i = 0; i < dims[0]; i++) {
+        ASSERT_THAT(std::vector<T>(hdf5_data + offset, hdf5_data + offset + dims[1]), ::testing::ElementsAreArray(vec[i]));
+        offset += dims[1];
+      }
+    }
+
+    template<typename T>
+    void validate_3d_vec(const std::vector<std::vector<std::vector<T>>>& vec, T* hdf5_data, hsize_t *dims)
+    {
+      ASSERT_EQ(vec.size(), dims[0]);
+      ASSERT_EQ(vec[0].size(), dims[1]);
+      ASSERT_EQ(vec[0][1].size(), dims[2]);
+
+      SPDLOG_DEBUG("validate_3d_vec asserting vector of dimensions [{}, {}, {}]", dims[0], dims[1], dims[2]);
+      uint64_t offset{0};
+      for (auto i = 0; i < dims[0]; i++) {
+        for (auto j = 0; j < dims[1]; j++) {
+          ASSERT_THAT(std::vector<T>(hdf5_data + offset, hdf5_data + offset + dims[2]), ::testing::ElementsAreArray(vec[i][j]));
+          offset += dims[2];
         }
       }
-
-      template<typename T>
-      void populate_2d_vec(std::vector<std::vector<T>>& vec)
-      {
-        for (auto i = 0; i < vec.size(); i++)
-        {
-          populate_1d_vec(vec[i]);
-        }
-      }
-
-      template<typename T>
-      void populate_3d_vec(std::vector<std::vector<std::vector<T>>>& vec)
-      {
-        for (auto i = 0; i < vec.size(); i++)
-        {
-          populate_2d_vec(vec[i]);
-        }
-      }
-
-      template<typename T>
-      void assert_1d_vec_header(const std::vector<T>& vec, const hvl_t& header_value)
-      {
-        ASSERT_EQ(header_value.len, vec.size());
-        T *data_ptr = reinterpret_cast<T *>(header_value.p);
-        std::vector<T> data_vec = std::vector(data_ptr, data_ptr + header_value.len); // NOLINT
-        ASSERT_THAT(data_vec, ::testing::ElementsAreArray(vec));
-      }
-
-      template<typename T>
-      void assert_1d_vec(const std::vector<T>& vec, std::shared_ptr<H5::H5File> file, std::string data_set_name, const H5::PredType& hd5_type)
-      {
-        SPDLOG_DEBUG("Asserting {} stored in file correctly with dimensions of [{}]", data_set_name, vec.size());
-        H5::DataSet dataset = file->openDataSet(data_set_name);
-        H5::DataSpace dataspace = dataset.getSpace();
-
-        ASSERT_EQ(1, dataspace.getSimpleExtentNdims());
-        hsize_t dims[1];
-        dataspace.getSimpleExtentDims(dims);
-        ASSERT_EQ(dims[0], vec.size());
-
-        std::vector<T> data_out(dims[0]);
-        dataset.read(data_out.data(), hd5_type);
-
-        validate_1d_vec(vec, data_out.data(), dims);
-      }
-
-      template<typename T>
-      void assert_2d_vec(const std::vector<std::vector<T>>& vec, std::shared_ptr<H5::H5File> file, std::string data_set_name, const H5::PredType& hd5_type)
-      {
-        SPDLOG_DEBUG("Asserting {} stored in file correctly with dimensions of [{}, {}]", data_set_name, vec.size(), vec[0].size());
-        H5::DataSet dataset = file->openDataSet(data_set_name);
-        H5::DataSpace dataspace = dataset.getSpace();
-
-        ASSERT_EQ(2, dataspace.getSimpleExtentNdims());
-        hsize_t dims[2];
-        dataspace.getSimpleExtentDims(dims);
-        ASSERT_EQ(dims[0], vec.size());
-        ASSERT_EQ(dims[1], vec[0].size());
-
-        std::vector<T> data_out(dims[0] * dims[1]);
-        dataset.read(data_out.data(), hd5_type);
-
-        validate_2d_vec(vec, data_out.data(), dims);
-      }
-
-      template<typename T>
-      void assert_3d_vec(const std::vector<std::vector<std::vector<T>>>& vec, std::shared_ptr<H5::H5File> file, std::string data_set_name, const H5::PredType& hd5_type)
-      {
-        SPDLOG_DEBUG("Asserting {} stored in file correctly with dimensions of [{}, {}, {}]", data_set_name, vec.size(), vec[0].size(), vec[0][0].size());
-        H5::DataSet dataset = file->openDataSet(data_set_name);
-        H5::DataSpace dataspace = dataset.getSpace();
-
-        ASSERT_EQ(3, dataspace.getSimpleExtentNdims());
-        hsize_t dims[3];
-        dataspace.getSimpleExtentDims(dims);
-        ASSERT_EQ(dims[0], vec.size());
-        ASSERT_EQ(dims[1], vec[0].size());
-        ASSERT_EQ(dims[2], vec[0][0].size());
-
-        std::vector<T> data_out(dims[0] * dims[1] * dims[2]);
-        dataset.read(data_out.data(), hd5_type);
-
-        validate_3d_vec(vec, data_out.data(), dims);
-      }
-
-      template<typename T>
-      void validate_1d_vec(const std::vector<T>& vec, T* hdf5_data, hsize_t *dims)
-      {
-        ASSERT_EQ(vec.size(), dims[0]);
-        SPDLOG_DEBUG("validate_1d_vec asserting vector of dimensions [{}]", dims[0]);
-        ASSERT_THAT(std::vector<T>(hdf5_data, hdf5_data + dims[0]), ::testing::ElementsAreArray(vec));
-      }
-
-      template<typename T>
-      void validate_2d_vec(const std::vector<std::vector<T>>& vec, T* hdf5_data, hsize_t *dims)
-      {
-        ASSERT_EQ(vec.size(), dims[0]);
-        ASSERT_EQ(vec[0].size(), dims[1]);
-
-        SPDLOG_DEBUG("validate_2d_vec asserting vector of dimensions [{}, {}]", dims[0], dims[1]);
-        uint64_t offset{0};
-        for (auto i = 0; i < dims[0]; i++) {
-          ASSERT_THAT(std::vector<T>(hdf5_data + offset, hdf5_data + offset + dims[1]), ::testing::ElementsAreArray(vec[i]));
-          offset += dims[1];
-        }
-      }
-
-      template<typename T>
-      void validate_3d_vec(const std::vector<std::vector<std::vector<T>>>& vec, T* hdf5_data, hsize_t *dims)
-      {
-        ASSERT_EQ(vec.size(), dims[0]);
-        ASSERT_EQ(vec[0].size(), dims[1]);
-        ASSERT_EQ(vec[0][1].size(), dims[2]);
-
-        SPDLOG_DEBUG("validate_3d_vec asserting vector of dimensions [{}, {}, {}]", dims[0], dims[1], dims[2]);
-        uint64_t offset{0};
-        for (auto i = 0; i < dims[0]; i++) {
-          for (auto j = 0; j < dims[1]; j++) {
-            ASSERT_THAT(std::vector<T>(hdf5_data + offset, hdf5_data + offset + dims[2]), ::testing::ElementsAreArray(vec[i][j]));
-            offset += dims[2];
-          }
-        }
-      }
+    }
 };
 
 } // namespace ska::pst::stat::test

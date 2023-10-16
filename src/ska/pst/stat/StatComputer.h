@@ -36,8 +36,8 @@
 #include <utility>
 #include <vector>
 
-#ifndef __SKA_PST_STAT_StatComputer_h
-#define __SKA_PST_STAT_StatComputer_h
+#ifndef SKA_PST_STAT_StatComputer_h
+#define SKA_PST_STAT_StatComputer_h
 
 namespace ska::pst::stat {
 
@@ -121,6 +121,9 @@ namespace ska::pst::stat {
       //! Time per sample (in microsecs), used for populating time timeseries_bins
       double tsamp{0.0};
 
+      //! data rate of the data stream in bytes per second, used for converting obs_offset to absolute time
+      double bytes_per_second{0};
+
       //! Number of polarisations in the data stream
       uint32_t npol{0};
 
@@ -142,4 +145,4 @@ namespace ska::pst::stat {
 
 } // namespace ska::pst::stat
 
-#endif // __SKA_PST_STAT_StatComputer_h
+#endif // SKA_PST_STAT_StatComputer_h

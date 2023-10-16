@@ -35,8 +35,8 @@
 #include <memory>
 #include <vector>
 
-#ifndef __SKA_PST_STAT_FileProcessor_h
-#define __SKA_PST_STAT_FileProcessor_h
+#ifndef SKA_PST_STAT_FileProcessor_h
+#define SKA_PST_STAT_FileProcessor_h
 
 namespace ska::pst::stat {
 
@@ -121,4 +121,4 @@ namespace ska::pst::stat {
 
 } // namespace ska::pst::stat
 
-#endif // __SKA_PST_STAT_FileProcessor_h
+#endif // SKA_PST_STAT_FileProcessor_h

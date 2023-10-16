@@ -131,6 +131,25 @@ void ska::pst::stat::StatApplicationManager::perform_configure_beam()
   data_key = beam_config.get_val("DATA_KEY");
   weights_key = beam_config.get_val("WEIGHTS_KEY");
 
+  // ensure the shared memory key is valid
+  try {
+    key_t valid_key = ska::pst::smrb::DataBlock::parse_psrdada_key(data_key);
+  }
+  catch (std::runtime_error& exc)
+  {
+    SPDLOG_ERROR("ska::pst::stat::StatApplicationManager::perform_configure_beam DATA_KEY={} was an invalid", data_key);
+    throw std::runtime_error("ska::pst::stat::StatApplicationManager::perform_configure_beam DATA_KEY was invalid");
+  }
+
+  try {
+    key_t valid_key = ska::pst::smrb::DataBlock::parse_psrdada_key(weights_key);
+  }
+  catch (std::runtime_error& exc)
+  {
+    SPDLOG_ERROR("ska::pst::stat::StatApplicationManager::perform_configure_beam WEIGHTS_KEY={} was invalid", weights_key);
+    throw std::runtime_error("ska::pst::stat::StatApplicationManager::perform_configure_beam WEIGHTS_KEY was invalid");
+  }
+
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam complete");
 }
 
@@ -139,7 +158,7 @@ void ska::pst::stat::StatApplicationManager::perform_configure_scan()
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan");
 
   // Construct the SMRB segment producer
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_beam SmrbSegmentProducer({}, {})", data_key, weights_key);
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_configure_scan SmrbSegmentProducer({}, {})", data_key, weights_key);
   producer = std::make_unique<ska::pst::smrb::SmrbSegmentProducer>(data_key, weights_key);
 
   processing_delay = scan_config.get_uint32("STAT_PROC_DELAY_MS");
@@ -190,7 +209,10 @@ void ska::pst::stat::StatApplicationManager::perform_start_scan()
   data_header.set("STAT_NREBIN", num_rebin);
 
   // ensure the STAT_OUTPUT_FILENAME is not present in the beam_config
-  data_header.del("STAT_OUTPUT_FILENAME");
+  if (data_header.has("STAT_OUTPUT_FILENAME"))
+  {
+    data_header.del("STAT_OUTPUT_FILENAME");
+  }
 
   processor = std::make_unique<ska::pst::stat::StatProcessor>(data_header, weights_header);
 
@@ -221,7 +243,8 @@ void ska::pst::stat::StatApplicationManager::perform_scan()
   {
     SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan producer->next_segment()");
     auto segment = producer->next_segment();
-    SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan opened segment containing {} bytes", segment.data.size);
+    auto obs_offset = segment.data.obs_offset;
+    SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan opened segment with offset {} and containing {} bytes", obs_offset, segment.data.size);
 
     if (segment.data.block == nullptr)
     {
@@ -301,5 +324,13 @@ void ska::pst::stat::StatApplicationManager::perform_terminate()
 
 auto ska::pst::stat::StatApplicationManager::get_scalar_stats() -> ska::pst::stat::StatStorage::scalar_stats_t
 {
-  return scalar_publisher->get_scalar_stats();
+  if (scalar_publisher)
+  {
+    return scalar_publisher->get_scalar_stats();
+  }
+  else
+  {
+    StatStorage::scalar_stats_t empty_stats;
+    return empty_stats;
+  }
 }

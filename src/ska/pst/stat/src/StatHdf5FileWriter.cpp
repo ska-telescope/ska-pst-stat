@@ -118,9 +118,10 @@ void ska::pst::stat::StatHdf5FileWriter::publish(std::shared_ptr<StatStorage> st
   stat_hdf5_header_t header;
 
   auto picoseconds = config.get_uint64("PICOSECONDS");
-  auto t_min = static_cast<double>(ska::pst::common::attoseconds_per_microsecond) /
+  auto picoseconds_offset_in_seconds = static_cast<double>(ska::pst::common::attoseconds_per_microsecond) /
     static_cast<double>(ska::pst::common::attoseconds_per_second) *
     static_cast<double>(picoseconds);
+  auto t_min = picoseconds_offset_in_seconds + storage->get_utc_start_offset_seconds();
 
   std::string unknown = "unknown";
   std::string eb_id = get_val_if_has(config, "EB_ID", unknown);
@@ -156,9 +157,7 @@ void ska::pst::stat::StatHdf5FileWriter::publish(std::shared_ptr<StatStorage> st
   }
   else
   {
-    // ideally the obs offset would be provided by the SMRB Segment Producer so that the StatProcessor can set
-    // this value in the StatStorage class. #TODO
-    uint64_t obs_offset = 0;
+    uint64_t obs_offset = static_cast<uint64_t>(storage->get_utc_start_offset_bytes());
 
     // construct the required output path of
     std::filesystem::path filename = get_output_filename(utc_start, obs_offset, file_number);
@@ -229,18 +228,19 @@ std::filesystem::path ska::pst::stat::StatHdf5FileWriter::construct_output_filen
   const std::string& scan_id, const std::string& telescope,
   const std::string& utc_start, uint64_t obs_offset, uint64_t file_number)
 {
-  std::filesystem::path stat_base_path(stat_base);
-  auto eb_id_path = std::filesystem::path(eb_id);
-  auto scan_id_path = std::filesystem::path(scan_id);
-  auto subsystem_id_path = std::filesystem::path(telescope);
-
-  std::filesystem::path product_path{"product"};
-  std::filesystem::path stream_path{"monitoring_stats"};
 
   std::map<std::string, std::string> subsystem_path_map {
     { "SKALow", "pst-low" },
     { "SKAMid", "pst-mid" },
   };
+
+  std::filesystem::path stat_base_path(stat_base);
+  auto eb_id_path = std::filesystem::path(eb_id);
+  auto scan_id_path = std::filesystem::path(scan_id);
+  auto subsystem_id_path = std::filesystem::path(subsystem_path_map[telescope]);
+
+  std::filesystem::path product_path{"product"};
+  std::filesystem::path stream_path{"monitoring_stats"};
 
   // construct the directory for the scan_id
   std::filesystem::path scan_path = stat_base_path / product_path / eb_id_path / subsystem_id_path / scan_id_path / stream_path;

@@ -30,6 +30,7 @@
 
 #include <cmath>
 #include <vector>
+#include <regex>
 #include <filesystem>
 #include <spdlog/spdlog.h>
 
@@ -307,8 +308,17 @@ TEST_F(StatApplicationManagerTest, test_configure_from_file) // NOLINT
   std::filesystem::path stat_file = StatHdf5FileWriter::construct_output_filename(
     stat_base_path, data_header.get_val("EB_ID"), data_header.get_val("SCAN_ID"), data_header.get_val("TELESCOPE"),
     data_header.get_val("UTC_START"), data_header.get_uint64("OBS_OFFSET"), file_number);
+  SPDLOG_DEBUG("test_configure_from_file expected stat_file={}", stat_file.generic_string());
 
-  ASSERT_TRUE(std::filesystem::exists(stat_file));
+  std::string path = stat_file.parent_path();
+  std::ostringstream oss;
+  oss << path << "/" << data_header.get_val("UTC_START") << "_(.*)_00000(.*).h5";
+  std::string regex_pattern = oss.str();
+  for (const auto & entry : std::filesystem::directory_iterator(path))
+  {
+    SPDLOG_DEBUG("Assessing file {}", entry.path().generic_string());
+    ASSERT_TRUE(std::regex_match(entry.path().generic_string(), std::regex(regex_pattern)));
+  }
 
   sm->stop_scan();
   ASSERT_EQ(ska::pst::common::ScanConfigured, sm->get_state());

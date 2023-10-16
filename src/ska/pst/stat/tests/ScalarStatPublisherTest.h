@@ -48,59 +48,59 @@ namespace ska::pst::stat::test {
  */
 class ScalarStatPublisherTest : public ::testing::Test
 {
-    protected:
-      void SetUp() override;
+  protected:
+    void SetUp() override;
 
-      void TearDown() override;
+    void TearDown() override;
 
-      std::shared_ptr<ska::pst::stat::StatStorage> storage{nullptr};
+    std::shared_ptr<ska::pst::stat::StatStorage> storage{nullptr};
 
-      ska::pst::common::AsciiHeader config;
+    ska::pst::common::AsciiHeader config;
 
-      std::mutex scalar_stats_test_mutex;
+    std::mutex scalar_stats_test_mutex;
 
-      void populate_storage();
+    void populate_storage();
 
-      std::shared_ptr<ScalarStatPublisher> scalar_stat_publisher{nullptr};
+    std::shared_ptr<ScalarStatPublisher> scalar_stat_publisher{nullptr};
 
-    public:
-      ScalarStatPublisherTest();
-      ~ScalarStatPublisherTest() = default;
+  public:
+    ScalarStatPublisherTest();
+    ~ScalarStatPublisherTest() = default;
 
-      void initialise(const std::string& config_file = "data_config.txt");
+    void initialise(const std::string& config_file = "data_config.txt");
 
-    private:
+  private:
 
-      //! random number engine based on Mersenne Twister algorithm
-      std::mt19937 generator;
+    //! random number engine based on Mersenne Twister algorithm
+    std::mt19937 generator;
 
-      template<typename T>
-      void populate_1d_vec(std::vector<T>& vec)
+    template<typename T>
+    void populate_1d_vec(std::vector<T>& vec)
+    {
+      std::uniform_int_distribution<uint32_t> uniform_dist(1, 1000);
+      for (auto i = 0; i < vec.size(); i++)
       {
-        std::uniform_int_distribution<uint32_t> uniform_dist(1, 1000);
-        for (auto i = 0; i < vec.size(); i++)
-        {
-          vec[i] = static_cast<T>(uniform_dist(generator));
-        }
+        vec[i] = static_cast<T>(uniform_dist(generator));
       }
+    }
 
-      template<typename T>
-      void populate_2d_vec(std::vector<std::vector<T>>& vec)
+    template<typename T>
+    void populate_2d_vec(std::vector<std::vector<T>>& vec)
+    {
+      for (auto i = 0; i < vec.size(); i++)
       {
-        for (auto i = 0; i < vec.size(); i++)
-        {
-          populate_1d_vec(vec[i]);
-        }
+        populate_1d_vec(vec[i]);
       }
+    }
 
-      template<typename T>
-      void populate_3d_vec(std::vector<std::vector<std::vector<T>>>& vec)
+    template<typename T>
+    void populate_3d_vec(std::vector<std::vector<std::vector<T>>>& vec)
+    {
+      for (auto i = 0; i < vec.size(); i++)
       {
-        for (auto i = 0; i < vec.size(); i++)
-        {
-          populate_2d_vec(vec[i]);
-        }
+        populate_2d_vec(vec[i]);
       }
+    }
 
 };
 

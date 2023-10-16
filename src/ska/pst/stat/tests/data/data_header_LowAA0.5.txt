@@ -22,7 +22,7 @@ BW                    75
 START_CHANNEL         0
 END_CHANNEL           20736
 RESOLUTION            5308416
-BYTES_PER_SECOND      16666666
+BYTES_PER_SECOND      800000000
 DATA_HOST             127.0.0.1
 DATA_PORT             9510
 LOCAL_HOST            127.0.0.1

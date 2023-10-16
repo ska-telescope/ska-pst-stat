@@ -35,7 +35,7 @@
 
 #ifdef HAVE_PROTOBUF_gRPC_SKAPSTLMC
 #include "ska/pst/common/lmc/LmcService.h"
-#include "ska/pst/stat/StatLmcServiceHandler.h"
+#include "ska/pst/stat/lmc/StatLmcServiceHandler.h"
 #endif
 
 #include <spdlog/spdlog.h>
@@ -147,11 +147,11 @@ auto main(int argc, char *argv[]) -> int
     std::unique_ptr<ska::pst::common::LmcService> lmc_service{nullptr};
     if (control_port != -1)
     {
-      // SPDLOG_INFO("Setting up gRPC LMC service on port {}", control_port);
-      // auto lmc_handler = std::make_shared<ska::pst::stat::StatLmcServiceHandler>(stat);
-      // lmc_service = std::make_unique<ska::pst::common::LmcService>(service_name, lmc_handler, control_port);
-      // lmc_service->start();
-      // SPDLOG_TRACE("gRPC LMC service has been started");
+      SPDLOG_INFO("Setting up gRPC LMC service on port {}", control_port);
+      auto lmc_handler = std::make_shared<ska::pst::stat::StatLmcServiceHandler>(stat);
+      lmc_service = std::make_unique<ska::pst::common::LmcService>(service_name, lmc_handler, control_port);
+      lmc_service->start();
+      SPDLOG_TRACE("gRPC LMC service has been started");
     }
     else
 #endif
