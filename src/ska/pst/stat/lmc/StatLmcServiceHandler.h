@@ -239,6 +239,54 @@ namespace ska::pst::stat {
         * @param exception an exception pointer to store on the application manager.
        */
       void go_to_runtime_error(std::exception_ptr exc) override;
+
+      /**
+       * @brief helper method for flattening 2d vectors
+       *
+       * @tparam T
+       * @param vec
+       * @param data
+       * @return size_t
+       */
+      template<typename T>
+      static size_t flatten_2d_vec(const std::vector<std::vector<T>>& vec, std::vector<float>& data)
+      {
+          // Check if the input vector is empty
+          if (vec.empty()) {
+              return 0;
+          }
+
+          size_t dim1 = vec.size();
+
+          // Check if any inner vectors are empty
+          if (dim1 == 0 || vec[0].empty()) {
+              return 0;
+          }
+
+          size_t dim2 = vec[0].size();
+
+          size_t num_elements = dim1 * dim2;
+          size_t stride = dim2 * sizeof(T);
+
+          // Resize the 'data' vector to fit the flattened data
+          data.resize(num_elements);
+
+          size_t offset = 0;
+
+          for (size_t i = 0; i < dim1; i++) {
+              // Check if the inner vector is empty
+              if (vec[i].size() != dim2) {
+                  data.clear();
+                  return 0;
+              }
+
+              std::memcpy(data.data() + offset, vec[i].data(), stride);
+              offset += stride;
+          }
+
+          return num_elements;
+      }
+
   };
 
 } // namespace ska::pst::stat

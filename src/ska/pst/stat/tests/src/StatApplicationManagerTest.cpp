@@ -298,9 +298,9 @@ TEST_F(StatApplicationManagerTest, test_configure_from_file) // NOLINT
     for (unsigned idim=0; idim<ss.mean_frequency_avg[ipol].size(); idim++) // NOLINT
     {
       // disable asserts due to gitlab inconsistency
-      // ASSERT_EQ(ss.mean_frequency_avg[ipol][idim], 0);
-      // ASSERT_EQ(ss.variance_frequency_avg[ipol][idim], 0);
-      // ASSERT_EQ(ss.num_clipped_samples[ipol][idim], 0);
+      ASSERT_EQ(ss.mean_frequency_avg[ipol][idim], 0);
+      ASSERT_EQ(ss.variance_frequency_avg[ipol][idim], 0);
+      ASSERT_EQ(ss.num_clipped_samples[ipol][idim], 0);
     }
   }
 
