@@ -38,6 +38,7 @@
 #include "ska/pst/smrb/DataBlockRead.h"
 #include "ska/pst/common/utils/FileWriter.h"
 
+#include "ska/pst/stat/StatFilenameConstructor.h"
 #include "ska/pst/stat/tests/StatApplicationManagerTest.h"
 
 auto main(int argc, char* argv[]) -> int
@@ -292,22 +293,23 @@ TEST_F(StatApplicationManagerTest, test_configure_from_file) // NOLINT
     waited_so_far += ska::pst::common::microseconds_per_decisecond;
   }
 
+  sleep(1);
+
   StatStorage::scalar_stats_t ss = sm->get_scalar_stats();
   for (unsigned ipol=0; ipol<ss.mean_frequency_avg.size(); ipol++) // NOLINT
   {
     for (unsigned idim=0; idim<ss.mean_frequency_avg[ipol].size(); idim++) // NOLINT
     {
-      // disable asserts due to gitlab inconsistency
-      // ASSERT_EQ(ss.mean_frequency_avg[ipol][idim], 0);
-      // ASSERT_EQ(ss.variance_frequency_avg[ipol][idim], 0);
-      // ASSERT_EQ(ss.num_clipped_samples[ipol][idim], 0);
+      ASSERT_EQ(ss.mean_frequency_avg[ipol][idim], 0);
+      ASSERT_EQ(ss.variance_frequency_avg[ipol][idim], 0);
+      ASSERT_EQ(ss.num_clipped_samples[ipol][idim], 0);
     }
   }
 
+  data_header.set_val("STAT_BASE_PATH", stat_base_path);
+  ska::pst::stat::StatFilenameConstructor namer(data_header);
   uint64_t file_number = 0;
-  std::filesystem::path stat_file = StatHdf5FileWriter::construct_output_filename(
-    stat_base_path, data_header.get_val("EB_ID"), data_header.get_val("SCAN_ID"), data_header.get_val("TELESCOPE"),
-    data_header.get_val("UTC_START"), data_header.get_uint64("OBS_OFFSET"), file_number);
+  std::filesystem::path stat_file = namer.get_filename(data_header.get_val("UTC_START"), data_header.get_uint64("OBS_OFFSET"), file_number);
   SPDLOG_DEBUG("test_configure_from_file expected stat_file={}", stat_file.generic_string());
 
   std::string path = stat_file.parent_path();

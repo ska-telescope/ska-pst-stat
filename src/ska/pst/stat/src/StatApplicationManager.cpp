@@ -136,7 +136,7 @@ void ska::pst::stat::StatApplicationManager::perform_configure_beam()
   }
   catch (std::runtime_error& exc)
   {
-    SPDLOG_ERROR("ska::pst::stat::StatApplicationManager::perform_configure_beam DATA_KEY={} was an invalid", data_key);
+    SPDLOG_ERROR("ska::pst::stat::StatApplicationManager::perform_configure_beam DATA_KEY={} was invalid", data_key);
     throw std::runtime_error("ska::pst::stat::StatApplicationManager::perform_configure_beam DATA_KEY was invalid");
   }
 

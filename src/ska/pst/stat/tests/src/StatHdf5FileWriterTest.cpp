@@ -35,7 +35,6 @@
 #include "ska/pst/common/definitions.h"
 #include "ska/pst/common/utils/AsciiHeader.h"
 #include "ska/pst/common/utils/Timer.h"
-#include "ska/pst/common/definitions.h"
 #include "ska/pst/stat/tests/StatHdf5FileWriterTest.h"
 #include "ska/pst/stat/testutils/GtestMain.h"
 
