@@ -241,15 +241,19 @@ namespace ska::pst::stat {
       void go_to_runtime_error(std::exception_ptr exc) override;
 
       /**
-       * @brief helper method for flattening 2d vectors
+       * @brief Helper method for flattening a 2D vector into a 1D vector.
        *
-       * @tparam T
-       * @param vec
-       * @param data
-       * @return size_t
+       * This function takes a 2D vector and flattens it into a 1D vector of floats. It checks for
+       * empty vectors, dimensions, and inner vector sizes and logs warnings when data integrity
+       * issues are detected.
+       *
+       * @tparam T The type of elements in the input vector.
+       * @param vec The 2D vector to be flattened.
+       * @param data The output 1D vector to store the flattened data.
+       * @return The number of elements in the flattened data vector.
        */
       template<typename T>
-      static size_t flatten_2d_vec(const std::vector<std::vector<T>>& vec, std::vector<float>& data)
+      static size_t flatten_2d_vec(const std::vector<std::vector<T>>& vec, std::vector<uint32_t>& data)
       {
           // Check if the input vector is empty
           if (vec.empty()) {
@@ -276,6 +280,7 @@ namespace ska::pst::stat {
           for (size_t i = 0; i < dim1; i++) {
               // Check if the inner vector is empty
               if (vec[i].size() != dim2) {
+                  SPDLOG_WARN("StatLmcServiceHandler::flatten_2d_vec vec[{}].size() != dim2. Clearing Data and returning 0", i);
                   data.clear();
                   return 0;
               }
