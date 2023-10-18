@@ -44,13 +44,13 @@ auto beam_configuration_as_ascii_header(
   SPDLOG_TRACE("ska::pst::stat::beam_configuration_as_ascii_header()");
   if (!configuration.has_stat())
   {
-  SPDLOG_WARN("BeamConfiguration protobuf message has no STAT.CORE details provided.");
+    SPDLOG_WARN("BeamConfiguration protobuf message has no STAT.CORE details provided.");
 
-  throw ska::pst::common::LmcServiceException(
-    "Expected a STAT.CORE beam configuration object, but none were provided.",
-    ska::pst::lmc::ErrorCode::INVALID_REQUEST,
-    grpc::StatusCode::INVALID_ARGUMENT
-  );
+    throw ska::pst::common::LmcServiceException(
+      "Expected a STAT.CORE beam configuration object, but none were provided.",
+      ska::pst::lmc::ErrorCode::INVALID_REQUEST,
+      grpc::StatusCode::INVALID_ARGUMENT
+    );
   }
 
   const auto &stat_beam_configurations = configuration.stat();
@@ -79,6 +79,11 @@ auto scan_configuration_as_ascii_header(
   const auto& request = configuration.stat();
 
   ska::pst::common::AsciiHeader scan_configuration;
+  scan_configuration.set_val("EB_ID", request.execution_block_id());
+  scan_configuration.set("STAT_PROC_DELAY_MS", request.processing_delay_ms());
+  scan_configuration.set("STAT_REQ_TIME_BINS", request.req_time_bins());
+  scan_configuration.set("STAT_REQ_FREQ_BINS", request.req_freq_bins());
+  scan_configuration.set("STAT_NREBIN", request.num_rebin());
   return scan_configuration;
 }
 
@@ -113,9 +118,9 @@ void ska::pst::stat::StatLmcServiceHandler::configure_beam(
     SPDLOG_WARN("Received configure beam request when in Runtime Error.");
 
     throw ska::pst::common::LmcServiceException(
-        "Received configure beam request when in Runtime Error.",
-        ska::pst::lmc::ErrorCode::INVALID_REQUEST,
-        grpc::StatusCode::FAILED_PRECONDITION
+      "Received configure beam request when in Runtime Error.",
+      ska::pst::lmc::ErrorCode::INVALID_REQUEST,
+      grpc::StatusCode::FAILED_PRECONDITION
     );
   }
 
@@ -307,8 +312,11 @@ void ska::pst::stat::StatLmcServiceHandler::get_scan_configuration(
   const auto &curr_scan_configuration = stat->get_scan_configuration();
   auto *stat_scan_configuration = configuration->mutable_stat();
 
-  // TODO(jesmigel): confirm set functions
-  // stat_scan_configuration->set_ functions
+  stat_scan_configuration->set_execution_block_id(curr_scan_configuration.get_val("EB_ID"));
+  stat_scan_configuration->set_processing_delay_ms(curr_scan_configuration.get_uint32("STAT_PROC_DELAY_MS"));
+  stat_scan_configuration->set_req_time_bins(curr_scan_configuration.get_uint32("STAT_REQ_TIME_BINS"));
+  stat_scan_configuration->set_req_freq_bins(curr_scan_configuration.get_uint32("STAT_REQ_FREQ_BINS"));
+  stat_scan_configuration->set_num_rebin(curr_scan_configuration.get_uint32("STAT_NREBIN"));
 }
 
 auto ska::pst::stat::StatLmcServiceHandler::is_scan_configured() const noexcept -> bool
@@ -317,7 +325,7 @@ auto ska::pst::stat::StatLmcServiceHandler::is_scan_configured() const noexcept 
   return stat->is_scan_configured();
 }
 
-void ska::pst::stat::StatLmcServiceHandler::start_scan(const ska::pst::lmc::StartScanRequest& /*request*/)
+void ska::pst::stat::StatLmcServiceHandler::start_scan(const ska::pst::lmc::StartScanRequest& request)
 {
   SPDLOG_TRACE("ska::pst::stat::StatLmcServiceHandler::start_scan()");
 
@@ -346,14 +354,13 @@ void ska::pst::stat::StatLmcServiceHandler::start_scan(const ska::pst::lmc::Star
   {
     SPDLOG_WARN("Received scan request when already scanning.");
     throw ska::pst::common::LmcServiceException(
-        "STAT.CORE is already scanning.",
-        ska::pst::lmc::ErrorCode::ALREADY_SCANNING,
-        grpc::StatusCode::FAILED_PRECONDITION
+      "STAT.CORE is already scanning.",
+      ska::pst::lmc::ErrorCode::ALREADY_SCANNING,
+      grpc::StatusCode::FAILED_PRECONDITION
     );
   }
   ska::pst::common::AsciiHeader start_scan_config;
-  // TODO(jesmigel): get SCAN_ID from request if not provided. It should be obtained from SMRB.
-  start_scan_config.set_val("SCAN_ID", "1");
+  start_scan_config.set("SCAN_ID", request.scan_id());
 
   stat->start_scan(start_scan_config);
 }
@@ -390,7 +397,7 @@ void ska::pst::stat::StatLmcServiceHandler::reset()
   SPDLOG_INFO("ska::pst::stat::StatLmcServiceHandler::reset()");
   if (stat->get_state() == ska::pst::common::State::RuntimeError)
   {
-      stat->reset();
+    stat->reset();
   }
 }
 
@@ -406,35 +413,33 @@ void ska::pst::stat::StatLmcServiceHandler::get_monitor_data(
   SPDLOG_TRACE("ska::pst::stat::StatLmcServiceHandler::get_monitor_data()");
   if (!is_scanning())
   {
-      SPDLOG_WARN("Received get_monitor_data request when not scanning.");
+    SPDLOG_WARN("Received get_monitor_data request when not scanning.");
 
-      throw ska::pst::common::LmcServiceException(
-          "Received get_monitor_data request when STAT.CORE is not scanning.",
-          ska::pst::lmc::ErrorCode::NOT_SCANNING,
-          grpc::StatusCode::FAILED_PRECONDITION
-      );
+    throw ska::pst::common::LmcServiceException(
+      "Received get_monitor_data request when STAT.CORE is not scanning.",
+      ska::pst::lmc::ErrorCode::NOT_SCANNING,
+      grpc::StatusCode::FAILED_PRECONDITION
+    );
   }
 
   auto *stat_monitor_data = data->mutable_stat();
 
   // TODO(jesmigel): implement get_scalar_stats in StatApplicationManager
-  // const auto &stats = stat->get_scalar_stats();
-  float placeholder = 0.0;
-  stat_monitor_data->set_mean_frequency_avg(0, placeholder);
-  stat_monitor_data->set_mean_frequency_avg_masked(0, placeholder);
-  stat_monitor_data->set_variance_frequency_avg(0, placeholder);
-  stat_monitor_data->set_variance_frequency_avg_masked(0, placeholder);
-  stat_monitor_data->set_num_clipped_samples_spectrum(0, 0.0);
-  // stat_monitor_data->num_clipped_samples_spectrum_masked(0, 0.0);
+  const auto &stats = stat->get_scalar_stats();
+  stat_monitor_data->set_mean_frequency_avg(0, stats.mean_frequency_avg[0][0]);
+  stat_monitor_data->set_mean_frequency_avg_masked(0, stats.mean_frequency_avg_masked[0][0]);
+  stat_monitor_data->set_variance_frequency_avg(0, stats.variance_frequency_avg[0][0]);
+  stat_monitor_data->set_variance_frequency_avg_masked(0, stats.variance_frequency_avg_masked[0][0]);
+  stat_monitor_data->set_num_clipped_samples(0, stats.num_clipped_samples[0][0]);
+  stat_monitor_data->set_num_clipped_samples_masked(0, stats.num_clipped_samples_masked[0][0]);
 }
 
 void ska::pst::stat::StatLmcServiceHandler::get_env(
-  ska::pst::lmc::GetEnvironmentResponse* response
+  ska::pst::lmc::GetEnvironmentResponse* /*response*/
 ) noexcept
 {
   SPDLOG_TRACE("ska::pst::stat::StatLmcServiceHandler::get_env()");
-  auto values = response->mutable_values();
-
+  // auto values = response->mutable_values();
   // auto stats = stat->get_scalar_stats();
 }
 

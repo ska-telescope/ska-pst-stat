@@ -38,8 +38,7 @@
 #define SKA_PST_STAT_TESTS_StatProcessorTest_h
 
 namespace ska::pst::stat::test {
-/**
-  */
+
   class TestStatProcessor : public StatProcessor
   {
     public:

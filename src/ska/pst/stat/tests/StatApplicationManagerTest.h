@@ -58,6 +58,7 @@ class StatApplicationManagerTest : public ::testing::Test
 
     ska::pst::common::AsciiHeader config;
     ska::pst::common::AsciiHeader header;
+
   public:
     StatApplicationManagerTest();
 
@@ -76,8 +77,6 @@ class StatApplicationManagerTest : public ::testing::Test
     ska::pst::common::AsciiHeader scan_config;
     ska::pst::common::AsciiHeader start_scan_config;
 
-    ska::pst::common::AsciiHeader data_scan_config;
-    ska::pst::common::AsciiHeader weights_scan_config;
     ska::pst::common::AsciiHeader data_header;
     ska::pst::common::AsciiHeader weights_header;
 
@@ -95,6 +94,7 @@ class StatApplicationManagerTest : public ::testing::Test
     std::vector<char> weights_to_write;
 
     std::unique_ptr<ska::pst::stat::StatApplicationManager> sm{nullptr};
+    std::string stat_base_path{"/tmp"};
 
 };
 } // namespace ska::pst::stat::test

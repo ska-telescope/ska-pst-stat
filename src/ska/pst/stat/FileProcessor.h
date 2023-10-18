@@ -28,14 +28,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "ska/pst/stat/StatHdf5FileWriter.h"
 #include "ska/pst/stat/StatProcessor.h"
 #include "ska/pst/common/utils/FileSegmentProducer.h"
 
 #include <memory>
 #include <vector>
 
-#ifndef __SKA_PST_STAT_FileProcessor_h
-#define __SKA_PST_STAT_FileProcessor_h
+#ifndef SKA_PST_STAT_FileProcessor_h
+#define SKA_PST_STAT_FileProcessor_h
 
 namespace ska::pst::stat {
 
@@ -111,10 +112,13 @@ namespace ska::pst::stat {
       //! shared pointer a statistics processor
       std::shared_ptr<StatProcessor> processor;
 
+      //! shared pointer to a statistics publisher
+      std::shared_ptr<StatHdf5FileWriter> publisher;
+
       //! the block loader that us used to mmap the data and weights files
       std::unique_ptr<ska::pst::common::FileSegmentProducer> segment_producer;
   };
 
 } // namespace ska::pst::stat
 
-#endif // __SKA_PST_STAT_FileProcessor_h
+#endif // SKA_PST_STAT_FileProcessor_h

@@ -15,9 +15,9 @@ set(sources
   src/version.cpp
   src/StatStorage.cpp
   src/StatPublisher.cpp
+  src/StatFilenameConstructor.cpp
   src/StatHdf5FileWriter.cpp
   src/StatComputer.cpp
-  src/StatStorage.cpp
   src/StatProcessor.cpp
   src/ScalarStatPublisher.cpp
 )
@@ -26,6 +26,7 @@ set(private_headers
   FileProcessor.h
   StatApplicationManager.h
   StatComputer.h
+  StatFilenameConstructor.h
   StatHdf5FileWriter.h
   StatProcessor.h
   StatPublisher.h

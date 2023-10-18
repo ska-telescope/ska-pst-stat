@@ -42,10 +42,7 @@
 #ifndef SKA_PST_STAT_TESTS_StatLmcServiceIntegrationTest_h
 #define SKA_PST_STAT_TESTS_StatLmcServiceIntegrationTest_h
 
-namespace ska {
-namespace pst {
-namespace stat {
-namespace test {
+namespace ska::pst::stat::test {
 
 /**
  * @brief Simple test to check integration via LmcService
@@ -97,8 +94,8 @@ class StatLmcServiceIntegrationTest : public ::testing::Test
 
     float delay_ms = 1000;
     int test_nblocks = 4;
-    uint64_t data_bufsz;
-    uint64_t weights_bufsz;
+    uint64_t data_bufsz{0};
+    uint64_t weights_bufsz{0};
     std::string data_key;
     std::string weights_key;
     ska::pst::common::AsciiHeader beam_config;
@@ -120,11 +117,10 @@ class StatLmcServiceIntegrationTest : public ::testing::Test
     std::shared_ptr<ska::pst::stat::StatApplicationManager> _stat{nullptr};
     std::shared_ptr<grpc::Channel> _channel{nullptr};
     std::shared_ptr<ska::pst::lmc::PstLmcService::Stub> _stub{nullptr};
+
+    std::string stat_base_path = "/tmp";
 };
 
-} // namespace test
-} // namespace stat
-} // namespace pst
-} // namespace ska
+} // namespace ska::pst::stat::test
 
 #endif // SKA_PST_STAT_TESTS_StatLmcServiceIntegrationTest_h

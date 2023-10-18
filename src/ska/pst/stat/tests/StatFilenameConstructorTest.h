@@ -28,82 +28,47 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <random>
 #include <gtest/gtest.h>
-#include <gmock/gmock.h>
 #include "ska/pst/common/utils/AsciiHeader.h"
-#include "ska/pst/stat/StatStorage.h"
-#include "ska/pst/stat/ScalarStatPublisher.h"
+#include "ska/pst/stat/StatFilenameConstructor.h"
 
-#ifndef SKA_PST_STAT_TESTS_ScalarStatPublisherTest_h
-#define SKA_PST_STAT_TESTS_ScalarStatPublisherTest_h
+#ifndef SKA_PST_STAT_TESTS_StatFilenameConstructorTest_h
+#define SKA_PST_STAT_TESTS_StatFilenameConstructorTest_h
 
 namespace ska::pst::stat::test {
 
 /**
- * @brief Test the ScalarStatPublisher class
+ * @brief Test the StatFilenameConstructor class
  *
  * @details
  *
  */
-class ScalarStatPublisherTest : public ::testing::Test
+class StatFilenameConstructorTest : public ::testing::Test
 {
   protected:
     void SetUp() override;
 
     void TearDown() override;
 
-    std::shared_ptr<ska::pst::stat::StatStorage> storage{nullptr};
+    ska::pst::common::AsciiHeader header;
 
-    ska::pst::common::AsciiHeader config;
+    std::string expected_filename;
 
-    std::mutex scalar_stats_test_mutex;
+    std::string utc_start;
 
-    void populate_storage();
+    uint64_t obs_offset{0};
 
-    std::shared_ptr<ScalarStatPublisher> scalar_stat_publisher{nullptr};
+    uint64_t file_number{0};
 
   public:
-    ScalarStatPublisherTest();
-    ~ScalarStatPublisherTest() = default;
+      StatFilenameConstructorTest();
 
-    void initialise(const std::string& config_file = "data_config.txt");
+      ~StatFilenameConstructorTest() = default;
 
   private:
-
-    //! random number engine based on Mersenne Twister algorithm
-    std::mt19937 generator;
-
-    template<typename T>
-    void populate_1d_vec(std::vector<T>& vec)
-    {
-      std::uniform_int_distribution<uint32_t> uniform_dist(1, 1000);
-      for (auto i = 0; i < vec.size(); i++)
-      {
-        vec[i] = static_cast<T>(uniform_dist(generator));
-      }
-    }
-
-    template<typename T>
-    void populate_2d_vec(std::vector<std::vector<T>>& vec)
-    {
-      for (auto i = 0; i < vec.size(); i++)
-      {
-        populate_1d_vec(vec[i]);
-      }
-    }
-
-    template<typename T>
-    void populate_3d_vec(std::vector<std::vector<std::vector<T>>>& vec)
-    {
-      for (auto i = 0; i < vec.size(); i++)
-      {
-        populate_2d_vec(vec[i]);
-      }
-    }
 
 };
 
 } // namespace ska::pst::stat::test
 
-#endif // SKA_PST_STAT_TESTS_ScalarStatPublisherTest_h
+#endif // SKA_PST_STAT_TESTS_StatFilenameConstructorTest_h

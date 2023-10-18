@@ -32,8 +32,8 @@
 
 #include "ska/pst/common/utils/AsciiHeader.h"
 
-#ifndef __SKA_PST_STAT_StatStorage_h
-#define __SKA_PST_STAT_StatStorage_h
+#ifndef SKA_PST_STAT_StatStorage_h
+#define SKA_PST_STAT_StatStorage_h
 
 namespace ska::pst::stat {
 
@@ -413,6 +413,34 @@ namespace ska::pst::stat {
       void set_total_sample_time(double _total_sample_time) { total_sample_time = _total_sample_time; };
 
       /**
+       * @brief Get the utc start offset in seconds of the first sample that was integrated into the statistics.
+       *
+       * @return double utc start offset in seconds
+       */
+      double get_utc_start_offset_seconds() const { return utc_start_offset_seconds; };
+
+      /**
+       * @brief Set the utc start offset in seconds of the first sample that was integrated into the statistics.
+       *
+       * @param _utc_start_offset_seconds utc start offset in seconds
+       */
+      void set_utc_start_offset_seconds(double _utc_start_offset_seconds) { utc_start_offset_seconds = _utc_start_offset_seconds; };
+
+      /**
+       * @brief Get the utc start offset in bytes of the first sample that was integrated into the statistics.
+       *
+       * @return size_t utc start offset in bytes
+       */
+      size_t get_utc_start_offset_bytes() const { return utc_start_offset_bytes; };
+
+      /**
+       * @brief Set the utc start offset in bytes of the first sample that was integrated into the statistics.
+       *
+       * @param _utc_start_offset_bytes utc start offset in bytess
+       */
+      void set_utc_start_offset_bytes(size_t _utc_start_offset_bytes) { utc_start_offset_bytes = _utc_start_offset_bytes; };
+
+      /**
        * @brief Get flag for whether the storage has been resized
        *
        * @return true storage has been resized
@@ -605,8 +633,15 @@ namespace ska::pst::stat {
 
       //! total time, in seconds, for sample of data the statistics are for
       double total_sample_time{0.0};
+
+      //! offset from the UTC_START for the first sample the statistics represent, in bytes
+      size_t utc_start_offset_bytes{0};
+
+      //! offset from the UTC_START for the first sample the statistics represent, in seconds
+      double utc_start_offset_seconds{0};
+
   };
 
 } // namespace ska::pst::stat
 
-#endif // __SKA_PST_STAT_StatStorage_h
+#endif // SKA_PST_STAT_StatStorage_h

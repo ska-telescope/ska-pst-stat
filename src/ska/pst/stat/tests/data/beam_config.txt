@@ -1,2 +1,10 @@
+# Stat Beam Configuration
+
 DATA_KEY            a000
 WEIGHTS_KEY         a010
+HB_NBUFS            4
+HB_BUFSZ            4096
+DB_NBUFS            4
+DB_BUFSZ            10616832
+WB_NBUFS            4
+WB_BUFSZ            89856

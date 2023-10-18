@@ -44,14 +44,8 @@ ska::pst::stat::StatProcessor::StatProcessor(
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::StatProcessor weights_config:\n{}", weights_config.raw());
   data_resolution = data_config.get_uint32("RESOLUTION");
   weights_resolution = weights_config.get_uint32("RESOLUTION");
-  if (data_config.has("STAT_REQ_TIME_BINS"))
-  {
-    req_time_bins = data_config.get_uint32("STAT_REQ_TIME_BINS");
-  }
-  if (data_config.has("STAT_REQ_FREQ_BINS"))
-  {
-    req_freq_bins = data_config.get_uint32("STAT_REQ_FREQ_BINS");
-  }
+  req_time_bins = data_config.get_uint32("STAT_REQ_TIME_BINS");
+  req_freq_bins = data_config.get_uint32("STAT_REQ_FREQ_BINS");
   nchan = data_config.get_uint32("NCHAN");
 
   if (req_time_bins <= 0 || req_time_bins > max_time_bins)
@@ -85,7 +79,7 @@ void ska::pst::stat::StatProcessor::interrupt()
   computer->interrupt();
 }
 
-void ska::pst::stat::StatProcessor::add_publisher(std::unique_ptr<StatPublisher> publisher)
+void ska::pst::stat::StatProcessor::add_publisher(std::shared_ptr<StatPublisher> publisher)
 {
   publishers.push_back(std::move(publisher));
 }
@@ -94,6 +88,7 @@ auto ska::pst::stat::StatProcessor::process(const ska::pst::common::SegmentProdu
 {
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process segment.data.size={}", segment.data.size);
   SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process segment.weights.size={}", segment.weights.size);
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process segment.data.obs_offset={}", segment.data.obs_offset);
 
   if (segment.data.block == nullptr)
   {
@@ -138,8 +133,8 @@ auto ska::pst::stat::StatProcessor::process(const ska::pst::common::SegmentProdu
 
   auto num_data_heaps = segment.data.size / data_resolution;
   auto num_weights_heaps = segment.weights.size / weights_resolution;
-  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process num_data_heaps={}", num_data_heaps);
-  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process num_weights_heaps={}", num_weights_heaps);
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process num_data_heaps={} size={} resolution={}", num_data_heaps, segment.data.size, data_resolution);
+  SPDLOG_DEBUG("ska::pst::stat::StatProcessor::process num_weights_heaps={} size={} resolution={}", num_weights_heaps, segment.weights.size, weights_resolution);
   if (num_data_heaps == 0)
   {
     SPDLOG_ERROR("ska::pst::stat::StatProcessor::process segment.data.size \% data_resolution={}", (segment.data.size % data_resolution));

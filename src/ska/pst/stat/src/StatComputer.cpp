@@ -99,6 +99,13 @@ ska::pst::stat::StatComputer::StatComputer(
     throw std::runtime_error("ska::pst::stat::StatComputer::StatComputer tsamp not greater than 0");
   }
 
+  bytes_per_second = data_config.get_double("BYTES_PER_SECOND");
+  if (bytes_per_second == 0.0)
+  {
+    SPDLOG_ERROR("ska::pst::stat::StatComputer::StatComputer bytes_per_second not greater than 0");
+    throw std::runtime_error("ska::pst::stat::StatComputer::StatComputer bytes_per_second not greater than 0");
+  }
+
   if (data_config.has("NMASK")) {
     nmask = data_config.get_uint32("NMASK");
   }
@@ -213,6 +220,11 @@ auto ska::pst::stat::StatComputer::compute(const ska::pst::common::SegmentProduc
     SPDLOG_WARN("ska::pst::stat::StatComputer::compute - segment.data.size is zero. No computation necessary");
     return false;
   }
+
+  double utc_start_offset_seconds = static_cast<double>(segment.data.obs_offset) / bytes_per_second;
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::compute - segment.data.obs_offset={} offset_seconds={}", segment.data.obs_offset, utc_start_offset_seconds);
+  storage->set_utc_start_offset_bytes(segment.data.obs_offset);
+  storage->set_utc_start_offset_seconds(utc_start_offset_seconds);
 
   const uint32_t nheaps = segment.data.size / heap_layout.get_data_heap_stride();
   SPDLOG_DEBUG("ska::pst::stat::StatComputer::compute - nheaps={}", nheaps);

@@ -1,5 +1,5 @@
-PACKET_WEIGHTS_SIZE 48
-PACKET_SCALES_SIZE  4
+# Complete weights header for the DataBlockTestHelper
+
 HDR_SIZE            4096
 HDR_VERSION         1.0
 TELESCOPE           SKALow
@@ -32,19 +32,15 @@ SOURCE              J0437-4715
 DATA_KEY            a000
 WEIGHTS_KEY         a010
 NUMA_NODE           0
-HB_NBUFS            8
-HB_BUFSZ            4096
-DB_NBUFS            8
-DB_BUFSZ            11059200
-WB_NBUFS            8
-WB_BUFSZ            93600
-SCAN_ID             1
 BEAM_ID             1
-DATA_GENERATOR      Sine
-ORDER               TSFP
-NSAMP_PER_WEIGHT    32
+DATA_GENERATOR      GaussianNoise
 UTC_START           2023-02-14-22:15:37
 PICOSECONDS         0
 FILE_NUMBER         0
-STAT_OUTPUT_FILENAME /tmp/stats.h5
+SCAN_ID             12345
 EB_ID               eb-m001-20230921-12345
+NORMAL_DIST_MEAN    0
+NORMAL_DIST_STDDEV  10
+NSAMP_PER_WEIGHT    32
+PACKET_WEIGHTS_SIZE 48
+PACKET_SCALES_SIZE  4

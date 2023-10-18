@@ -32,14 +32,13 @@
 #include "ska/pst/stat/StatPublisher.h"
 #include "ska/pst/stat/StatStorage.h"
 #include "ska/pst/stat/StatComputer.h"
-#include "ska/pst/stat/StatHdf5FileWriter.h"
 #include "ska/pst/common/definitions.h"
 
 #include <memory>
 #include <vector>
 
-#ifndef __SKA_PST_STAT_StatProcessor_h
-#define __SKA_PST_STAT_StatProcessor_h
+#ifndef SKA_PST_STAT_StatProcessor_h
+#define SKA_PST_STAT_StatProcessor_h
 
 namespace ska::pst::stat {
 
@@ -71,7 +70,7 @@ namespace ska::pst::stat {
        *
        * @param publisher
        */
-      void add_publisher(std::unique_ptr<StatPublisher> publisher);
+      void add_publisher(std::shared_ptr<StatPublisher> publisher);
 
       /**
        * @brief process the current block of data and weights.
@@ -98,7 +97,7 @@ namespace ska::pst::stat {
       std::unique_ptr<StatComputer> computer;
 
       //! unique pointer to each of the statistics publishers.
-      std::vector<std::unique_ptr<StatPublisher>> publishers;
+      std::vector<std::shared_ptr<StatPublisher>> publishers;
 
       //! the configuration for the current stream of voltage data.
       ska::pst::common::AsciiHeader data_config;
@@ -141,4 +140,4 @@ namespace ska::pst::stat {
 
 } // namespace ska::pst::stat
 
-#endif // __SKA_PST_STAT_StatProcessor_h
+#endif // SKA_PST_STAT_StatProcessor_h

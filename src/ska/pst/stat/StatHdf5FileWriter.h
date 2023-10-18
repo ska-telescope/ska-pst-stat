@@ -32,13 +32,14 @@
 #include "ska/pst/stat/StatPublisher.h"
 
 #include <spdlog/spdlog.h>
+#include <filesystem>
 #include <H5Cpp.h>
 #include <memory>
 #include <string>
 #include <cstring>
 
-#ifndef __SKA_PST_STAT_StatHdf5FileWriter_h
-#define __SKA_PST_STAT_StatHdf5FileWriter_h
+#ifndef SKA_PST_STAT_StatHdf5FileWriter_h
+#define SKA_PST_STAT_StatHdf5FileWriter_h
 
 namespace ska::pst::stat {
 
@@ -138,6 +139,10 @@ namespace ska::pst::stat {
       auto get_hdf5_header_datatype() -> H5::CompType;
 
     private:
+
+      //! sequence number of HDF5 files produced
+      unsigned file_number{0};
+
       //! write array out to a HDF5 DataSpace
       void write_array(const std::vector<char>& data, const std::string& field_name, const H5::PredType& datatype, H5::DataSpace& dataspace);
 
@@ -240,8 +245,9 @@ namespace ska::pst::stat {
       }
 
       std::shared_ptr<H5::H5File> file{nullptr};
+
   };
 
 } // namespace ska::pst::stat
 
-#endif // __SKA_PST_STAT_StatHdf5FileWriter_h
+#endif // SKA_PST_STAT_StatHdf5FileWriter_h

@@ -36,10 +36,11 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <filesystem>
 #include <algorithm>
 
 #include "ska/pst/stat/StatHdf5FileWriter.h"
+#include "ska/pst/stat/StatFilenameConstructor.h"
+#include "ska/pst/common/utils/FileWriter.h"
 #include "ska/pst/common/definitions.h"
 
 
@@ -86,7 +87,7 @@ auto ska::pst::stat::StatHdf5FileWriter::get_hdf5_header_datatype() -> H5::CompT
 }
 
 template<typename T>
-auto get_val_if_has (const ska::pst::common::AsciiHeader& config, const char* key, T default_value) -> T
+auto get_val_if_has(const ska::pst::common::AsciiHeader& config, const char* key, T default_value) -> T
 {
   if (config.has(key))
   {
@@ -104,7 +105,7 @@ auto get_val_if_has (const ska::pst::common::AsciiHeader& config, const char* ke
 void ska::pst::stat::StatHdf5FileWriter::publish(std::shared_ptr<StatStorage> storage)
 {
   SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::publish()");
-  SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::publish() - config\n{}", config.raw());
+  SPDLOG_TRACE("ska::pst::stat::StatHdf5FileWriter::publish() - config\n{}", config.raw());
 
   auto npol = storage->get_npol();
   auto ndim = storage->get_ndim();
@@ -117,9 +118,10 @@ void ska::pst::stat::StatHdf5FileWriter::publish(std::shared_ptr<StatStorage> st
   stat_hdf5_header_t header;
 
   auto picoseconds = config.get_uint64("PICOSECONDS");
-  auto t_min = static_cast<double>(ska::pst::common::attoseconds_per_microsecond) /
+  auto picoseconds_offset_in_seconds = static_cast<double>(ska::pst::common::attoseconds_per_microsecond) /
     static_cast<double>(ska::pst::common::attoseconds_per_second) *
     static_cast<double>(picoseconds);
+  auto t_min = picoseconds_offset_in_seconds + storage->get_utc_start_offset_seconds();
 
   std::string unknown = "unknown";
   std::string eb_id = get_val_if_has(config, "EB_ID", unknown);
@@ -148,7 +150,25 @@ void ska::pst::stat::StatHdf5FileWriter::publish(std::shared_ptr<StatStorage> st
   write_1d_vec_header(storage->timeseries_bins, header.timeseries_bins);
 
   std::vector<char> temp_data;
-  std::string stat_filename = config.get_val("STAT_OUTPUT_FILENAME");
+  std::string stat_filename;
+  if (config.has("STAT_OUTPUT_FILENAME"))
+  {
+    stat_filename = config.get_val("STAT_OUTPUT_FILENAME");
+  }
+  else
+  {
+    StatFilenameConstructor namer(config);
+    auto obs_offset = static_cast<uint64_t>(storage->get_utc_start_offset_bytes());
+
+    // construct the required output path of
+    std::filesystem::path filename = namer.get_filename(utc_start, obs_offset, file_number);
+    SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::publish constructed filename={}", filename.generic_string());
+
+    create_directories(filename.parent_path());
+
+    stat_filename = filename.generic_string();
+  }
+
   try
   {
     SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::publish opening file: {}", stat_filename);
@@ -187,6 +207,7 @@ void ska::pst::stat::StatHdf5FileWriter::publish(std::shared_ptr<StatStorage> st
     write_3d_vec<float>(storage->timeseries_masked, "TIMESERIES_MASKED", H5::PredType::NATIVE_FLOAT, temp_data);
 
     file->close();
+    file_number++;
   }
   catch (H5::Exception& exc)
   {

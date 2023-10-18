@@ -31,6 +31,9 @@
 #include "ska/pst/common/utils/AsciiHeader.h"
 #include "ska/pst/common/statemodel/ApplicationManager.h"
 #include "ska/pst/smrb/SmrbSegmentProducer.h"
+#include "ska/pst/stat/ScalarStatPublisher.h"
+#include "ska/pst/stat/StatHdf5FileWriter.h"
+#include "ska/pst/stat/StatStorage.h"
 #include "ska/pst/stat/StatProcessor.h"
 
 #include <string>
@@ -38,8 +41,8 @@
 #include <vector>
 #include <mutex>
 
-#ifndef __SKA_PST_STAT_StatApplicationManager_h
-#define __SKA_PST_STAT_StatApplicationManager_h
+#ifndef SKA_PST_STAT_StatApplicationManager_h
+#define SKA_PST_STAT_StatApplicationManager_h
 
 namespace ska::pst::stat {
 
@@ -50,17 +53,37 @@ namespace ska::pst::stat {
   class StatApplicationManager : public ska::pst::common::ApplicationManager
   {
     public:
+
+      /**
+       * @brief Enumeration of statistics processor's state
+       *
+       */
+      enum ProcessingState {
+        Unknown,
+        Idle,
+        Processing,
+        Waiting,
+      };
+
       /**
        * @brief Create instance of a Stat Application Manager object.
        *
+       * @param base_path directory to which stat hdf5 files will be written.
        */
-      StatApplicationManager();
+      StatApplicationManager(std::string base_path);
 
       /**
        * @brief Destroy the Stat Application Manager object.
        *
        */
       ~StatApplicationManager();
+
+      /**
+       * @brief Get the base path the StatApplicationManager is constructed with.
+       *
+       * @return std::string filesystem base path to where files will be written
+       */
+      std::string get_stat_base_path() { return stat_base_path; };
 
       /**
        * @brief Configure beam and scan as described by the configuration file
@@ -161,15 +184,51 @@ namespace ska::pst::stat {
        */
       void set_timeout(int _timeout) { timeout = _timeout; }
 
+      /**
+       * @brief Get the scalar stats object
+       *
+       * @return StatStorage::scalar_stats_t
+       */
+      StatStorage::scalar_stats_t get_scalar_stats();
+
+      /**
+       * @brief Get the processing state of the application manager
+       *
+       * @return State processing state of the application manager
+       */
+      ProcessingState get_processing_state() { return processing_state; };
+
     private:
+
+      //! Current processing state of the application manager
+      ProcessingState processing_state{Unknown};
+
+      //! directory to which stat HDF5 files will be written.
+      std::string stat_base_path;
+
       //! timeout, in seconds, to wait when attempting to connect to the DataBlockView object.
       int timeout{120};
 
       //! delay, in milliseconds, to wait between processing data from the producer
-      unsigned processing_delay{5000};
+      uint32_t processing_delay{5000};
 
       //! flag to indicate if processing of statistics should be contining
       bool keep_processing{true};
+
+      //! hexidecimal shared memory key for the data ring buffer
+      std::string data_key;
+
+      //! hexidecimal shared memory key for the weights ring buffer
+      std::string weights_key;
+
+      //! requested number of time bins for statistics
+      uint32_t req_time_bins{0};
+
+      //! requested number of freq bins for statistics
+      uint32_t req_freq_bins{0};
+
+      //! number of bins to re-bin the large histograms into
+      uint32_t num_rebin{0};
 
       //! Coordinates thread interactions on the keep_processing attribute
       std::condition_variable processing_cond;
@@ -177,30 +236,32 @@ namespace ska::pst::stat {
       //! Protect the keep_processing condition variable
       std::mutex processing_mutex;
 
-      //! allocated configuration for beam of data stream and weights stream
-      ska::pst::common::AsciiHeader data_beam_config;
-      ska::pst::common::AsciiHeader weights_beam_config;
+      //! received headers from the segment of data and weights
+      ska::pst::common::AsciiHeader data_header;
+      ska::pst::common::AsciiHeader weights_header;
 
       //! shared pointer a statistics processor
       std::shared_ptr<StatProcessor> processor;
 
+      //! shared pointer to a statistics publisher
+      std::shared_ptr<ScalarStatPublisher> scalar_publisher;
+
+      //! shared pointer to a statistics publisher
+      std::shared_ptr<StatHdf5FileWriter> hdf5_publisher;
+
       //! shared pointer a statistics processor
       std::shared_ptr<ska::pst::smrb::SmrbSegmentProducer> producer;
 
-      //! List of mandatory data config keys
-      const std::vector<std::string> data_config_keys = {"DATA_KEY"};
+      //! List of mandatory beam config keys
+      const std::vector<std::string> beam_config_keys = {"DATA_KEY", "WEIGHTS_KEY"};
 
-      //! List of mandatory weights config keys
-      const std::vector<std::string> weights_config_keys = {"WEIGHTS_KEY"};
+      //! List of mandatory scan config keys
+      const std::vector<std::string> scan_config_keys = {"EB_ID", "STAT_PROC_DELAY_MS", "STAT_REQ_FREQ_BINS", "STAT_REQ_TIME_BINS", "STAT_NREBIN"};
 
-
-      //! List of mandatory data config keys
-      const std::vector<std::string> data_smrb_keys = {"RESOLUTION", "NCHAN"};
-
-      //! List of mandatory weights config keys
-      const std::vector<std::string> weights_smrb_keys = {"RESOLUTION", "NCHAN"};
+      //! List of mandatory start scan config keys
+      const std::vector<std::string> startscan_config_keys = {"SCAN_ID"};
   };
 
 } // namespace ska::pst::stat
 
-#endif // __SKA_PST_STAT_StatApplicationManager_h
+#endif // SKA_PST_STAT_StatApplicationManager_h
