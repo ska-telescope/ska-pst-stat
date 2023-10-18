@@ -434,10 +434,12 @@ TEST_F(StatLmcServiceIntegrationTest, start_scan_stop_scan) // NOLINT
   EXPECT_TRUE(status.ok()); // NOLINT
   const auto &scan_configuration = scan_configuration_response.scan_configuration();
   EXPECT_TRUE(scan_configuration.has_stat());
-  const auto &stat_scan_configuration = scan_configuration.dsp_disk();
-  // EXPECT_EQ(stat_scan_configuration.scanlen_max(), helper.data_scan_config.get_double("SCANLEN_MAX"));
-  // EXPECT_EQ(stat_scan_configuration.bytes_per_second(), helper.data_scan_config.get_double("BYTES_PER_SECOND"));
-  // EXPECT_EQ(stat_scan_configuration.execution_block_id(), helper.data_scan_config.get_val("EB_ID"));
+  const auto &stat_scan_configuration = scan_configuration.stat();
+  EXPECT_EQ(stat_scan_configuration.execution_block_id(), scan_config.get_val("EB_ID"));
+  EXPECT_EQ(stat_scan_configuration.processing_delay_ms(), scan_config.get_uint32("STAT_PROC_DELAY_MS"));
+  EXPECT_EQ(stat_scan_configuration.req_time_bins(), scan_config.get_uint32("STAT_REQ_TIME_BINS"));
+  EXPECT_EQ(stat_scan_configuration.req_freq_bins(), scan_config.get_uint32("STAT_REQ_FREQ_BINS"));
+  EXPECT_EQ(stat_scan_configuration.num_rebin(), scan_config.get_uint32("STAT_NREBIN"));
   SPDLOG_TRACE("StatLmcServiceIntegrationTest::start_scan_stop_scan - scan configuration checked");
 
   SPDLOG_TRACE("StatLmcServiceIntegrationTest::start_scan_stop_scan - starting scan");

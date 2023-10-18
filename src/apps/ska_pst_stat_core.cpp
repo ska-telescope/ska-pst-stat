@@ -159,7 +159,7 @@ auto main(int argc, char *argv[]) -> int
       // performs configure_beam, configure_scan and start_scan using config_file
       stat->configure_from_file(config_file);
 
-      SPDLOG_TRACE("waiting {} seconds before self-termination", duration / ska::pst::common::microseconds_per_second);
+      SPDLOG_TRACE("running for {} seconds before self-termination", duration / ska::pst::common::microseconds_per_second);
       ska::pst::stat::StatStorage::scalar_stats_t prev{};
       while (!signal_received && duration > 0)
       {

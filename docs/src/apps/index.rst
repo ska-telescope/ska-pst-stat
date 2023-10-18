@@ -11,10 +11,17 @@ Prints the version of the ska-pst-stat library to stdout.
 ska_pst_stat_core
 -----------------
 
-The implementation of the STAT.CORE software component for the Pulsar Timing product. This application regularly (5s) processes short (100ms) segements of the voltage data streams received from the Correlator Beam Former. Each segment of data is analysed and a range of statistics metrics are computed. Simple scalar metrics (mean, variance, etc) are provided to a TANGO device and a richer set of vector metrics (bandpasses, histograms, etc) are made available to signal displays. A small HDF5 data file (< 10 MB) is generated from each segment that is processed and is written to the configured output path of <path>/SCAN_<scan_id>/monitoring_stats/.
+The implementation of the STAT.CORE software component for the Pulsar Timing product. This application
+regularly (every 5 seconds) processes short (100ms) segments of the voltage data streams received from the
+Correlator Beam Former. Each segment of data is analysed and a range of statistics metrics are computed.
+Simple scalar metrics (mean, variance, etc) are provided to a TANGO device and a richer set of vector
+metrics (bandpasses, histograms, etc) are made available to signal displays. A small HDF5 data file
+(< 10 MB) is generated from each segment that is processed and is written to the configured output
+path of <path>/<eb_id>/<subsystem_id>/<scan_id>/monitoring_stats/.
 
     Usage: ska_pst_stat_core
 
+      -c port     port on which to accept control commands
       -d path     write output files to the path [default /tmp]
       -f config   ascii file containing observation configuration
       -h          print this help text

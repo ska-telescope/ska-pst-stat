@@ -222,7 +222,7 @@ auto ska::pst::stat::StatComputer::compute(const ska::pst::common::SegmentProduc
   }
 
   double utc_start_offset_seconds = static_cast<double>(segment.data.obs_offset) / bytes_per_second;
-  SPDLOG_INFO("ska::pst::stat::StatComputer::compute - segment.data.obs_offset={} offset_seconds={}", segment.data.obs_offset, utc_start_offset_seconds);
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::compute - segment.data.obs_offset={} offset_seconds={}", segment.data.obs_offset, utc_start_offset_seconds);
   storage->set_utc_start_offset_bytes(segment.data.obs_offset);
   storage->set_utc_start_offset_seconds(utc_start_offset_seconds);
 

@@ -32,7 +32,6 @@
 #include <H5Cpp.h>
 #include <H5Exception.h>
 #include <iostream>
-#include <map>
 #include <spdlog/spdlog.h>
 #include <stdexcept>
 #include <string>
@@ -40,6 +39,7 @@
 #include <algorithm>
 
 #include "ska/pst/stat/StatHdf5FileWriter.h"
+#include "ska/pst/stat/StatFilenameConstructor.h"
 #include "ska/pst/common/utils/FileWriter.h"
 #include "ska/pst/common/definitions.h"
 
@@ -157,10 +157,11 @@ void ska::pst::stat::StatHdf5FileWriter::publish(std::shared_ptr<StatStorage> st
   }
   else
   {
+    StatFilenameConstructor namer(config);
     auto obs_offset = static_cast<uint64_t>(storage->get_utc_start_offset_bytes());
 
     // construct the required output path of
-    std::filesystem::path filename = get_output_filename(utc_start, obs_offset, file_number);
+    std::filesystem::path filename = namer.get_filename(utc_start, obs_offset, file_number);
     SPDLOG_DEBUG("ska::pst::stat::StatHdf5FileWriter::publish constructed filename={}", filename.generic_string());
 
     create_directories(filename.parent_path());
@@ -213,45 +214,6 @@ void ska::pst::stat::StatHdf5FileWriter::publish(std::shared_ptr<StatStorage> st
     SPDLOG_ERROR("ska::pst::stat::StatHdf5FileWriter::publish H5::Exception when writing to {}: {}", stat_filename, exc.getDetailMsg());
     throw std::runtime_error("Unable to write HDF5 file");
   }
-}
-
-auto ska::pst::stat::StatHdf5FileWriter::get_output_filename(
-  const std::string& utc_start, uint64_t obs_offset, uint64_t file_number) -> std::filesystem::path
-{
-  return construct_output_filename(
-    config.get_val("STAT_BASE_PATH"), config.get_val("EB_ID"), config.get_val("SCAN_ID"),
-    config.get_val("TELESCOPE"), utc_start, obs_offset, file_number);
-}
-
-auto ska::pst::stat::StatHdf5FileWriter::construct_output_filename(
-  const std::string& stat_base, const std::string& eb_id,
-  const std::string& scan_id, const std::string& telescope,
-  const std::string& utc_start, uint64_t obs_offset, uint64_t file_number) -> std::filesystem::path
-{
-
-  std::map<std::string, std::string> subsystem_path_map {
-    { "SKALow", "pst-low" },
-    { "SKAMid", "pst-mid" },
-  };
-
-  std::filesystem::path stat_base_path(stat_base);
-  auto eb_id_path = std::filesystem::path(eb_id);
-  auto scan_id_path = std::filesystem::path(scan_id);
-  auto subsystem_id_path = std::filesystem::path(subsystem_path_map[telescope]);
-
-  std::filesystem::path product_path{"product"};
-  std::filesystem::path stream_path{"monitoring_stats"};
-
-  // construct the directory for the scan_id
-  std::filesystem::path scan_path = stat_base_path / product_path / eb_id_path / subsystem_id_path / scan_id_path / stream_path;
-
-  // file name (with no directory prefix) using FileWriter for consistent nameing
-  std::filesystem::path filename = ska::pst::common::FileWriter::get_filename(utc_start, obs_offset, file_number);
-
-  // full path to the STAT output file
-  std::filesystem::path output_file = scan_path / filename.replace_extension("h5");
-
-  return output_file;
 }
 
 void ska::pst::stat::StatHdf5FileWriter::write_array(

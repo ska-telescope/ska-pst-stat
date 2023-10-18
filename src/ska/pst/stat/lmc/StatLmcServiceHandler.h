@@ -224,14 +224,14 @@ namespace ska::pst::stat {
        *
        * @return ska::pst::common::State returns current the enum State of the StatApplicationManager
        */
-      ska::pst::common::State get_application_manager_state() { return stat->get_state(); }
+      ska::pst::common::State get_application_manager_state() override { return stat->get_state(); }
 
       /**
        * @brief Get the StatApplicationManager exception pointer
        *
        * @return std::exception_ptr returns the current captured exception caught by the StatApplicationManager
        */
-      std::exception_ptr get_application_manager_exception() { return stat->get_exception(); }
+      std::exception_ptr get_application_manager_exception() override { return stat->get_exception(); }
 
       /**
         * @brief Put application into a runtime error state.
