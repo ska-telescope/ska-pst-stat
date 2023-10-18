@@ -466,28 +466,11 @@ void ska::pst::stat::StatLmcServiceHandler::get_monitor_data(
   }
 }
 
-// TODO(jesmigel): Update at AT3-422
 void ska::pst::stat::StatLmcServiceHandler::get_env(
   ska::pst::lmc::GetEnvironmentResponse* response
 ) noexcept
 {
-  SPDLOG_TRACE("ska::pst::stat::StatLmcServiceHandler::get_env()");
-  auto values = response->mutable_values();
-  auto stats = stat->get_scalar_stats();
-
-  std::vector<float> mean_frequency_avg(4);
-  std::vector<float> mean_frequency_avg_masked(4);
-  std::vector<float> variance_frequency_avg(4);
-  std::vector<float> variance_frequency_avg_masked(4);
-  std::vector<float> num_clipped_samples(4);
-  std::vector<float> num_clipped_samples_masked(4);
-
-  flatten_2d_vec(stats.mean_frequency_avg, mean_frequency_avg);
-  flatten_2d_vec(stats.mean_frequency_avg_masked, mean_frequency_avg_masked);
-  flatten_2d_vec(stats.variance_frequency_avg, variance_frequency_avg);
-  flatten_2d_vec(stats.variance_frequency_avg_masked, variance_frequency_avg_masked);
-  flatten_2d_vec(stats.num_clipped_samples, num_clipped_samples);
-  flatten_2d_vec(stats.num_clipped_samples_masked, num_clipped_samples_masked);
+  SPDLOG_TRACE("ska::pst::stat::StatLmcServiceHandler::get_env() placeholder");
 }
 
 void ska::pst::stat::StatLmcServiceHandler::go_to_runtime_error(
