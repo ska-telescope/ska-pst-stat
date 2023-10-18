@@ -156,7 +156,7 @@ void ska::pst::stat::StatComputer::initialise()
   }
 
   SPDLOG_TRACE("ska::pst::stat::StatComputer::StatComputer - generating centre frequencies {} channels with channel_bandwidth={} MHz", nchan, channel_bandwidth);
-  uint32_t num_masked = 0;
+  uint32_t num_rfi_excised_channels = 0;
   for (auto ichan = 0; ichan<nchan; ichan++)
   {
     auto channel_start_freq = start_freq + static_cast<double>(ichan) * channel_bandwidth;
@@ -183,12 +183,12 @@ void ska::pst::stat::StatComputer::initialise()
         (channel_end_freq > rfi_mask_pair.first && channel_end_freq <= rfi_mask_pair.second)
       )
       {
-        SPDLOG_WARN("chan {} frequency band {:.4f} MHz to {:.4f} MHz is between {:.4f} MHz and {:.4f} MHz. Marking as masked",
+        SPDLOG_WARN("chan {} frequency band {:.4f} MHz to {:.4f} MHz is between {:.4f} MHz and {:.4f} MHz. Marking as RFI masked",
           ichan, channel_start_freq, channel_end_freq,
           rfi_mask_pair.first, rfi_mask_pair.second
         );
         storage->rfi_mask_lut[ichan] = true;
-        num_masked++;
+        num_rfi_excised_channels++;
         break;
       }
     }
@@ -197,7 +197,7 @@ void ska::pst::stat::StatComputer::initialise()
   keep_computing = true;
   initialised = true;
 
-  SPDLOG_DEBUG("ska::pst::stat::StatComputer::initialise() - Number of masked channels = {}", num_masked);
+  SPDLOG_DEBUG("ska::pst::stat::StatComputer::initialise() - Number of RFI excised channels = {}", num_rfi_excised_channels);
 }
 
 void ska::pst::stat::StatComputer::interrupt()
@@ -296,7 +296,7 @@ auto ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
 
   uint32_t packet_number{0};
   std::vector<uint32_t> pol_samples(npol,  0);
-  std::vector<uint32_t> pol_samples_masked(npol,  0);
+  std::vector<uint32_t> pol_samples_rfi_excised(npol,  0);
 
   auto total_samples_per_channel = nheaps * heap_layout.get_packet_layout().get_samples_per_packet();
   if (total_samples_per_channel % storage->get_ntime_bins() != 0)
@@ -321,7 +321,7 @@ auto ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
     for (auto i=0; i<npol; i++)
     {
       storage->timeseries[i][time_bin][TS_MIN_IDX] = std::numeric_limits<float>::max();
-      storage->timeseries_masked[i][time_bin][TS_MIN_IDX] = std::numeric_limits<float>::max();
+      storage->timeseries_rfi_excised[i][time_bin][TS_MIN_IDX] = std::numeric_limits<float>::max();
     }
   }
 
@@ -333,17 +333,17 @@ auto ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
   }
   uint32_t freq_binning_factor = nchan / storage->get_nfreq_bins();
 
-  // counts used in timeseries_masked mean averages
+  // counts used in timeseries_rfi_excised mean averages
   // could initially pre-calc scale factors but easier to accumulate and use Wilford algorithm for mean.
   std::vector<std::vector<uint32_t>> timeseries_counts;
   timeseries_counts.resize(npol);
-  std::vector<std::vector<uint32_t>> timeseries_counts_masked;
-  timeseries_counts_masked.resize(npol);
+  std::vector<std::vector<uint32_t>> timeseries_counts_rfi_excised;
+  timeseries_counts_rfi_excised.resize(npol);
   for (auto i=0; i<npol; i++) {
     timeseries_counts[i].resize(storage->get_ntime_bins());
-    timeseries_counts_masked[i].resize(storage->get_ntime_bins());
+    timeseries_counts_rfi_excised[i].resize(storage->get_ntime_bins());
     std::fill(timeseries_counts[i].begin(), timeseries_counts[i].end(), 0);
-    std::fill(timeseries_counts_masked[i].begin(), timeseries_counts_masked[i].end(), 0);
+    std::fill(timeseries_counts_rfi_excised[i].begin(), timeseries_counts_rfi_excised[i].end(), 0);
   }
 
   // populate the centre freq of the frequency bins
@@ -392,7 +392,7 @@ auto ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
 
             pol_samples[ipol]++;
             if (!channel_masked) {
-              pol_samples_masked[ipol]++;
+              pol_samples_rfi_excised[ipol]++;
             }
 
             auto value_i_int = data[I_IDX]; // NOLINT
@@ -466,44 +466,44 @@ auto ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
               (power - storage->timeseries[ipol][temporal_bin][TS_MEAN_IDX]) / static_cast<float>(timeseries_counts[ipol][temporal_bin])
             );
 
-            // handle masked channel stats
+            // handle RFI masked channel stats
             if (!channel_masked) {
-              timeseries_counts_masked[ipol][temporal_bin] += 1;
+              timeseries_counts_rfi_excised[ipol][temporal_bin] += 1;
 
-              auto value_i_mean_diff_masked = value_i - storage->mean_frequency_avg_masked[ipol][I_IDX];
-              auto value_q_mean_diff_masked = value_q - storage->mean_frequency_avg_masked[ipol][Q_IDX];
+              auto value_i_mean_diff_rfi_excised = value_i - storage->mean_frequency_avg_rfi_excised[ipol][I_IDX];
+              auto value_q_mean_diff_rfi_excised = value_q - storage->mean_frequency_avg_rfi_excised[ipol][Q_IDX];
 
-              storage->mean_frequency_avg_masked[ipol][I_IDX] += value_i_mean_diff_masked/static_cast<float>(pol_samples_masked[ipol]);
-              storage->mean_frequency_avg_masked[ipol][Q_IDX] += value_q_mean_diff_masked/static_cast<float>(pol_samples_masked[ipol]);
-              storage->variance_frequency_avg_masked[ipol][I_IDX] += (
-                (value_i - storage->mean_frequency_avg_masked[ipol][I_IDX]) * value_i_mean_diff_masked
+              storage->mean_frequency_avg_rfi_excised[ipol][I_IDX] += value_i_mean_diff_rfi_excised/static_cast<float>(pol_samples_rfi_excised[ipol]);
+              storage->mean_frequency_avg_rfi_excised[ipol][Q_IDX] += value_q_mean_diff_rfi_excised/static_cast<float>(pol_samples_rfi_excised[ipol]);
+              storage->variance_frequency_avg_rfi_excised[ipol][I_IDX] += (
+                (value_i - storage->mean_frequency_avg_rfi_excised[ipol][I_IDX]) * value_i_mean_diff_rfi_excised
               );
-              storage->variance_frequency_avg_masked[ipol][Q_IDX] += (
-                (value_q - storage->mean_frequency_avg_masked[ipol][Q_IDX]) * value_q_mean_diff_masked
+              storage->variance_frequency_avg_rfi_excised[ipol][Q_IDX] += (
+                (value_q - storage->mean_frequency_avg_rfi_excised[ipol][Q_IDX]) * value_q_mean_diff_rfi_excised
               );
 
-              // 1D histogram bins - masked
-              storage->histogram_1d_freq_avg_masked[ipol][I_IDX][value_i_bin] += 1;
-              storage->histogram_1d_freq_avg_masked[ipol][Q_IDX][value_q_bin] += 1;
+              // 1D histogram bins - RFI excised
+              storage->histogram_1d_freq_avg_rfi_excised[ipol][I_IDX][value_i_bin] += 1;
+              storage->histogram_1d_freq_avg_rfi_excised[ipol][Q_IDX][value_q_bin] += 1;
 
-              // 2D histogram bins - masked
-              storage->rebinned_histogram_2d_freq_avg_masked[ipol][value_i_rebin][value_q_rebin] += 1;
-              storage->rebinned_histogram_1d_freq_avg_masked[ipol][I_IDX][value_i_rebin] += 1;
-              storage->rebinned_histogram_1d_freq_avg_masked[ipol][Q_IDX][value_q_rebin] += 1;
+              // 2D histogram bins - RFI excised
+              storage->rebinned_histogram_2d_freq_avg_rfi_excised[ipol][value_i_rebin][value_q_rebin] += 1;
+              storage->rebinned_histogram_1d_freq_avg_rfi_excised[ipol][I_IDX][value_i_rebin] += 1;
+              storage->rebinned_histogram_1d_freq_avg_rfi_excised[ipol][Q_IDX][value_q_rebin] += 1;
 
-              // Number clipped samples - masked
+              // Number clipped samples - RFI excised
               if (value_i_bin == 0 || value_i_bin == max_bin) {
-                storage->num_clipped_samples_masked[ipol][I_IDX] += 1;
+                storage->num_clipped_samples_rfi_excised[ipol][I_IDX] += 1;
               }
 
               if (value_q_bin == 0 || value_q_bin == max_bin) {
-                storage->num_clipped_samples_masked[ipol][Q_IDX] += 1;
+                storage->num_clipped_samples_rfi_excised[ipol][Q_IDX] += 1;
               }
 
-              storage->timeseries_masked[ipol][temporal_bin][TS_MAX_IDX] = std::max(storage->timeseries_masked[ipol][temporal_bin][TS_MAX_IDX], power);
-              storage->timeseries_masked[ipol][temporal_bin][TS_MIN_IDX] = std::min(storage->timeseries_masked[ipol][temporal_bin][TS_MIN_IDX], power);
-              storage->timeseries_masked[ipol][temporal_bin][TS_MEAN_IDX] += (
-                (power - storage->timeseries_masked[ipol][temporal_bin][TS_MEAN_IDX]) / static_cast<float>(timeseries_counts_masked[ipol][temporal_bin])
+              storage->timeseries_rfi_excised[ipol][temporal_bin][TS_MAX_IDX] = std::max(storage->timeseries_rfi_excised[ipol][temporal_bin][TS_MAX_IDX], power);
+              storage->timeseries_rfi_excised[ipol][temporal_bin][TS_MIN_IDX] = std::min(storage->timeseries_rfi_excised[ipol][temporal_bin][TS_MIN_IDX], power);
+              storage->timeseries_rfi_excised[ipol][temporal_bin][TS_MEAN_IDX] += (
+                (power - storage->timeseries_rfi_excised[ipol][temporal_bin][TS_MEAN_IDX]) / static_cast<float>(timeseries_counts_rfi_excised[ipol][temporal_bin])
               );
             }
 
@@ -531,14 +531,14 @@ auto ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
 
   // pola and polb should have the same number of samples
   uint32_t total_samples = pol_samples[0];
-  uint32_t total_samples_masked = pol_samples_masked[0];
-  SPDLOG_DEBUG("total_samples={}, total_samples_masked={}, total_sample_per_chan={}",
-    total_samples, total_samples_masked, total_sample_per_chan
+  uint32_t total_samples_rfi_excised = pol_samples_rfi_excised[0];
+  SPDLOG_DEBUG("total_samples={}, total_samples_rfi_excised={}, total_sample_per_chan={}",
+    total_samples, total_samples_rfi_excised, total_sample_per_chan
   );
 
   float var_freq_factor = 1 / static_cast<float>(total_samples - 1);
   float mean_spectrum_factor = 1 / static_cast<float>(total_sample_per_chan);
-  float var_freq_factor_masked = 1 / static_cast<float>(total_samples_masked - 1);
+  float var_freq_factor_rfi_excised = 1 / static_cast<float>(total_samples_rfi_excised - 1);
   float var_spectrum_factor = 1 / static_cast<float>(total_sample_per_chan - 1);
 
   for (auto ipol=0; ipol < npol; ipol++)
@@ -552,13 +552,13 @@ auto ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
       storage->variance_frequency_avg[ipol][I_IDX], storage->variance_frequency_avg[ipol][Q_IDX]
     );
 
-    storage->variance_frequency_avg_masked[ipol][I_IDX] *= var_freq_factor_masked;
-    storage->variance_frequency_avg_masked[ipol][Q_IDX] *= var_freq_factor_masked;
+    storage->variance_frequency_avg_rfi_excised[ipol][I_IDX] *= var_freq_factor_rfi_excised;
+    storage->variance_frequency_avg_rfi_excised[ipol][Q_IDX] *= var_freq_factor_rfi_excised;
 
-    SPDLOG_DEBUG("ipol={}, mean_i_masked={}, mean_q_masked={}, var_i_masked={}, var_q_masked={}",
+    SPDLOG_DEBUG("ipol={}, mean_i_rfi_excised={}, mean_q_rfi_excised={}, var_i_rfi_excised={}, var_q_rfi_excised={}",
       ipol,
-      storage->mean_frequency_avg_masked[ipol][I_IDX], storage->mean_frequency_avg_masked[ipol][Q_IDX],
-      storage->variance_frequency_avg_masked[ipol][I_IDX], storage->variance_frequency_avg_masked[ipol][Q_IDX]
+      storage->mean_frequency_avg_rfi_excised[ipol][I_IDX], storage->mean_frequency_avg_rfi_excised[ipol][Q_IDX],
+      storage->variance_frequency_avg_rfi_excised[ipol][I_IDX], storage->variance_frequency_avg_rfi_excised[ipol][Q_IDX]
     );
 
     for (auto ichan=0; ichan < nchan; ichan++)

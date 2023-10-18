@@ -174,10 +174,10 @@ TEST_F(StatComputerTest, test_compute) // NOLINT
     for (auto idim = 0; idim < storage->get_ndim(); idim++) {
       SPDLOG_DEBUG("StatComputerTest::test_compute - storage->mean_frequency_avg[{}][{}]={}", ipol, idim, storage->mean_frequency_avg[ipol][idim]);
       SPDLOG_DEBUG("StatComputerTest::test_compute - storage->variance_frequency_avg[{}][{}]={}", ipol, idim, storage->variance_frequency_avg[ipol][idim]);
-      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->mean_frequency_avg_masked[{}][{}]={}", ipol, idim, storage->mean_frequency_avg_masked[ipol][idim]);
-      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->variance_frequency_avg_masked[{}][{}]={}", ipol, idim, storage->variance_frequency_avg_masked[ipol][idim]);
+      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->mean_frequency_avg_rfi_excised[{}][{}]={}", ipol, idim, storage->mean_frequency_avg_rfi_excised[ipol][idim]);
+      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->variance_frequency_avg_rfi_excised[{}][{}]={}", ipol, idim, storage->variance_frequency_avg_rfi_excised[ipol][idim]);
       SPDLOG_DEBUG("StatComputerTest::test_compute - storage->num_clipped_samples[{}][{}]={}", ipol, idim, storage->num_clipped_samples[ipol][idim]);
-      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->num_clipped_samples_masked[{}][{}]={}", ipol, idim, storage->num_clipped_samples_masked[ipol][idim]);
+      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->num_clipped_samples_rfi_excised[{}][{}]={}", ipol, idim, storage->num_clipped_samples_rfi_excised[ipol][idim]);
       for (auto ichan = 0; ichan < storage->get_nchan(); ichan++) {
         SPDLOG_TRACE("StatComputerTest::test_compute - storage->mean_spectrum[{}][{}][{}]={}", ipol, idim, ichan, storage->mean_spectrum[ipol][idim][ichan]);
         SPDLOG_TRACE("StatComputerTest::test_compute - storage->variance_spectrum[{}][{}][{}]={}", ipol, idim, ichan, storage->variance_spectrum[ipol][idim][ichan]);
@@ -266,23 +266,23 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
   // [0,1][0,1] are [pol][dim]
   ASSERT_FLOAT_EQ(storage->mean_frequency_avg[0][0], 2.96875);
   ASSERT_FLOAT_EQ(storage->variance_frequency_avg[0][0], 185.0635081);
-  ASSERT_FLOAT_EQ(storage->mean_frequency_avg_masked[0][0], 2.96875);
-  ASSERT_FLOAT_EQ(storage->variance_frequency_avg_masked[0][0], 185.0635081);
+  ASSERT_FLOAT_EQ(storage->mean_frequency_avg_rfi_excised[0][0], 2.96875);
+  ASSERT_FLOAT_EQ(storage->variance_frequency_avg_rfi_excised[0][0], 185.0635081);
 
   ASSERT_FLOAT_EQ(storage->mean_frequency_avg[0][1], 2.375);
   ASSERT_FLOAT_EQ(storage->variance_frequency_avg[0][1], 87.98387097);
-  ASSERT_FLOAT_EQ(storage->mean_frequency_avg_masked[0][1], 2.375);
-  ASSERT_FLOAT_EQ(storage->variance_frequency_avg_masked[0][1], 87.98387097);
+  ASSERT_FLOAT_EQ(storage->mean_frequency_avg_rfi_excised[0][1], 2.375);
+  ASSERT_FLOAT_EQ(storage->variance_frequency_avg_rfi_excised[0][1], 87.98387097);
 
   ASSERT_FLOAT_EQ(storage->mean_frequency_avg[1][0], 4.09375);
   ASSERT_FLOAT_EQ(storage->variance_frequency_avg[1][0], 75.50705645);
-  ASSERT_FLOAT_EQ(storage->mean_frequency_avg_masked[1][0], 4.09375);
-  ASSERT_FLOAT_EQ(storage->variance_frequency_avg_masked[1][0], 75.50705645);
+  ASSERT_FLOAT_EQ(storage->mean_frequency_avg_rfi_excised[1][0], 4.09375);
+  ASSERT_FLOAT_EQ(storage->variance_frequency_avg_rfi_excised[1][0], 75.50705645);
 
   ASSERT_FLOAT_EQ(storage->mean_frequency_avg[1][1], 6);
   ASSERT_FLOAT_EQ(storage->variance_frequency_avg[1][1], 130.5806452);
-  ASSERT_FLOAT_EQ(storage->mean_frequency_avg_masked[1][1], 6);
-  ASSERT_FLOAT_EQ(storage->variance_frequency_avg_masked[1][1], 130.5806452);
+  ASSERT_FLOAT_EQ(storage->mean_frequency_avg_rfi_excised[1][1], 6);
+  ASSERT_FLOAT_EQ(storage->variance_frequency_avg_rfi_excised[1][1], 130.5806452);
 
   // assert no clipping
   for (auto ipol = 0; ipol < npol; ipol++)
@@ -290,7 +290,7 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
     for (auto idim = 0; idim < ndim; idim++)
     {
       ASSERT_EQ(storage->num_clipped_samples[ipol][idim], 0);
-      ASSERT_EQ(storage->num_clipped_samples_masked[ipol][idim], 0);
+      ASSERT_EQ(storage->num_clipped_samples_rfi_excised[ipol][idim], 0);
       for (auto ichan = 0; ichan < nchan; ichan++)
       {
         ASSERT_EQ(storage->num_clipped_samples_spectrum[ipol][idim][ichan], 0);
@@ -322,11 +322,11 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
       SPDLOG_DEBUG("StatComputerTest::test_compute - storage->variance_frequency_avg[{}][{}]={}",
         ipol, idim, storage->variance_frequency_avg[ipol][idim]
       );
-      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->mean_frequency_avg_masked[{}][{}]={}",
-        ipol, idim, storage->mean_frequency_avg_masked[ipol][idim]
+      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->mean_frequency_avg_rfi_excised[{}][{}]={}",
+        ipol, idim, storage->mean_frequency_avg_rfi_excised[ipol][idim]
       );
-      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->variance_frequency_avg_masked[{}][{}]={}",
-        ipol, idim, storage->variance_frequency_avg_masked[ipol][idim]
+      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->variance_frequency_avg_rfi_excised[{}][{}]={}",
+        ipol, idim, storage->variance_frequency_avg_rfi_excised[ipol][idim]
       );
       SPDLOG_DEBUG("StatComputerTest::test_compute - storage->num_clipped_samples[{}][{}]={}",
         ipol, idim, storage->num_clipped_samples[ipol][idim]
@@ -351,10 +351,10 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
   }
 }
 
-TEST_F(StatComputerTest, test_masked_channels) // NOLINT
+TEST_F(StatComputerTest, test_rfi_excised_channels) // NOLINT
 {
   data_config.reset();
-  data_config.load_from_file(test_data_file("stat_computer_4chan_8nsamp_masked_config.txt"));
+  data_config.load_from_file(test_data_file("stat_computer_4chan_8nsamp_rfi_excised_config.txt"));
   weights_config = get_weights_config(data_config);
   configure(false);
 
@@ -402,23 +402,23 @@ TEST_F(StatComputerTest, test_masked_channels) // NOLINT
 
   ASSERT_FLOAT_EQ(storage->mean_frequency_avg[0][0], 2.96875);
   ASSERT_FLOAT_EQ(storage->variance_frequency_avg[0][0], 185.0635081);
-  ASSERT_FLOAT_EQ(storage->mean_frequency_avg_masked[0][0], 2.375);
-  ASSERT_FLOAT_EQ(storage->variance_frequency_avg_masked[0][0], 222.9166667);
+  ASSERT_FLOAT_EQ(storage->mean_frequency_avg_rfi_excised[0][0], 2.375);
+  ASSERT_FLOAT_EQ(storage->variance_frequency_avg_rfi_excised[0][0], 222.9166667);
 
   ASSERT_FLOAT_EQ(storage->mean_frequency_avg[0][1], 2.375);
   ASSERT_FLOAT_EQ(storage->variance_frequency_avg[0][1], 87.98387097);
-  ASSERT_FLOAT_EQ(storage->mean_frequency_avg_masked[0][1], 1.375);
-  ASSERT_FLOAT_EQ(storage->variance_frequency_avg_masked[0][1], 80.65);
+  ASSERT_FLOAT_EQ(storage->mean_frequency_avg_rfi_excised[0][1], 1.375);
+  ASSERT_FLOAT_EQ(storage->variance_frequency_avg_rfi_excised[0][1], 80.65);
 
   ASSERT_FLOAT_EQ(storage->mean_frequency_avg[1][0], 4.09375);
   ASSERT_FLOAT_EQ(storage->variance_frequency_avg[1][0], 75.50705645);
-  ASSERT_FLOAT_EQ(storage->mean_frequency_avg_masked[1][0], 3.25);
-  ASSERT_FLOAT_EQ(storage->variance_frequency_avg_masked[1][0], 60.86666667);
+  ASSERT_FLOAT_EQ(storage->mean_frequency_avg_rfi_excised[1][0], 3.25);
+  ASSERT_FLOAT_EQ(storage->variance_frequency_avg_rfi_excised[1][0], 60.86666667);
 
   ASSERT_FLOAT_EQ(storage->mean_frequency_avg[1][1], 6);
   ASSERT_FLOAT_EQ(storage->variance_frequency_avg[1][1], 130.5806452);
-  ASSERT_FLOAT_EQ(storage->mean_frequency_avg_masked[1][1], 5.625);
-  ASSERT_FLOAT_EQ(storage->variance_frequency_avg_masked[1][1], 190.1166667);
+  ASSERT_FLOAT_EQ(storage->mean_frequency_avg_rfi_excised[1][1], 5.625);
+  ASSERT_FLOAT_EQ(storage->variance_frequency_avg_rfi_excised[1][1], 190.1166667);
 
   // assert no clipping
   for (auto ipol = 0; ipol < npol; ipol++)
@@ -426,7 +426,7 @@ TEST_F(StatComputerTest, test_masked_channels) // NOLINT
     for (auto idim = 0; idim < ndim; idim++)
     {
       ASSERT_EQ(storage->num_clipped_samples[ipol][idim], 0);
-      ASSERT_EQ(storage->num_clipped_samples_masked[ipol][idim], 0);
+      ASSERT_EQ(storage->num_clipped_samples_rfi_excised[ipol][idim], 0);
       for (auto ichan = 0; ichan < nchan; ichan++)
       {
         ASSERT_EQ(storage->num_clipped_samples_spectrum[ipol][idim][ichan], 0);
@@ -516,14 +516,14 @@ TEST_F(StatComputerTest, test_masked_channels) // NOLINT
       SPDLOG_DEBUG("StatComputerTest::test_compute - storage->timeseries[{}][{}][MEAN]={}",
         ipol, time_bin, storage->timeseries[ipol][time_bin][2]
       );
-      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->timeseries_masked[{}][{}][MAX]={}",
-        ipol, time_bin, storage->timeseries_masked[ipol][time_bin][0]
+      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->timeseries_rfi_excised[{}][{}][MAX]={}",
+        ipol, time_bin, storage->timeseries_rfi_excised[ipol][time_bin][0]
       );
-      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->timeseries_masked[{}][{}][MIN]={}",
-        ipol, time_bin, storage->timeseries_masked[ipol][time_bin][1]
+      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->timeseries_rfi_excised[{}][{}][MIN]={}",
+        ipol, time_bin, storage->timeseries_rfi_excised[ipol][time_bin][1]
       );
-      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->timeseries_masked[{}][{}][MEAN]={}",
-        ipol, time_bin, storage->timeseries_masked[ipol][time_bin][2]
+      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->timeseries_rfi_excised[{}][{}][MEAN]={}",
+        ipol, time_bin, storage->timeseries_rfi_excised[ipol][time_bin][2]
       );
     }
   }
@@ -547,7 +547,7 @@ TEST_F(StatComputerTest, test_masked_channels) // NOLINT
   ASSERT_FLOAT_EQ(storage->spectrogram[1][1][2], 832);
   ASSERT_FLOAT_EQ(storage->spectrogram[1][1][3], 1449);
 
-  // for the assertions below of timeseries/timeseris_masked
+  // for the assertions below of timeseries/timeseris_rfi_excised
   // the [0,1][0,1,2,3][0,1,2] = [pol][temp_bin][max,min,mean]
 
   // assertions of timeseries (Pol A - max)
@@ -586,41 +586,41 @@ TEST_F(StatComputerTest, test_masked_channels) // NOLINT
   ASSERT_FLOAT_EQ(storage->timeseries[1][2][2], 226.75);
   ASSERT_FLOAT_EQ(storage->timeseries[1][3][2], 210.875);
 
-  // assertions of timeseries_masked (Pol A - max)
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][0][0], 593);
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][1][0], 793);
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][2][0], 1028);
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][3][0], 85);
+  // assertions of timeseries_rfi_excised (Pol A - max)
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[0][0][0], 593);
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[0][1][0], 793);
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[0][2][0], 1028);
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[0][3][0], 85);
 
-  // assertions of timeseries_masked (Pol A - min)
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][0][1], 100);
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][1][1], 25);
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][2][1], 225);
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][3][1], 64);
+  // assertions of timeseries_rfi_excised (Pol A - min)
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[0][0][1], 100);
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[0][1][1], 25);
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[0][2][1], 225);
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[0][3][1], 64);
 
-  // assertions of timeseries_masked (Pol A - mean)
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][0][2], 319.5);
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][1][2], 280);
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][2][2], 491.5);
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[0][3][2], 77.5);
+  // assertions of timeseries_rfi_excised (Pol A - mean)
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[0][0][2], 319.5);
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[0][1][2], 280);
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[0][2][2], 491.5);
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[0][3][2], 77.5);
 
-  // assertions of timeseries_masked (Pol B - max)
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][0][0], 1025);
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][1][0], 226);
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][2][0], 401);
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][3][0], 569);
+  // assertions of timeseries_rfi_excised (Pol B - max)
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[1][0][0], 1025);
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[1][1][0], 226);
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[1][2][0], 401);
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[1][3][0], 569);
 
-  // assertions of timeseries_masked (Pol B - min)
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][0][1], 2);
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][1][1], 72);
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][2][1], 25);
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][3][1], 41);
+  // assertions of timeseries_rfi_excised (Pol B - min)
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[1][0][1], 2);
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[1][1][1], 72);
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[1][2][1], 25);
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[1][3][1], 41);
 
-  // assertions of timeseries_masked (Pol B - mean)
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][0][2], 395.75);
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][1][2], 144);
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][2][2], 208);
-  ASSERT_FLOAT_EQ(storage->timeseries_masked[1][3][2], 362.25);
+  // assertions of timeseries_rfi_excised (Pol B - mean)
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[1][0][2], 395.75);
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[1][1][2], 144);
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[1][2][2], 208);
+  ASSERT_FLOAT_EQ(storage->timeseries_rfi_excised[1][3][2], 362.25);
 
 }
 
@@ -633,7 +633,7 @@ TEST_F(StatComputerTest, test_clipped_channels) // NOLINT
 
   // This is gausian data with mean of 3.14, stddev of 10, rounded to nearest int
   // There are 4 channels, 2 pols, 2 dims, and 8 samples each (128 values).
-  // Some values have been put in a bin that should be masked
+  // Some values have been put in a bin that should be RFI excised
   std::vector<int16_t> data = {
     // Pol A - channel 1
     -32768,  19,  17,   6,  -2,   2,   0,  15,  15,   3,  15,   8, -11, -21, -18,   2,   // NOLINT
@@ -680,10 +680,10 @@ TEST_F(StatComputerTest, test_clipped_channels) // NOLINT
   ASSERT_EQ(storage->num_clipped_samples[1][0], 2);
   ASSERT_EQ(storage->num_clipped_samples[1][1], 2);
 
-  ASSERT_EQ(storage->num_clipped_samples_masked[0][0], 2);
-  ASSERT_EQ(storage->num_clipped_samples_masked[0][1], 2);
-  ASSERT_EQ(storage->num_clipped_samples_masked[1][0], 2);
-  ASSERT_EQ(storage->num_clipped_samples_masked[1][1], 2);
+  ASSERT_EQ(storage->num_clipped_samples_rfi_excised[0][0], 2);
+  ASSERT_EQ(storage->num_clipped_samples_rfi_excised[0][1], 2);
+  ASSERT_EQ(storage->num_clipped_samples_rfi_excised[1][0], 2);
+  ASSERT_EQ(storage->num_clipped_samples_rfi_excised[1][1], 2);
 
   // [0,1][0,1][x] are [pol][dim][chan]
   // channel 1
@@ -711,17 +711,17 @@ TEST_F(StatComputerTest, test_clipped_channels) // NOLINT
   ASSERT_EQ(storage->num_clipped_samples_spectrum[1][1][3], 1);
 }
 
-TEST_F(StatComputerTest, test_clipped_masked_channels) // NOLINT
+TEST_F(StatComputerTest, test_clipped_rfi_excised_channels) // NOLINT
 {
   data_config.reset();
-  data_config.load_from_file(test_data_file("stat_computer_4chan_8nsamp_masked_config.txt"));
+  data_config.load_from_file(test_data_file("stat_computer_4chan_8nsamp_rfi_excised_config.txt"));
   weights_config = get_weights_config(data_config);
   configure(false);
 
 
   // This is gausian data with mean of 3.14, stddev of 10, rounded to nearest int
   // There are 4 channels, 2 pols, 2 dims, and 8 samples each (128 values).
-  // Some values have been put in a bin that should be masked
+  // Some values have been put in a bin that should be RFI excised
   std::vector<int16_t> data = {
     // Pol A - channel 1
     -32768,  19,  17,   6,  -2,   2,   0,  15,  15,   3,  15,   8, -11, -21, -18,   2,   // NOLINT
@@ -768,11 +768,11 @@ TEST_F(StatComputerTest, test_clipped_masked_channels) // NOLINT
   ASSERT_EQ(storage->num_clipped_samples[1][0], 2);
   ASSERT_EQ(storage->num_clipped_samples[1][1], 2);
 
-  // as channels 0 and 1 are masked, expect that the number of clipped masked samples is 1
-  ASSERT_EQ(storage->num_clipped_samples_masked[0][0], 1);
-  ASSERT_EQ(storage->num_clipped_samples_masked[0][1], 1);
-  ASSERT_EQ(storage->num_clipped_samples_masked[1][0], 1);
-  ASSERT_EQ(storage->num_clipped_samples_masked[1][1], 1);
+  // as channels 0 and 1 are RFI excised, expect that the number of clipped RFI excised samples is 1
+  ASSERT_EQ(storage->num_clipped_samples_rfi_excised[0][0], 1);
+  ASSERT_EQ(storage->num_clipped_samples_rfi_excised[0][1], 1);
+  ASSERT_EQ(storage->num_clipped_samples_rfi_excised[1][0], 1);
+  ASSERT_EQ(storage->num_clipped_samples_rfi_excised[1][1], 1);
 }
 
 TEST_F(StatComputerTest, test_nchan_cannot_be_zero) // NOLINT

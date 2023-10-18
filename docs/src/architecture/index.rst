@@ -86,25 +86,25 @@ The header of the HDF5 file includes the following fields:
 The output data of the HDF5 includes the following datasets:
 
   * MEAN_FREQUENCY_AVG - the mean of the data for each polarisation and dimension, averaged over all channels.
-  * MEAN_FREQUENCY_AVG_MASKED - the mean of the data for each polarisation and dimension, averaged over all channels, expect those flagged for RFI.
+  * MEAN_FREQUENCY_AVG_RFI_MASKED - the mean of the data for each polarisation and dimension, averaged over all channels, expect those flagged for RFI.
   * VARIANCE_FREQUENCY_AVG - the variance of the data for each polarisation and dimension, averaged over all channels.
-  * VARIANCE_FREQUENCY_AVG_MASKED - the variance of the data for each polarisation and dimension, averaged over all channels, expect those flagged for RFI.
+  * VARIANCE_FREQUENCY_AVG_RFI_MASKED - the variance of the data for each polarisation and dimension, averaged over all channels, expect those flagged for RFI.
   * MEAN_SPECTRUM - the mean of the data for each polarisation, dimension and channel.
   * VARIANCE_SPECTRUM - the variance of the data for each polarisation, dimension and channel.
   * MEAN_SPECTRAL_POWER - mean power of the data for each polarisation and channel.
   * MAX_SPECTRAL_POWER - maximum power of the data for each polarisation and channel.
   * HISTOGRAM_1D_FREQ_AVG - histogram of the input data integer states for each polarisation and dimension, averaged over all channels.
-  * HISTOGRAM_1D_FREQ_AVG_MASKED - histogram of the input data integer states for each polarisation and dimension, averaged over all channels, expect those flagged for RFI.
+  * HISTOGRAM_1D_FREQ_AVG_RFI_MASKED - histogram of the input data integer states for each polarisation and dimension, averaged over all channels, expect those flagged for RFI.
   * HISTOGRAM_REBINNED_2D_FREQ_AVG - rebinned 2D histogram of the input data integer states for each polarisation, averaged over all channels.
-  * HISTOGRAM_REBINNED_2D_FREQ_AVG_MASKED - rebinned 2D histogram of the input data integer states for each polarisation, averaged over all channels, expect those flagged for RFI.
+  * HISTOGRAM_REBINNED_2D_FREQ_AVG_RFI_MASKED - rebinned 2D histogram of the input data integer states for each polarisation, averaged over all channels, expect those flagged for RFI.
   * HISTOGRAM_REBINNED_1D_FREQ_AVG - rebinned histogram of the input data integer states for each polarisation and dimension, averaged over all channels
-  * HISTOGRAM_REBINNED_1D_FREQ_AVG_MASKED - rebinned histogram of the input data integer states for each polarisation and dimension, averaged over all channels, expect those flagged for RFI.
+  * HISTOGRAM_REBINNED_1D_FREQ_AVG_RFI_MASKED - rebinned histogram of the input data integer states for each polarisation and dimension, averaged over all channels, expect those flagged for RFI.
   * NUM_CLIPPED_SAMPLES_SPECTRUM - number of clipped input samples (maximum level) for each polarisation, dimension and channel.
   * NUM_CLIPPED_SAMPLES - number of clipped input samples (maximum level) for each polarisation, dimension, averaged over all channels
-  * NUM_CLIPPED_SAMPLES_MASKED - number of clipped input samples (maximum level) for each polarisation, dimension, averaged over all channels, expect those flagged for RFI.
+  * NUM_CLIPPED_SAMPLES_RFI_MASKED - number of clipped input samples (maximum level) for each polarisation, dimension, averaged over all channels, expect those flagged for RFI.
   * SPECTROGRAM - spectrogram of the data for each polarisation, rebinned in frequency to NCHAN_DS bins and in time to NDAT_DS bins.
   * TIMESERIES - time series of the data for each polarisation, rebinned in time to NDAT_DS bins, averaged over all frequency channels. This includes max, min, and mean of the power in each bin.
-  * TIMESERIES_MASKED - time series of the data for each polarisation, rebinned in time to NDAT_DS bins, averaged over all frequency channels, expect those flagged by RFI. This includes max, min, and mean of the power in each bin.
+  * TIMESERIES_RFI_MASKED - time series of the data for each polarisation, rebinned in time to NDAT_DS bins, averaged over all frequency channels, expect those flagged by RFI. This includes max, min, and mean of the power in each bin.
 
 StatStorage
 ^^^^^^^^^^^

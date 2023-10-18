@@ -198,9 +198,9 @@ namespace ska::pst::stat {
        * @brief Handle getting the monitoring data for the service.
        *
        * This will get the current monitoring data for STAT.CORE. This includes
-       * the following scalar statistics: mean_frequency_avg, mean_frequency_avg_masked,
-       * variance_frequency_avg, variance_frequency_avg_masked, num_clipped_samples,
-       * and num_clipped_samples_masked.
+       * the following scalar statistics: mean_frequency_avg, mean_frequency_avg_rfi_excised,
+       * variance_frequency_avg, variance_frequency_avg_rfi_excised, num_clipped_samples,
+       * and num_clipped_samples_rfi_excised.
        *
        * @param data Pointer to the protobuf message to return. This will set the stat
        *    sub-message with the monitoring data.
@@ -211,9 +211,9 @@ namespace ska::pst::stat {
       /**
        * @brief Return environment variables back to the client.
        *
-       * This implementation returns mean_frequency_avg, mean_frequency_avg_masked,
-       * variance_frequency_avg, variance_frequency_avg_masked, num_clipped_samples,
-       * and num_clipped_samples_masked.
+       * This implementation returns mean_frequency_avg, mean_frequency_avg_rfi_excised,
+       * variance_frequency_avg, variance_frequency_avg_rfi_excised, num_clipped_samples,
+       * and num_clipped_samples_rfi_excised.
        *
        * @param data Pointer to a protobuf message message that includes the a map to populate.
        */

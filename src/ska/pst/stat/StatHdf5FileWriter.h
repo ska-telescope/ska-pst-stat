@@ -86,7 +86,7 @@ namespace ska::pst::stat {
     //! number of spectral bins in the spectrogram
     uint32_t nfreq_bins;
 
-    //! number of temporal bins in the timeseries, timeseries_masked and spectrogram attributes
+    //! number of temporal bins in the timeseries, timeseries_rfi_excised and spectrogram attributes
     uint32_t ntime_bins;
 
     //! number of rebinned bins represented in storage vectors

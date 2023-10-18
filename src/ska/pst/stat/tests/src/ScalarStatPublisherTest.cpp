@@ -77,25 +77,25 @@ void ScalarStatPublisherTest::populate_storage()
 
   // data
   populate_2d_vec<float>(storage->mean_frequency_avg);
-  populate_2d_vec<float>(storage->mean_frequency_avg_masked);
+  populate_2d_vec<float>(storage->mean_frequency_avg_rfi_excised);
   populate_2d_vec<float>(storage->variance_frequency_avg);
-  populate_2d_vec<float>(storage->variance_frequency_avg_masked);
+  populate_2d_vec<float>(storage->variance_frequency_avg_rfi_excised);
   populate_3d_vec<float>(storage->mean_spectrum);
   populate_3d_vec<float>(storage->variance_spectrum);
   populate_2d_vec<float>(storage->mean_spectral_power);
   populate_2d_vec<float>(storage->max_spectral_power);
   populate_3d_vec<uint32_t>(storage->histogram_1d_freq_avg);
-  populate_3d_vec<uint32_t>(storage->histogram_1d_freq_avg_masked);
+  populate_3d_vec<uint32_t>(storage->histogram_1d_freq_avg_rfi_excised);
   populate_3d_vec<uint32_t>(storage->rebinned_histogram_2d_freq_avg);
-  populate_3d_vec<uint32_t>(storage->rebinned_histogram_2d_freq_avg_masked);
+  populate_3d_vec<uint32_t>(storage->rebinned_histogram_2d_freq_avg_rfi_excised);
   populate_3d_vec<uint32_t>(storage->rebinned_histogram_1d_freq_avg);
-  populate_3d_vec<uint32_t>(storage->rebinned_histogram_1d_freq_avg_masked);
+  populate_3d_vec<uint32_t>(storage->rebinned_histogram_1d_freq_avg_rfi_excised);
   populate_3d_vec<uint32_t>(storage->num_clipped_samples_spectrum);
   populate_2d_vec<uint32_t>(storage->num_clipped_samples);
-  populate_2d_vec<uint32_t>(storage->num_clipped_samples_masked);
+  populate_2d_vec<uint32_t>(storage->num_clipped_samples_rfi_excised);
   populate_3d_vec<float>(storage->spectrogram);
   populate_3d_vec<float>(storage->timeseries);
-  populate_3d_vec<float>(storage->timeseries_masked);
+  populate_3d_vec<float>(storage->timeseries_rfi_excised);
 }
 
 void ScalarStatPublisherTest::initialise(const std::string& config_file)
@@ -129,11 +129,11 @@ TEST_F(ScalarStatPublisherTest, test_controlled_process_and_read_data) // NOLINT
   scalar_stat_publisher->publish(storage);
   ska::pst::stat::StatStorage::scalar_stats_t copied_scalar_stat = scalar_stat_publisher->get_scalar_stats();
   ASSERT_EQ(copied_scalar_stat.mean_frequency_avg, storage->mean_frequency_avg);
-  ASSERT_EQ(copied_scalar_stat.mean_frequency_avg_masked, storage->mean_frequency_avg_masked);
+  ASSERT_EQ(copied_scalar_stat.mean_frequency_avg_rfi_excised, storage->mean_frequency_avg_rfi_excised);
   ASSERT_EQ(copied_scalar_stat.variance_frequency_avg, storage->variance_frequency_avg);
-  ASSERT_EQ(copied_scalar_stat.variance_frequency_avg_masked, storage->variance_frequency_avg_masked);
+  ASSERT_EQ(copied_scalar_stat.variance_frequency_avg_rfi_excised, storage->variance_frequency_avg_rfi_excised);
   ASSERT_EQ(copied_scalar_stat.num_clipped_samples, storage->num_clipped_samples);
-  ASSERT_EQ(copied_scalar_stat.num_clipped_samples_masked, storage->num_clipped_samples_masked);
+  ASSERT_EQ(copied_scalar_stat.num_clipped_samples_rfi_excised, storage->num_clipped_samples_rfi_excised);
 }
 
 TEST_F(ScalarStatPublisherTest, test_threaded_process_and_read_data) // NOLINT
@@ -161,11 +161,11 @@ TEST_F(ScalarStatPublisherTest, test_threaded_process_and_read_data) // NOLINT
 
         // Add assertions to verify that the result matches the expected values
         ASSERT_EQ(copied_scalar_stat.mean_frequency_avg, storage->mean_frequency_avg);
-        ASSERT_EQ(copied_scalar_stat.mean_frequency_avg_masked, storage->mean_frequency_avg_masked);
+        ASSERT_EQ(copied_scalar_stat.mean_frequency_avg_rfi_excised, storage->mean_frequency_avg_rfi_excised);
         ASSERT_EQ(copied_scalar_stat.variance_frequency_avg, storage->variance_frequency_avg);
-        ASSERT_EQ(copied_scalar_stat.variance_frequency_avg_masked, storage->variance_frequency_avg_masked);
+        ASSERT_EQ(copied_scalar_stat.variance_frequency_avg_rfi_excised, storage->variance_frequency_avg_rfi_excised);
         ASSERT_EQ(copied_scalar_stat.num_clipped_samples, storage->num_clipped_samples);
-        ASSERT_EQ(copied_scalar_stat.num_clipped_samples_masked, storage->num_clipped_samples_masked);
+        ASSERT_EQ(copied_scalar_stat.num_clipped_samples_rfi_excised, storage->num_clipped_samples_rfi_excised);
       }
     });
   }
@@ -183,11 +183,11 @@ TEST_F(ScalarStatPublisherTest, test_controlled_reset) // NOLINT
   scalar_stat_publisher->reset();
   ska::pst::stat::StatStorage::scalar_stats_t copied_scalar_stat = scalar_stat_publisher->get_scalar_stats();
   ASSERT_EQ(copied_scalar_stat.mean_frequency_avg.size(), 0);
-  ASSERT_EQ(copied_scalar_stat.mean_frequency_avg_masked.size(), 0);
+  ASSERT_EQ(copied_scalar_stat.mean_frequency_avg_rfi_excised.size(), 0);
   ASSERT_EQ(copied_scalar_stat.variance_frequency_avg.size(), 0);
-  ASSERT_EQ(copied_scalar_stat.variance_frequency_avg_masked.size(), 0);
+  ASSERT_EQ(copied_scalar_stat.variance_frequency_avg_rfi_excised.size(), 0);
   ASSERT_EQ(copied_scalar_stat.num_clipped_samples.size(), 0);
-  ASSERT_EQ(copied_scalar_stat.num_clipped_samples_masked.size(), 0);
+  ASSERT_EQ(copied_scalar_stat.num_clipped_samples_rfi_excised.size(), 0);
 }
 
 
@@ -219,11 +219,11 @@ TEST_F(ScalarStatPublisherTest, test_threaded_reset) // NOLINT
 
         // Add assertions to verify that the result matches the expected values
         ASSERT_EQ(copied_scalar_stat.mean_frequency_avg.size(), 0);
-        ASSERT_EQ(copied_scalar_stat.mean_frequency_avg_masked.size(), 0);
+        ASSERT_EQ(copied_scalar_stat.mean_frequency_avg_rfi_excised.size(), 0);
         ASSERT_EQ(copied_scalar_stat.variance_frequency_avg.size(), 0);
-        ASSERT_EQ(copied_scalar_stat.variance_frequency_avg_masked.size(), 0);
+        ASSERT_EQ(copied_scalar_stat.variance_frequency_avg_rfi_excised.size(), 0);
         ASSERT_EQ(copied_scalar_stat.num_clipped_samples.size(), 0);
-        ASSERT_EQ(copied_scalar_stat.num_clipped_samples_masked.size(), 0);
+        ASSERT_EQ(copied_scalar_stat.num_clipped_samples_rfi_excised.size(), 0);
       }
     });
   }
