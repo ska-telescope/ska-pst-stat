@@ -44,6 +44,9 @@
 namespace ska::pst::stat {
 
   typedef struct stat_hdf5_header {
+    //! the file format version.  Used for compatability with tools reading file.
+    char* file_format_version;
+
     //! the execution block that the data relates to
     char* eb_id;
 

@@ -61,6 +61,7 @@ auto ska::pst::stat::StatHdf5FileWriter::get_hdf5_header_datatype() -> H5::CompT
   H5::StrType str_datatype(H5::PredType::C_S1, H5T_VARIABLE);
 
   H5::CompType header_datatype(sizeof(stat_hdf5_header_t));
+  header_datatype.insertMember("FILE_FORMAT_VERSION", HOFFSET(stat_hdf5_header_t, file_format_version), str_datatype);
   header_datatype.insertMember("EB_ID", HOFFSET(stat_hdf5_header_t, eb_id), str_datatype);
   header_datatype.insertMember("SCAN_ID", HOFFSET(stat_hdf5_header_t, scan_id), H5::PredType::NATIVE_UINT64);
   header_datatype.insertMember("BEAM_ID", HOFFSET(stat_hdf5_header_t, beam_id), str_datatype);
@@ -128,6 +129,7 @@ void ska::pst::stat::StatHdf5FileWriter::publish(std::shared_ptr<StatStorage> st
   std::string beam_id = get_val_if_has(config, "BEAM_ID", unknown);
   std::string utc_start = get_val_if_has(config, "UTC_START", unknown);
 
+  header.file_format_version = "1.0.0";
   header.eb_id = const_cast<char *>(eb_id.c_str()); // NOLINT
   header.scan_id = get_val_if_has(config, "SCAN_ID", 0);
   header.beam_id = const_cast<char *>(beam_id.c_str()); // NOLINT
