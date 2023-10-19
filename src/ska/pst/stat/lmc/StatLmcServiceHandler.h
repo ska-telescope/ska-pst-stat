@@ -252,12 +252,12 @@ namespace ska::pst::stat {
        * @param data The output 1D vector to store the flattened data.
        */
       template<typename T>
-      static size_t flatten_2d_vec(const std::vector<std::vector<T>>& vec, std::vector<T>& data)
+      static void flatten_2d_vec(const std::vector<std::vector<T>>& vec, std::vector<T>& data)
       {
           // Check if the input vector is empty
           if (vec.empty()) {
             data.clear();
-            return 0;
+            return;
           }
 
           size_t dim1 = vec.size();
@@ -265,7 +265,7 @@ namespace ska::pst::stat {
           // Check if any inner vectors are empty
           if (dim1 == 0 || vec[0].empty()) {
             data.clear();
-            return 0;
+            return;
           }
 
           size_t dim2 = vec[0].size();
@@ -283,14 +283,12 @@ namespace ska::pst::stat {
               if (vec[i].size() != dim2) {
                 SPDLOG_WARN("StatLmcServiceHandler::flatten_2d_vec vec[{}].size() != dim2. Clearing Data and returning 0", i);
                 data.clear();
-                return 0;
+                return;
               }
 
               std::memcpy(data.data() + offset, vec[i].data(), stride);
               offset += stride;
           }
-
-          return num_elements;
       }
 
   };
