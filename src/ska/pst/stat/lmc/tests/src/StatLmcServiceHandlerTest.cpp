@@ -745,17 +745,17 @@ TEST_F(StatLmcServiceHandlerTest, controlled_get_monitor_data) // NOLINT
 
   // end scan
   usleep(ska::pst::common::microseconds_per_decisecond);
-  SPDLOG_TRACE("StatLmcServiceHandlerTest::get_monitor_data - ending scan");
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::controlled_get_monitor_data - ending scan");
   handler->stop_scan();
-  SPDLOG_TRACE("StatLmcServiceHandlerTest::get_monitor_data - scan ended");
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::controlled_get_monitor_data - scan ended");
 
-  SPDLOG_TRACE("StatLmcServiceHandlerTest::get_monitor_data - deconfiguring scan");
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::controlled_get_monitor_data - deconfiguring scan");
   handler->deconfigure_scan();
-  SPDLOG_TRACE("StatLmcServiceHandlerTest::get_monitor_data - scan deconfigured");
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::controlled_get_monitor_data - scan deconfigured");
 
-  SPDLOG_TRACE("StatLmcServiceHandlerTest::get_monitor_data - deconfiguring beam");
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::controlled_get_monitor_data - deconfiguring beam");
   handler->deconfigure_beam();
-  SPDLOG_TRACE("StatLmcServiceHandlerTest::get_monitor_data - beam deconfigured");
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::controlled_get_monitor_data - beam deconfigured");
 }
 
 // TODO(jesmigel): Update at AT3-422

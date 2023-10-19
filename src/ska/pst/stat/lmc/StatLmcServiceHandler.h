@@ -243,17 +243,16 @@ namespace ska::pst::stat {
       /**
        * @brief Helper method for flattening a 2D vector into a 1D vector.
        *
-       * This function takes a 2D vector and flattens it into a 1D vector of floats. It checks for
+       * This function takes a 2D vector and flattens it into a 1D vector of elements type T. It checks for
        * empty vectors, dimensions, and inner vector sizes and logs warnings when data integrity
-       * issues are detected.
+       * issues are detected. The number of elements in the flattened vector is available as vector<T>::size
        *
        * @tparam T The type of elements in the input vector.
        * @param vec The 2D vector to be flattened.
        * @param data The output 1D vector to store the flattened data.
-       * @return The number of elements in the flattened data vector.
        */
       template<typename T>
-      static size_t flatten_2d_vec(const std::vector<std::vector<T>>& vec, std::vector<uint32_t>& data)
+      static size_t flatten_2d_vec(const std::vector<std::vector<T>>& vec, std::vector<T>& data)
       {
           // Check if the input vector is empty
           if (vec.empty()) {

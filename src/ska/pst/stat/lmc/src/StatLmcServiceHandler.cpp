@@ -428,10 +428,10 @@ void ska::pst::stat::StatLmcServiceHandler::get_monitor_data(
     auto stats = stat->get_scalar_stats();
     SPDLOG_TRACE("StatLmcServiceHandler::get_monitor_data - stat->get_scalar_stats() done");
 
-    std::vector<uint32_t> mean_frequency_avg(4);
-    std::vector<uint32_t> mean_frequency_avg_masked(4);
-    std::vector<uint32_t> variance_frequency_avg(4);
-    std::vector<uint32_t> variance_frequency_avg_masked(4);
+    std::vector<float> mean_frequency_avg(4);
+    std::vector<float> mean_frequency_avg_masked(4);
+    std::vector<float> variance_frequency_avg(4);
+    std::vector<float> variance_frequency_avg_masked(4);
     std::vector<uint32_t> num_clipped_samples(4);
     std::vector<uint32_t> num_clipped_samples_masked(4);
 
@@ -458,20 +458,21 @@ void ska::pst::stat::StatLmcServiceHandler::get_monitor_data(
     {
       SPDLOG_WARN("StatLmcServiceHandler::get_monitor_data empty scalar stats");
     }
+    else{
+      *stat_monitor_data->mutable_mean_frequency_avg() = { mean_frequency_avg.begin(), mean_frequency_avg.end() };
+      *stat_monitor_data->mutable_mean_frequency_avg_masked() = { mean_frequency_avg_masked.begin(), mean_frequency_avg_masked.end() };
+      *stat_monitor_data->mutable_variance_frequency_avg() = { variance_frequency_avg.begin(), variance_frequency_avg.end() };
+      *stat_monitor_data->mutable_variance_frequency_avg_masked() = { variance_frequency_avg_masked.begin(), variance_frequency_avg_masked.end() };
+      *stat_monitor_data->mutable_num_clipped_samples() = { num_clipped_samples.begin(), num_clipped_samples.end() };
+      *stat_monitor_data->mutable_num_clipped_samples_masked() = { num_clipped_samples_masked.begin(), num_clipped_samples_masked.end() };
 
-    *stat_monitor_data->mutable_mean_frequency_avg() = { mean_frequency_avg.begin(), mean_frequency_avg.end() };
-    *stat_monitor_data->mutable_mean_frequency_avg_masked() = { mean_frequency_avg_masked.begin(), mean_frequency_avg_masked.end() };
-    *stat_monitor_data->mutable_variance_frequency_avg() = { variance_frequency_avg.begin(), variance_frequency_avg.end() };
-    *stat_monitor_data->mutable_variance_frequency_avg_masked() = { variance_frequency_avg_masked.begin(), variance_frequency_avg_masked.end() };
-    *stat_monitor_data->mutable_num_clipped_samples() = { num_clipped_samples.begin(), num_clipped_samples.end() };
-    *stat_monitor_data->mutable_num_clipped_samples_masked() = { num_clipped_samples_masked.begin(), num_clipped_samples_masked.end() };
-
-    SPDLOG_TRACE("StatLmcServiceHandler::get_monitor_data stat_monitor_data->mean_frequency_avg().size()={}", stat_monitor_data->mean_frequency_avg().size());
-    SPDLOG_TRACE("StatLmcServiceHandler::get_monitor_data stat_monitor_data->mean_frequency_avg_masked().size()={}", stat_monitor_data->mean_frequency_avg_masked().size());
-    SPDLOG_TRACE("StatLmcServiceHandler::get_monitor_data stat_monitor_data->variance_frequency_avg().size()={}", stat_monitor_data->variance_frequency_avg().size());
-    SPDLOG_TRACE("StatLmcServiceHandler::get_monitor_data stat_monitor_data->variance_frequency_avg_masked().size()={}", stat_monitor_data->variance_frequency_avg_masked().size());
-    SPDLOG_TRACE("StatLmcServiceHandler::get_monitor_data stat_monitor_data->num_clipped_samples().size()={}", stat_monitor_data->num_clipped_samples().size());
-    SPDLOG_TRACE("StatLmcServiceHandler::get_monitor_data stat_monitor_data->num_clipped_samples_masked().size()={}", stat_monitor_data->num_clipped_samples_masked().size());
+      SPDLOG_TRACE("StatLmcServiceHandler::get_monitor_data stat_monitor_data->mean_frequency_avg().size()={}", stat_monitor_data->mean_frequency_avg().size());
+      SPDLOG_TRACE("StatLmcServiceHandler::get_monitor_data stat_monitor_data->mean_frequency_avg_masked().size()={}", stat_monitor_data->mean_frequency_avg_masked().size());
+      SPDLOG_TRACE("StatLmcServiceHandler::get_monitor_data stat_monitor_data->variance_frequency_avg().size()={}", stat_monitor_data->variance_frequency_avg().size());
+      SPDLOG_TRACE("StatLmcServiceHandler::get_monitor_data stat_monitor_data->variance_frequency_avg_masked().size()={}", stat_monitor_data->variance_frequency_avg_masked().size());
+      SPDLOG_TRACE("StatLmcServiceHandler::get_monitor_data stat_monitor_data->num_clipped_samples().size()={}", stat_monitor_data->num_clipped_samples().size());
+      SPDLOG_TRACE("StatLmcServiceHandler::get_monitor_data stat_monitor_data->num_clipped_samples_masked().size()={}", stat_monitor_data->num_clipped_samples_masked().size());
+    }
   }
 }
 
