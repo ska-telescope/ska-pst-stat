@@ -449,6 +449,16 @@ void ska::pst::stat::StatLmcServiceHandler::get_monitor_data(
     flatten_2d_vec(stats.num_clipped_samples, num_clipped_samples);
     flatten_2d_vec(stats.num_clipped_samples_masked, num_clipped_samples_masked);
 
+    if (mean_frequency_avg.empty() ||
+        mean_frequency_avg_masked.empty() ||
+        variance_frequency_avg.empty() ||
+        variance_frequency_avg_masked.empty() ||
+        num_clipped_samples.empty() ||
+        num_clipped_samples_masked.empty())
+    {
+      SPDLOG_WARN("StatLmcServiceHandler::get_monitor_data empty scalar stats");
+    }
+
     *stat_monitor_data->mutable_mean_frequency_avg() = { mean_frequency_avg.begin(), mean_frequency_avg.end() };
     *stat_monitor_data->mutable_mean_frequency_avg_masked() = { mean_frequency_avg_masked.begin(), mean_frequency_avg_masked.end() };
     *stat_monitor_data->mutable_variance_frequency_avg() = { variance_frequency_avg.begin(), variance_frequency_avg.end() };
@@ -462,7 +472,6 @@ void ska::pst::stat::StatLmcServiceHandler::get_monitor_data(
     SPDLOG_TRACE("StatLmcServiceHandler::get_monitor_data stat_monitor_data->variance_frequency_avg_masked().size()={}", stat_monitor_data->variance_frequency_avg_masked().size());
     SPDLOG_TRACE("StatLmcServiceHandler::get_monitor_data stat_monitor_data->num_clipped_samples().size()={}", stat_monitor_data->num_clipped_samples().size());
     SPDLOG_TRACE("StatLmcServiceHandler::get_monitor_data stat_monitor_data->num_clipped_samples_masked().size()={}", stat_monitor_data->num_clipped_samples_masked().size());
-
   }
 }
 

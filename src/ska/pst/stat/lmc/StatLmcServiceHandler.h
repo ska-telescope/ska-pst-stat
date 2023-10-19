@@ -257,14 +257,16 @@ namespace ska::pst::stat {
       {
           // Check if the input vector is empty
           if (vec.empty()) {
-              return 0;
+            data.clear();
+            return 0;
           }
 
           size_t dim1 = vec.size();
 
           // Check if any inner vectors are empty
           if (dim1 == 0 || vec[0].empty()) {
-              return 0;
+            data.clear();
+            return 0;
           }
 
           size_t dim2 = vec[0].size();
@@ -280,9 +282,9 @@ namespace ska::pst::stat {
           for (size_t i = 0; i < dim1; i++) {
               // Check if the inner vector is empty
               if (vec[i].size() != dim2) {
-                  SPDLOG_WARN("StatLmcServiceHandler::flatten_2d_vec vec[{}].size() != dim2. Clearing Data and returning 0", i);
-                  data.clear();
-                  return 0;
+                SPDLOG_WARN("StatLmcServiceHandler::flatten_2d_vec vec[{}].size() != dim2. Clearing Data and returning 0", i);
+                data.clear();
+                return 0;
               }
 
               std::memcpy(data.data() + offset, vec[i].data(), stride);
