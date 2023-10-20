@@ -271,7 +271,7 @@ namespace ska::pst::stat {
           size_t dim2 = vec[0].size();
 
           size_t num_elements = dim1 * dim2;
-          size_t stride = dim2 * sizeof(T);
+          size_t num_bytes = dim2 * sizeof(T);
 
           // Resize the 'data' vector to fit the flattened data
           data.resize(num_elements);
@@ -286,11 +286,11 @@ namespace ska::pst::stat {
                 return 0;
               }
 
-              std::memcpy(data.data() + offset, vec[i].data(), stride);
-              offset += stride;
+              std::memcpy(data.data() + offset, vec[i].data(), num_bytes);
+              offset += dim2;
           }
 
-          return num_elements;
+        return num_elements;
       }
 
   };
