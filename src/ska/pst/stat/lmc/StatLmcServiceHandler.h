@@ -254,45 +254,44 @@ namespace ska::pst::stat {
       template<typename T>
       static size_t flatten_2d_vec(const std::vector<std::vector<T>>& vec, std::vector<T>& data)
       {
-          // Check if the input vector is empty
-          if (vec.empty()) {
+        // Check if the input vector is empty
+        if (vec.empty()) {
+          data.clear();
+          return 0;
+        }
+
+        size_t dim1 = vec.size();
+
+        // Check if any inner vectors are empty
+        if (dim1 == 0 || vec[0].empty()) {
+          data.clear();
+          return 0;
+        }
+
+        size_t dim2 = vec[0].size();
+
+        size_t num_elements = dim1 * dim2;
+        size_t num_bytes = dim2 * sizeof(T);
+
+        // Resize the 'data' vector to fit the flattened data
+        data.resize(num_elements);
+
+        size_t offset = 0;
+
+        for (size_t i = 0; i < dim1; i++) {
+          // Check if the inner vector is empty
+          if (vec[i].size() != dim2) {
+            SPDLOG_WARN("StatLmcServiceHandler::flatten_2d_vec vec[{}].size() != dim2. Clearing Data and returning 0", i);
             data.clear();
             return 0;
           }
 
-          size_t dim1 = vec.size();
-
-          // Check if any inner vectors are empty
-          if (dim1 == 0 || vec[0].empty()) {
-            data.clear();
-            return 0;
-          }
-
-          size_t dim2 = vec[0].size();
-
-          size_t num_elements = dim1 * dim2;
-          size_t num_bytes = dim2 * sizeof(T);
-
-          // Resize the 'data' vector to fit the flattened data
-          data.resize(num_elements);
-
-          size_t offset = 0;
-
-          for (size_t i = 0; i < dim1; i++) {
-              // Check if the inner vector is empty
-              if (vec[i].size() != dim2) {
-                SPDLOG_WARN("StatLmcServiceHandler::flatten_2d_vec vec[{}].size() != dim2. Clearing Data and returning 0", i);
-                data.clear();
-                return 0;
-              }
-
-              std::memcpy(data.data() + offset, vec[i].data(), num_bytes);
-              offset += dim2;
-          }
+          std::memcpy(data.data() + offset, vec[i].data(), num_bytes);
+          offset += dim2;
+        }
 
         return num_elements;
       }
-
   };
 
 } // namespace ska::pst::stat
