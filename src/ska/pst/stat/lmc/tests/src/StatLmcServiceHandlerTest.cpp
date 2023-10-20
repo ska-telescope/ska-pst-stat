@@ -387,7 +387,6 @@ TEST_F(StatLmcServiceHandlerTest, configure_deconfigure_scan) // NOLINT
   SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_deconfigure_scan - beam deconfigured");
 }
 
-// TODO(jesmigel): Review logic flow. Configure scan has cached config from configure beam
 TEST_F(StatLmcServiceHandlerTest, configure_scan_with_invalid_configuration) // NOLINT
 {
   SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_with_invalid_configuration - configuring beam");
@@ -396,15 +395,8 @@ TEST_F(StatLmcServiceHandlerTest, configure_scan_with_invalid_configuration) // 
 
   SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_with_invalid_configuration - configuring scan");
   EXPECT_FALSE(handler->is_scan_configured());
-  static constexpr double bad_double = 0;
 
-  /*
-  handler->deconfigure_beam();
-  tear_down_data_block();
-  data_header.set("BYTES_PER_SECOND", bad_double);
-  setup_data_block();
-  configure_beam();
-
+  scan_config.del("EB_ID");
   try
   {
     configure_scan();
@@ -419,7 +411,7 @@ TEST_F(StatLmcServiceHandlerTest, configure_scan_with_invalid_configuration) // 
     EXPECT_EQ(_stat->get_state(), ska::pst::common::State::Idle);
     SPDLOG_TRACE("StatLmcServiceHandlerTest::configure_scan_with_invalid_configuration deconfiguring beam");
   }
-  */
+
 }
 
 TEST_F(StatLmcServiceHandlerTest, configure_scan_when_not_beam_configured) // NOLINT
@@ -630,7 +622,6 @@ TEST_F(StatLmcServiceHandlerTest, stop_scan_when_not_scanning_should_throw_excep
   }
 }
 
-// TODO(jesmigel): Update at AT3-422
 TEST_F(StatLmcServiceHandlerTest, get_monitor_data) // NOLINT
 {
   // configure beam
@@ -643,28 +634,45 @@ TEST_F(StatLmcServiceHandlerTest, get_monitor_data) // NOLINT
   configure_scan();
   SPDLOG_TRACE("StatLmcServiceHandlerTest::get_monitor_data - scan configured");
 
-  /*
+
   // scan
   SPDLOG_TRACE("StatLmcServiceHandlerTest::get_monitor_data - starting scan");
+  EXPECT_FALSE(handler->is_scanning());
   start_scan();
-  usleep(ska::pst::common::microseconds_per_decisecond);
+  EXPECT_TRUE(handler->is_scanning());
   SPDLOG_TRACE("StatLmcServiceHandlerTest::get_monitor_data - scanning");
 
-  SPDLOG_TRACE("StatLmcServiceHandlerTest::get_monitor_data - monitoring");
+  std::thread data_thread = std::thread(&DataBlockTestHelper::write_and_close, data_helper.get(), test_nblocks, delay_ms);
+  std::thread weights_thread = std::thread(&DataBlockTestHelper::write_and_close, weights_helper.get(), test_nblocks, delay_ms);
+  data_thread.join();
+  weights_thread.join();
+
+  static constexpr uint64_t max_to_wait = 60 * ska::pst::common::microseconds_per_second;
+  unsigned waited_so_far = 0;
+
+  const auto &scalar_stats = _stat->get_scalar_stats();
+  SPDLOG_INFO("StatLmcServiceHandlerTest::get_monitor_data scalar_stats.mean_frequency_avg={}", scalar_stats.mean_frequency_avg.size());
   ska::pst::lmc::MonitorData monitor_data;
   handler->get_monitor_data(&monitor_data);
-  // // TODO: AT3-422 const auto &scalar_stats = _stat->get_scalar_stats();
+  EXPECT_TRUE(monitor_data.has_stat()); // NOLINT
 
-  // EXPECT_TRUE(scalar_stats.has_stats()); // NOLINT
-  // const auto &stat_monitor_data = monitor_data.stat();
+  SPDLOG_INFO("StatLmcServiceHandlerTest::get_monitor_data - _stat->get_scalar_stats");
+  const auto &stat_monitor_data = monitor_data.stat();
+  SPDLOG_INFO("StatLmcServiceHandlerTest::get_monitor_data stat_monitor_data.mean_frequency_avg={}", stat_monitor_data.mean_frequency_avg().size());
 
-  // TODO: Add EQ Assertions here
+  EXPECT_NO_THROW(stat_monitor_data.mean_frequency_avg()); // NOLINT
+  EXPECT_NO_THROW(stat_monitor_data.mean_frequency_avg_masked()); // NOLINT
+  EXPECT_NO_THROW(stat_monitor_data.variance_frequency_avg()); // NOLINT
+  EXPECT_NO_THROW(stat_monitor_data.variance_frequency_avg_masked()); // NOLINT
+  EXPECT_NO_THROW(stat_monitor_data.num_clipped_samples()); // NOLINT
+  EXPECT_NO_THROW(stat_monitor_data.num_clipped_samples_masked()); // NOLINT
 
   // end scan
+  usleep(ska::pst::common::microseconds_per_decisecond);
   SPDLOG_TRACE("StatLmcServiceHandlerTest::get_monitor_data - ending scan");
   handler->stop_scan();
   SPDLOG_TRACE("StatLmcServiceHandlerTest::get_monitor_data - scan ended");
-  */
+
   SPDLOG_TRACE("StatLmcServiceHandlerTest::get_monitor_data - deconfiguring scan");
   handler->deconfigure_scan();
   SPDLOG_TRACE("StatLmcServiceHandlerTest::get_monitor_data - scan deconfigured");
@@ -674,26 +682,89 @@ TEST_F(StatLmcServiceHandlerTest, get_monitor_data) // NOLINT
   SPDLOG_TRACE("StatLmcServiceHandlerTest::get_monitor_data - beam deconfigured");
 }
 
+TEST_F(StatLmcServiceHandlerTest, controlled_get_monitor_data) // NOLINT
+{
+  // configure beam
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::controlled_get_monitor_data - configuring beam");
+  configure_beam();
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::controlled_get_monitor_data - beam configured");
+
+  // configure
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::controlled_get_monitor_data - configuring scan");
+  configure_scan();
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::controlled_get_monitor_data - scan configured");
+
+
+  // scan
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::controlled_get_monitor_data - starting scan");
+  EXPECT_FALSE(handler->is_scanning());
+  start_scan();
+  EXPECT_TRUE(handler->is_scanning());
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::controlled_get_monitor_data - scanning");
+
+  std::thread data_thread = std::thread(&DataBlockTestHelper::write_and_close, data_helper.get(), test_nblocks, delay_ms);
+  std::thread weights_thread = std::thread(&DataBlockTestHelper::write_and_close, weights_helper.get(), test_nblocks, delay_ms);
+  data_thread.join();
+  weights_thread.join();
+
+  static constexpr uint64_t max_to_wait = 60 * ska::pst::common::microseconds_per_second;
+  unsigned waited_so_far = 0;
+
+  while (_stat->get_processing_state() == ska::pst::stat::StatApplicationManager::ProcessingState::Processing && waited_so_far < max_to_wait)
+  {
+    usleep(ska::pst::common::microseconds_per_decisecond);
+    waited_so_far += ska::pst::common::microseconds_per_decisecond;
+  }
+
+  const auto &scalar_stats = _stat->get_scalar_stats();
+  SPDLOG_INFO("StatLmcServiceHandlerTest::controlled_get_monitor_data scalar_stats.mean_frequency_avg={}", scalar_stats.mean_frequency_avg.size());
+  ska::pst::lmc::MonitorData monitor_data;
+  handler->get_monitor_data(&monitor_data);
+  EXPECT_TRUE(monitor_data.has_stat()); // NOLINT
+
+  SPDLOG_INFO("StatLmcServiceHandlerTest::controlled_get_monitor_data - _stat->get_scalar_stats");
+  const auto &stat_monitor_data = monitor_data.stat();
+  SPDLOG_INFO("StatLmcServiceHandlerTest::controlled_get_monitor_data stat_monitor_data.mean_frequency_avg={}", stat_monitor_data.mean_frequency_avg().size());
+
+  int index_data_size=0;
+  SPDLOG_TRACE("scalar_stats.mean_frequency_avg.size()={}", scalar_stats.mean_frequency_avg.size());
+  for (int i_npol=0; i_npol<scalar_stats.mean_frequency_avg.size(); i_npol++)
+  {
+    SPDLOG_TRACE("scalar_stats.mean_frequency_avg[{}].size()={}", i_npol, scalar_stats.mean_frequency_avg[i_npol].size());
+    for (int i_ndim=0; i_ndim<scalar_stats.mean_frequency_avg[i_npol].size(); i_ndim++)
+    {
+      EXPECT_EQ(stat_monitor_data.mean_frequency_avg()[index_data_size], scalar_stats.mean_frequency_avg[i_npol][i_ndim]); // NOLINT
+      EXPECT_EQ(stat_monitor_data.mean_frequency_avg_masked()[index_data_size], scalar_stats.mean_frequency_avg_masked[i_npol][i_ndim]); // NOLINT
+      EXPECT_EQ(stat_monitor_data.variance_frequency_avg()[index_data_size], scalar_stats.variance_frequency_avg[i_npol][i_ndim]); // NOLINT
+      EXPECT_EQ(stat_monitor_data.variance_frequency_avg_masked()[index_data_size], scalar_stats.variance_frequency_avg_masked[i_npol][i_ndim]); // NOLINT
+      EXPECT_EQ(stat_monitor_data.num_clipped_samples()[index_data_size], scalar_stats.num_clipped_samples[i_npol][i_ndim]); // NOLINT
+      EXPECT_EQ(stat_monitor_data.num_clipped_samples_masked()[index_data_size], scalar_stats.num_clipped_samples_masked[i_npol][i_ndim]); // NOLINT
+      index_data_size++;
+    }
+  }
+
+  // end scan
+  usleep(ska::pst::common::microseconds_per_decisecond);
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::controlled_get_monitor_data - ending scan");
+  handler->stop_scan();
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::controlled_get_monitor_data - scan ended");
+
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::controlled_get_monitor_data - deconfiguring scan");
+  handler->deconfigure_scan();
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::controlled_get_monitor_data - scan deconfigured");
+
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::controlled_get_monitor_data - deconfiguring beam");
+  handler->deconfigure_beam();
+  SPDLOG_TRACE("StatLmcServiceHandlerTest::controlled_get_monitor_data - beam deconfigured");
+}
+
 // TODO(jesmigel): Update at AT3-422
 TEST_F(StatLmcServiceHandlerTest, get_env) // NOLINT
 {
   SPDLOG_TRACE("StatLmcServiceHandlerTest::get_env - beam deconfigured");
   ska::pst::lmc::GetEnvironmentResponse response;
   handler->get_env(&response);
-  // auto scalar_stats = _stat->get_scalar_stats();
-  /*
-  EXPECT_EQ(response.values().size(), 2);
-  auto values = response.values();
-
-  EXPECT_EQ(values.count("disk_capacity"), 1);
-  EXPECT_TRUE(values["disk_capacity"].has_unsigned_int_value());
-  // EXPECT_EQ(values["disk_capacity"].unsigned_int_value(), scalar_stats.capacity);
-
-
-  EXPECT_EQ(values.count("disk_available_bytes"), 1);
-  EXPECT_TRUE(values["disk_available_bytes"].has_unsigned_int_value());
-  // EXPECT_EQ(values["disk_available_bytes"].unsigned_int_value(), scalar_stats.available);
-  */
+  auto stats = _stat->get_scalar_stats();
 }
 
 TEST_F(StatLmcServiceHandlerTest, go_to_runtime_error) // NOLINT

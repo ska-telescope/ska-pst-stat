@@ -239,6 +239,59 @@ namespace ska::pst::stat {
         * @param exception an exception pointer to store on the application manager.
        */
       void go_to_runtime_error(std::exception_ptr exc) override;
+
+      /**
+       * @brief Helper method for flattening a 2D vector into a 1D vector.
+       *
+       * This function takes a 2D vector and flattens it into a 1D vector of elements type T. It checks for
+       * empty vectors, dimensions, and inner vector sizes and logs warnings when data integrity
+       * issues are detected. The number of elements in the flattened vector is available as vector<T>::size
+       *
+       * @tparam T The type of elements in the input vector.
+       * @param vec The 2D vector to be flattened.
+       * @param data The output 1D vector to store the flattened data.
+       */
+      template<typename T>
+      static size_t flatten_2d_vec(const std::vector<std::vector<T>>& vec, std::vector<T>& data)
+      {
+        // Check if the input vector is empty
+        if (vec.empty()) {
+          data.clear();
+          return 0;
+        }
+
+        size_t dim1 = vec.size();
+
+        // Check if any inner vectors are empty
+        if (dim1 == 0 || vec[0].empty()) {
+          data.clear();
+          return 0;
+        }
+
+        size_t dim2 = vec[0].size();
+
+        size_t num_elements = dim1 * dim2;
+        size_t num_bytes = dim2 * sizeof(T);
+
+        // Resize the 'data' vector to fit the flattened data
+        data.resize(num_elements);
+
+        size_t offset = 0;
+
+        for (size_t i = 0; i < dim1; i++) {
+          // Check if the inner vector is empty
+          if (vec[i].size() != dim2) {
+            SPDLOG_WARN("StatLmcServiceHandler::flatten_2d_vec vec[{}].size() != dim2. Clearing Data and returning 0", i);
+            data.clear();
+            return 0;
+          }
+
+          std::memcpy(data.data() + offset, vec[i].data(), num_bytes);
+          offset += dim2;
+        }
+
+        return num_elements;
+      }
   };
 
 } // namespace ska::pst::stat

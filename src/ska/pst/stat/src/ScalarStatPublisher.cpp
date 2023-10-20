@@ -55,6 +55,12 @@ void ska::pst::stat::ScalarStatPublisher::publish(std::shared_ptr<StatStorage> s
   scalar_stats.variance_frequency_avg_masked = storage->variance_frequency_avg_masked;
   scalar_stats.num_clipped_samples = storage->num_clipped_samples;
   scalar_stats.num_clipped_samples_masked = storage->num_clipped_samples_masked;
+  SPDLOG_TRACE("ska::pst::stat::ScalarStatPublisher::publish scalar_stats.mean_frequency_avg.size={}",scalar_stats.mean_frequency_avg.size());
+  SPDLOG_TRACE("ska::pst::stat::ScalarStatPublisher::publish scalar_stats.mean_frequency_avg_masked.size={}",scalar_stats.mean_frequency_avg_masked.size());
+  SPDLOG_TRACE("ska::pst::stat::ScalarStatPublisher::publish scalar_stats.variance_frequency_avg.size={}",scalar_stats.variance_frequency_avg.size());
+  SPDLOG_TRACE("ska::pst::stat::ScalarStatPublisher::publish scalar_stats.variance_frequency_avg_masked.size={}",scalar_stats.variance_frequency_avg_masked.size());
+  SPDLOG_TRACE("ska::pst::stat::ScalarStatPublisher::publish scalar_stats.num_clipped_samples.size={}",scalar_stats.num_clipped_samples.size());
+  SPDLOG_TRACE("ska::pst::stat::ScalarStatPublisher::publish scalar_stats.num_clipped_samples_masked.size={}",scalar_stats.num_clipped_samples_masked.size());
 }
 
 auto ska::pst::stat::ScalarStatPublisher::get_scalar_stats() -> ska::pst::stat::StatStorage::scalar_stats_t

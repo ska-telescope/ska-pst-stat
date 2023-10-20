@@ -103,18 +103,6 @@ void StatApplicationManagerTest::setup_data_block()
   SPDLOG_TRACE("data_helper->header:\n{}",data_helper->header.raw());
 }
 
-void StatApplicationManagerTest::write_bytes_to_data_writer(uint64_t bytes_to_write)
-{
-  std::vector<char> data(bytes_to_write);
-  _writer_data->write_data(&data[0], data.size());
-}
-
-void StatApplicationManagerTest::write_bytes_to_weights_writer(uint64_t bytes_to_write)
-{
-  std::vector<char> data(bytes_to_write);
-  _writer_weights->write_data(&data[0], data.size());
-}
-
 void StatApplicationManagerTest::tear_down_data_block()
 {
   SPDLOG_TRACE("tear_down_data_block teardown");
