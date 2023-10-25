@@ -44,11 +44,11 @@
 namespace ska::pst::stat {
 
   typedef struct stat_hdf5_header {
-    //! the file format version.  Used for compatability with tools reading file.
-    char* file_format_version;
-
     //! the execution block that the data relates to
     char* eb_id;
+
+    //! the name of the telescope that the data are from (i.e. SKALow or SKAMid)
+    char* telescope;
 
     //! the scan that the data relates to
     uint64_t scan_id;

@@ -135,6 +135,7 @@ void StatHdf5FileWriterTest::validate_hdf5_file(const std::shared_ptr<H5::H5File
     static_cast<double>(picoseconds);
 
   ASSERT_EQ(std::string(header.eb_id), config.get_val("EB_ID"));
+  ASSERT_EQ(std::string(header.telescope), config.get_val("TELESCOPE"));
   ASSERT_EQ(header.scan_id, config.get_uint64("SCAN_ID"));
   ASSERT_EQ(std::string(header.beam_id), config.get_val("BEAM_ID"));
   ASSERT_EQ(std::string(header.utc_start), config.get_val("UTC_START"));
