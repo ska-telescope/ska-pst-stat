@@ -2,7 +2,7 @@ SKA-PST-STAT
 =============
 
 This project provides the libraries and applications required for the STAT
-software component of the Square Kilometre Array (SKA)'s Pulsar Timing (PST) instrument. 
+software component of the Square Kilometre Array (SKA)'s Pulsar Timing (PST) instrument.
 
 .. README =============================================================
 
@@ -33,10 +33,17 @@ software component of the Square Kilometre Array (SKA)'s Pulsar Timing (PST) ins
 
 .. toctree::
   :maxdepth: 3
-  :caption: API
+  :caption: C++ API
   :hidden:
 
   api/library_root
+
+.. toctree::
+  :maxdepth: 3
+  :caption: Python Data Access Library
+  :hidden:
+
+  python/index
 
 .. Applications
 .. ==================================

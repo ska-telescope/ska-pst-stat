@@ -20,6 +20,7 @@ import sys
 import subprocess
 import shutil
 import textwrap
+sys.path.insert(0, os.path.abspath("../../python/src"))
 
 def setup(app):
     app.add_css_file('css/custom.css')
@@ -80,6 +81,16 @@ extensions = [
     'exhale',
     'recommonmark',
     'sphinxcontrib.plantuml',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.doctest',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.todo',
+    'sphinx.ext.coverage',
+    'sphinx.ext.mathjax',
+    'sphinx.ext.ifconfig',
+    'sphinx.ext.viewcode',
+    'sphinx.ext.githubpages',
 ]
 
 source_suffix = [".rst", '.md']

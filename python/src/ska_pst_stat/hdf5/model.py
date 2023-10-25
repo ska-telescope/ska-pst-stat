@@ -405,28 +405,32 @@ class Statistics:
         """
         Get the frequency averaged statistics.
 
-        While this method is a public method, it is recommened to use
-        the :py:attr:`frequency_averaged_stats` or
-        :py:attr:`frequency_averaged_stats_rfi_excised` directly. This
-        will return a data frame that includes statistics across all
+        This will return a data frame that includes statistics across all
         frequencies/channels as well as only the frequencies/channels
         that weren't marked as having RFI.
 
+        While this method is a public method, it is recommened to use
+        the following properties directly:
+
+            * :py:attr:`frequency_averaged_stats`
+            * :py:attr:`frequency_averaged_stats_rfi_excised`
+
         The data frame has the following columns:
+
             * Polarisation - which polarisation that the statistic value is for.
             * Dimension - which complex dimension/component (i.e. real or imag)
-                that the statistic is for.
+              that the statistic is for.
             * RFI Excised - a boolean value of whether the statistic after RFI
-                had been excised.
+              had been excised.
             * Mean - the mean of the data for each polarisation and dimension, averaged
-                over all channels.
+              over all channels.
             * Variance - the variance of the data for each polarisation and dimension,
-                averaged over all channels.
+              averaged over all channels.
             * Clipped - number of clipped input samples (maximum level) for each
-                polarisation, dimension, averaged over all channels.
+              polarisation, dimension, averaged over all channels.
 
-        The Pandas frame has a MultiIndex key using the "Polarisation", "Dimension",
-        and "RFI Excised" columns.
+        The Pandas frame has a MultiIndex key using the ``Polarisation``, ``Dimension``,
+        and ``RFI Excised`` columns.
         """
         polarisation: List[str] = []
         dimension: List[str] = []
@@ -490,17 +494,18 @@ class Statistics:
         number of bits.)
 
         The data frame has the following columns:
+
             * Polarisation - which polarisation that the statistic value is for.
             * Dimension - which complex dimension/component (i.e. real or imag)
-                that the statistic is for.
+              that the statistic is for.
             * Mean - the mean of the data for each polarisation and dimension, averaged
-                over all channels.
+              over all channels.
             * Variance - the variance of the data for each polarisation and dimension,
-                averaged over all channels.
+              averaged over all channels.
             * Clipped - number of clipped input samples (maximum level) for each
-                polarisation, dimension, averaged over all channels.
+              polarisation, dimension, averaged over all channels.
 
-        The Pandas frame has a MultiIndex key using the "Polarisation", and "Dimension"
+        The Pandas frame has a MultiIndex key using the ``Polarisation``, and ``Dimension``
         columns.
         """
         df = self.get_frequency_averaged_stats()
@@ -519,17 +524,18 @@ class Statistics:
         number of bits.)
 
         The data frame has the following columns:
+
             * Polarisation - which polarisation that the statistic value is for.
             * Dimension - which complex dimension/component (i.e. real or imag)
-                that the statistic is for.
+              that the statistic is for.
             * Mean - the mean of the data for each polarisation and dimension, averaged
-                over all channels.
+              over all channels.
             * Variance - the variance of the data for each polarisation and dimension,
-                averaged over all channels.
+              averaged over all channels.
             * Clipped - number of clipped input samples (maximum level) for each
-                polarisation, dimension, averaged over all channels.
+              polarisation, dimension, averaged over all channels.
 
-        The Pandas frame has a MultiIndex key using the "Polarisation", and "Dimension"
+        The Pandas frame has a MultiIndex key using the ``Polarisation``, and ``Dimension``
         columns.
         """
         df = self.get_frequency_averaged_stats()
@@ -540,27 +546,33 @@ class Statistics:
         Get the channel statistics.
 
         While this method is a public method, it is recommened to use
-        the :py:attr:`pol_a_channel_stats`, :py:attr:`pol_b_channel_stats`,
-        :py:attr:`pol_a_real_channel_stats`, :py:attr:`pol_a_imag_channel_stats`,
-        :py:attr:`pol_b_real_channel_stats`, or :py:attr:`pol_b_imag_channel_stats`
-        properties as they provide more specific access to the data based on
-        polarisation and specific dimension of the complex voltage data.
+        the following properties as they provide more specific access to
+        the data based on polarisation and specific dimension of the
+        complex voltage data.
+
+            * :py:attr:`pol_a_channel_stats`
+            * :py:attr:`pol_b_channel_stats`
+            * :py:attr:`pol_a_real_channel_stats`
+            * :py:attr:`pol_a_imag_channel_stats`
+            * :py:attr:`pol_b_real_channel_stats`
+            * :py:attr:`pol_b_imag_channel_stats`
 
         The data frame has the following columns:
+
             * Channel - the channel number the statistics are for.
             * Polarisation - which polarisation that the statistic value is for.
             * Dimension - which complex dimension/component (i.e. real or imag)
-                that the statistic is for.
+              that the statistic is for.
             * Channel Freq. (MHz) - the centre frequency for the channel.
             * Mean - the mean of the data for each polarisation and dimension, averaged
-                over all channels.
+              over all channels.
             * Variance - the variance of the data for each polarisation and dimension,
-                averaged over all channels.
+              averaged over all channels.
             * Clipped - number of clipped input samples (maximum level) for each
-                polarisation, dimension, averaged over all channels.
+              polarisation, dimension, averaged over all channels.
 
-        The Pandas frame has a MultiIndex key using the "Channel", "Polarisation",
-        and "Dimension" columns.
+        The Pandas frame has a MultiIndex key using the ``Channel``, ``Polarisation``,
+        and ``Dimension`` columns.
 
         :return: a data frame with statistics for each channel split by polarisation
             and complex volatge dimension.
@@ -614,23 +626,26 @@ class Statistics:
         Get the polarisation A channel statistics.
 
         This property incluses both the real and complex dimension
-        of the data. Utility properties are provided to get the statistics
-        of each dimension directly (see :py:attr:`pol_a_real_channel_stats`
-        or :py:attr:`pol_a_imag_channel_stats`)
+        of the data. The following utility properties are provided
+        to get the statistics of each dimension directly:
+
+            * :py:attr:`pol_a_real_channel_stats`
+            * :py:attr:`pol_a_imag_channel_stats`
 
         The data frame has the following columns:
+
             * Channel - the channel number the statistics are for.
             * Dimension - which complex dimension/component (i.e. real or imag)
-                that the statistic is for.
+              that the statistic is for.
             * Channel Freq. (MHz) - the centre frequency for the channel.
             * Mean - the mean of the data for each polarisation and dimension, averaged
-                over all channels.
+              over all channels.
             * Variance - the variance of the data for each polarisation and dimension,
-                averaged over all channels.
+              averaged over all channels.
             * Clipped - number of clipped input samples (maximum level) for each
-                polarisation, dimension, averaged over all channels.
+              polarisation, dimension, averaged over all channels.
 
-        The Pandas frame has a MultiIndex key using the "Channel", and "Dimension" columns.
+        The Pandas frame has a MultiIndex key using the ``Channel``, and ``Dimension`` columns.
 
         :return: a data frame with statistics for each channel split by polarisation
             and complex volatge dimension.
@@ -645,14 +660,15 @@ class Statistics:
         Get the real valued, polarisation A channel statistics.
 
         The data frame has the following columns:
+
             * Channel - the channel number the statistics are for.
             * Channel Freq. (MHz) - the centre frequency for the channel.
             * Mean - the mean of the data for each polarisation and dimension, averaged
-                over all channels.
+              over all channels.
             * Variance - the variance of the data for each polarisation and dimension,
-                averaged over all channels.
+              averaged over all channels.
             * Clipped - number of clipped input samples (maximum level) for each
-                polarisation, dimension, averaged over all channels.
+              polarisation, dimension, averaged over all channels.
 
         :return: a data frame with statistics for each channel split by polarisation
             and complex volatge dimension.
@@ -669,16 +685,17 @@ class Statistics:
         Get the imaginary valued, polarisation A channel statistics.
 
         The data frame has the following columns:
+
             * Channel - the channel number the statistics are for.
             * Channel Freq. (MHz) - the centre frequency for the channel.
             * Mean - the mean of the data for each polarisation and dimension, averaged
-                over all channels.
+              over all channels.
             * Variance - the variance of the data for each polarisation and dimension,
-                averaged over all channels.
+              averaged over all channels.
             * Clipped - number of clipped input samples (maximum level) for each
-                polarisation, dimension, averaged over all channels.
+              polarisation, dimension, averaged over all channels.
 
-        :return: a data frame with statistics for each channel split by polarisation
+        :return: a data frame with statistics for each channel split for polarisation A
             and complex volatge dimension.
         :rtype: pd.DataFrame
         """
@@ -692,24 +709,18 @@ class Statistics:
         """
         Get the polarisation B channel statistics.
 
-        This property incluses both the real and complex dimension
-        of the data. Utility properties are provided to get the statistics
-        of each dimension directly (see :py:attr:`pol_b_real_channel_stats`
-        or :py:attr:`pol_b_imag_channel_stats`)
-
         The data frame has the following columns:
+
             * Channel - the channel number the statistics are for.
-            * Dimension - which complex dimension/component (i.e. real or imag)
-                that the statistic is for.
             * Channel Freq. (MHz) - the centre frequency for the channel.
             * Mean - the mean of the data for each polarisation and dimension, averaged
-                over all channels.
+              over all channels.
             * Variance - the variance of the data for each polarisation and dimension,
-                averaged over all channels.
+              averaged over all channels.
             * Clipped - number of clipped input samples (maximum level) for each
-                polarisation, dimension, averaged over all channels.
+              polarisation, dimension, averaged over all channels.
 
-        The Pandas frame has a MultiIndex key using the "Channel", and "Dimension" columns.
+        The Pandas frame has a MultiIndex key using the ``Channel``, and ``Dimension`` columns.
 
         :return: a data frame with statistics for each channel split by polarisation
             and complex volatge dimension.
@@ -724,14 +735,15 @@ class Statistics:
         Get the real valued, polarisation B channel statistics.
 
         The data frame has the following columns:
+
             * Channel - the channel number the statistics are for.
             * Channel Freq. (MHz) - the centre frequency for the channel.
             * Mean - the mean of the data for each polarisation and dimension, averaged
-                over all channels.
+              over all channels.
             * Variance - the variance of the data for each polarisation and dimension,
-                averaged over all channels.
+              averaged over all channels.
             * Clipped - number of clipped input samples (maximum level) for each
-                polarisation, dimension, averaged over all channels.
+              polarisation, dimension, averaged over all channels.
 
         :return: a data frame with statistics for each channel split by polarisation
             and complex volatge dimension.
@@ -748,14 +760,15 @@ class Statistics:
         Get the imaginary valued, polarisation B channel statistics.
 
         The data frame has the following columns:
+
             * Channel - the channel number the statistics are for.
             * Channel Freq. (MHz) - the centre frequency for the channel.
             * Mean - the mean of the data for each polarisation and dimension, averaged
-                over all channels.
+              over all channels.
             * Variance - the variance of the data for each polarisation and dimension,
-                averaged over all channels.
+              averaged over all channels.
             * Clipped - number of clipped input samples (maximum level) for each
-                polarisation, dimension, averaged over all channels.
+              polarisation, dimension, averaged over all channels.
 
         :return: a data frame with statistics for each channel split by polarisation
             and complex volatge dimension.
@@ -771,7 +784,7 @@ class Statistics:
         Get the histogram of the input data integer states for each polarisation and dimension.
 
         While this method is a public method, it is recommened to use one of the
-        following 8 properties as they provide the data in a more usable format.
+        following 8 properties as they provide the data in a more usable format:
 
             * :py:attr:`pol_a_real_histogram`
             * :py:attr:`pol_a_imag_histogram`
@@ -786,14 +799,15 @@ class Statistics:
         data this is 256 bins and for 16 bit data this is 65536 bins.
 
         The data frame has the following columns:
+
             * Bin - the bin for the histogram count.
             * Polarisation - which polarisation that the statistic value is for.
             * Dimension - which complex dimension/component (i.e. real or imag)
-                that the statistic is for.
-            * Count - the number/count for the bin
+              that the statistic is for.
+            * Count - the number/count for the bin.
 
-        The Pandas frame has a MultiIndex key using the "Bin", "Polarisation",
-        and "Dimension" columns.
+        The Pandas frame has a MultiIndex key using the ``Bin``, ``Polarisation``,
+        and ``Dimension`` columns.
 
         :param rfi_excised: a bool value to report on all (False) or RFI excised
             (True) data
@@ -839,6 +853,7 @@ class Statistics:
         data this is 256 bins and for 16 bit data this is 65536 bins.
 
         The data frame has the following columns:
+
             * Bin - the bin for the histogram count.
             * Count - the number/count for the bin
 
@@ -860,6 +875,7 @@ class Statistics:
         data this is 256 bins and for 16 bit data this is 65536 bins.
 
         The data frame has the following columns:
+
             * Bin - the bin for the histogram count.
             * Count - the number/count for the bin
 
@@ -881,6 +897,7 @@ class Statistics:
         data this is 256 bins and for 16 bit data this is 65536 bins.
 
         The data frame has the following columns:
+
             * Bin - the bin for the histogram count.
             * Count - the number/count for the bin
 
@@ -902,6 +919,7 @@ class Statistics:
         data this is 256 bins and for 16 bit data this is 65536 bins.
 
         The data frame has the following columns:
+
             * Bin - the bin for the histogram count.
             * Count - the number/count for the bin
 
@@ -923,6 +941,7 @@ class Statistics:
         data this is 256 bins and for 16 bit data this is 65536 bins.
 
         The data frame has the following columns:
+
             * Bin - the bin for the histogram count.
             * Count - the number/count for the bin
 
@@ -945,6 +964,7 @@ class Statistics:
         data this is 256 bins and for 16 bit data this is 65536 bins.
 
         The data frame has the following columns:
+
             * Bin - the bin for the histogram count.
             * Count - the number/count for the bin
 
@@ -967,6 +987,7 @@ class Statistics:
         data this is 256 bins and for 16 bit data this is 65536 bins.
 
         The data frame has the following columns:
+
             * Bin - the bin for the histogram count.
             * Count - the number/count for the bin
 
@@ -989,6 +1010,7 @@ class Statistics:
         data this is 256 bins and for 16 bit data this is 65536 bins.
 
         The data frame has the following columns:
+
             * Bin - the bin for the histogram count.
             * Count - the number/count for the bin
 
@@ -1022,14 +1044,15 @@ class Statistics:
         "Num. Histogram Bins (Rebinned)" value found in the :py:attr:`header`.
 
         The data frame has the following columns:
+
             * Bin - the bin for the histogram count.
             * Polarisation - which polarisation that the statistic value is for.
             * Dimension - which complex dimension/component (i.e. real or imag)
-                that the statistic is for.
+              that the statistic is for.
             * Count - the number/count for the bin
 
-        The Pandas frame has a MultiIndex key using the "Bin", "Polarisation",
-        and "Dimension" columns.
+        The Pandas frame has a MultiIndex key using the ``Bin``, ``Polarisation``,
+        and ``Dimension`` columns.
 
         :param rfi_excised: a bool value to report on all (False) or RFI excised
             (True) data
@@ -1072,6 +1095,7 @@ class Statistics:
         Get the rebinned histogram of the real valued, pol A.
 
         The data frame has the following columns:
+
             * Bin - the bin for the histogram count.
             * Count - the number/count for the bin
 
@@ -1088,6 +1112,7 @@ class Statistics:
         Get the rebinned histogram of the imaginary valued, pol A.
 
         The data frame has the following columns:
+
             * Bin - the bin for the histogram count.
             * Count - the number/count for the bin
 
@@ -1104,6 +1129,7 @@ class Statistics:
         Get the rebinned histogram of the real valued, pol B.
 
         The data frame has the following columns:
+
             * Bin - the bin for the histogram count.
             * Count - the number/count for the bin
 
@@ -1120,6 +1146,7 @@ class Statistics:
         Get the rebinned histogram of the imaginary valued, pol B.
 
         The data frame has the following columns:
+
             * Bin - the bin for the histogram count.
             * Count - the number/count for the bin
 
@@ -1136,6 +1163,7 @@ class Statistics:
         Get the rebinned histogram of the real valued, pol A except those flagged with RFI.
 
         The data frame has the following columns:
+
             * Bin - the bin for the histogram count.
             * Count - the number/count for the bin
 
@@ -1153,6 +1181,7 @@ class Statistics:
         Get the rebinned histogram of the imag valued, pol A except those flagged with RFI.
 
         The data frame has the following columns:
+
             * Bin - the bin for the histogram count.
             * Count - the number/count for the bin
 
@@ -1170,6 +1199,7 @@ class Statistics:
         Get the rebinned histogram of the real valued, pol B except those flagged with RFI.
 
         The data frame has the following columns:
+
             * Bin - the bin for the histogram count.
             * Count - the number/count for the bin
 
@@ -1187,6 +1217,7 @@ class Statistics:
         Get the rebinned histogram of the imag valued, pol B except those flagged with RFI.
 
         The data frame has the following columns:
+
             * Bin - the bin for the histogram count.
             * Count - the number/count for the bin
 
@@ -1209,10 +1240,10 @@ class Statistics:
         While this is a public method the following properties should be used
         as they provide a more user friendly API.
 
-            * pol_a_rebinned_histogram2d
-            * pol_b_rebinned_histogram2d
-            * pol_a_rebinned_histogram2d_rfi_excised
-            * pol_a_rebinned_histogram2d_rfi_excised
+            * :py:attr:`pol_a_rebinned_histogram2d`
+            * :py:attr:`pol_b_rebinned_histogram2d`
+            * :py:attr:`pol_a_rebinned_histogram2d_rfi_excised`
+            * :py:attr:`pol_a_rebinned_histogram2d_rfi_excised`
 
         :param rfi_excised: use the RFI excised data (True) or all data (False)
         :type rfi_excised: bool
@@ -1231,8 +1262,8 @@ class Statistics:
 
         This returns a Numpy array with data for all frequencies.
 
-        * the first array dimension is the real valued data.
-        * the second array dimension is the imaginary valued data.
+            * the first array dimension is the real valued data.
+            * the second array dimension is the imaginary valued data.
 
         :return: the rebinned 2D histogram data for polarisation A.
         :rtype: np.ndarray
@@ -1246,8 +1277,8 @@ class Statistics:
 
         This returns a Numpy array with data for all frequencies.
 
-        * the first array dimension is the real valued data.
-        * the second array dimension is the imaginary valued data.
+            * the first array dimension is the real valued data.
+            * the second array dimension is the imaginary valued data.
 
         :return: the rebinned 2D histogram data for polarisation B.
         :rtype: np.ndarray
@@ -1263,8 +1294,8 @@ class Statistics:
 
         This returns a Numpy array with data for frequnecies that aren't RFI excised.
 
-        * the first array dimension is the real valued data.
-        * the second array dimension is the imaginary valued data.
+            * the first array dimension is the real valued data.
+            * the second array dimension is the imaginary valued data.
 
         :return: the rebinned 2D histogram data for polarisation A.
         :rtype: np.ndarray
@@ -1280,8 +1311,8 @@ class Statistics:
 
         This returns a Numpy array with data for frequnecies that aren't RFI excised.
 
-        * the first array dimension is the real valued data.
-        * the second array dimension is the imaginary valued data.
+            * the first array dimension is the real valued data.
+            * the second array dimension is the imaginary valued data.
 
         :return: the rebinned 2D histogram data for polarisation B.
         :rtype: np.ndarray
@@ -1339,6 +1370,7 @@ class Statistics:
         then the summing happens over the frequency that are not RFI excised.
 
         The data frame has the following columns:
+
             * Polarisation - which polarisation that the statistic value is for.
             * Temporal Bin - the time bin.
             * Time Offset - the offset, in seconds, for the current temporal bin.
@@ -1346,8 +1378,8 @@ class Statistics:
             * Min - the minimum power recorded in the temporal bin.
             * Mean - the mean power recorded in the temporal bin.
 
-        The Pandas frame has a MultiIndex key using the ""Polarisation",
-        and "Temporal Bin" columns.
+        The Pandas frame has a MultiIndex key using the ``Polarisation``,
+        and `Temporal Bin` columns.
 
         :param rfi_excised: whether to use all frequencies (False) or those that
             are not marked as having RFI.
@@ -1393,10 +1425,11 @@ class Statistics:
         """
         Get the timeseries data for polarisation A for all frequencies.
 
-        The timeseries is binned in time (see "Num. Temporal Bins" in :py:attr:`header`)
+        The timeseries is binned in time (see ``Num. Temporal Bins`` in :py:attr:`header`)
         and is summed over all frequencies.
 
         The data frame has the following columns:
+
             * Temporal Bin - the time bin.
             * Time Offset - the offset, in seconds, for the current temporal bin.
             * Max - the maximum power recorded in the temporal bin.
@@ -1414,10 +1447,11 @@ class Statistics:
         """
         Get the timeseries data for polarisation B for all frequencies.
 
-        The timeseries is binned in time (see "Num. Temporal Bins" in :py:attr:`header`)
+        The timeseries is binned in time (see ``Num. Temporal Bins`` in :py:attr:`header`)
         and is summed over all frequencies.
 
         The data frame has the following columns:
+
             * Temporal Bin - the time bin.
             * Time Offset - the offset, in seconds, for the current temporal bin.
             * Max - the maximum power recorded in the temporal bin.
@@ -1437,10 +1471,11 @@ class Statistics:
         """
         Get the timeseries data for polarisation A for all frequencies except for RFI excised frequencies.
 
-        The timeseries is binned in time (see "Num. Temporal Bins" in :py:attr:`header`)
+        The timeseries is binned in time (see ``Num. Temporal Bins`` in :py:attr:`header`)
         and is summed over all frequencies.
 
         The data frame has the following columns:
+
             * Temporal Bin - the time bin.
             * Time Offset - the offset, in seconds, for the current temporal bin.
             * Max - the maximum power recorded in the temporal bin.
@@ -1461,10 +1496,11 @@ class Statistics:
         """
         Get the timeseries data for polarisation B for all frequencies except for RFI excised frequencies.
 
-        The timeseries is binned in time (see "Num. Temporal Bins" in :py:attr:`header`)
+        The timeseries is binned in time (see ``Num. Temporal Bins`` in :py:attr:`header`)
         and is summed over all frequencies.
 
         The data frame has the following columns:
+
             * Temporal Bin - the time bin.
             * Time Offset - the offset, in seconds, for the current temporal bin.
             * Max - the maximum power recorded in the temporal bin.

@@ -64,6 +64,7 @@ a separate HDF5 dataset.
 The header of the HDF5 file includes the following fields:
 
   * EB_ID - the execution block that the output statistics file is for.
+  * TELESCOPE - the telescope that was used to capture the data (i.e SKALow or SKAMid)
   * SCAN_ID - the scan that the output statistics file is for.
   * BEAM_ID - the beam used to capture the voltage data used in computing the statistics.
   * UTC_START - the start time of the observation as an ISO 8601 string.
@@ -85,6 +86,7 @@ The header of the HDF5 file includes the following fields:
 
 The output data of the HDF5 includes the following datasets:
 
+  * FILE_FORMAT_VERSION - this is used to define the format of the file and is used within the Python data access library to be able to process a file even if there are future changes to the format
   * MEAN_FREQUENCY_AVG - the mean of the data for each polarisation and dimension, averaged over all channels.
   * MEAN_FREQUENCY_AVG_RFI_MASKED - the mean of the data for each polarisation and dimension, averaged over all channels, expect those flagged for RFI.
   * VARIANCE_FREQUENCY_AVG - the variance of the data for each polarisation and dimension, averaged over all channels.
