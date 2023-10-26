@@ -464,7 +464,7 @@ void ska::pst::stat::StatLmcServiceHandler::get_monitor_data(
       *stat_monitor_data->mutable_variance_frequency_avg() = { variance_frequency_avg.begin(), variance_frequency_avg.end() };
       *stat_monitor_data->mutable_variance_frequency_avg_masked() = { variance_frequency_avg_rfi_excised.begin(), variance_frequency_avg_rfi_excised.end() };
       *stat_monitor_data->mutable_num_clipped_samples() = { num_clipped_samples.begin(), num_clipped_samples.end() };
-      *stat_monitor_data->mutable_num_clipped_samples_rfi_masked() = { num_clipped_samples_rfi_excised.begin(), num_clipped_samples_rfi_excised.end() };
+      *stat_monitor_data->mutable_num_clipped_samples_masked() = { num_clipped_samples_rfi_excised.begin(), num_clipped_samples_rfi_excised.end() };
 
       SPDLOG_TRACE("StatLmcServiceHandler::get_monitor_data stat_monitor_data->mean_frequency_avg().size()={}", stat_monitor_data->mean_frequency_avg().size());
       SPDLOG_TRACE("StatLmcServiceHandler::get_monitor_data stat_monitor_data->mean_frequency_avg_masked().size()={}", stat_monitor_data->mean_frequency_avg_masked().size());
