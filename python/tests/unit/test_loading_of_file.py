@@ -9,7 +9,7 @@ import pathlib
 
 import h5py
 import numpy as np
-from ska_pst_stat.hdf5 import Statistics
+from ska_pst_stat import Statistics
 from ska_pst_stat.utility import Hdf5FileGenerator, StatConfig
 
 
