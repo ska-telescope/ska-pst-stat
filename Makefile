@@ -93,5 +93,3 @@ _VENV=.venv
 local-apt-install-dependencies:
 	apt-get update -y
 	apt-get install -y `cat dependencies/apt.txt`
-	pip3 install -r docs/requirements.txt
-
