@@ -47,6 +47,7 @@ pytest-runner = "^6.0.0"
 jupyterlab = "^4.0.7"
 pandas-stubs = "^2.1.1.230928"
 matplotlib = "^3.8.0"
+nbqa = "^1.7.0"
 
 
 [tool.poetry.group.docs.dependencies]

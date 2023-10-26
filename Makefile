@@ -8,16 +8,24 @@ PYTHON_TEST_FILE = python/tests/
 PYTHON_LINT_TARGET = python/src/ python/tests/
 PYTHON_LINE_LENGTH = 110
 
+NOTEBOOK_LINT_TARGET=notebooks
+PYTHON_TEST_FOLDER_NBMAKE=notebooks
+
 # E203 and W503 conflict with black
 PYTHON_SWITCHES_FOR_FLAKE8 = --extend-ignore=BLK,T --enable=DAR104 --ignore=E203,FS003,W503,N802 --max-complexity=10 \
     --rst-roles=py:attr,py:class,py:const,py:exc,py:func,py:meth,py:mod \
 		--rst-directives deprecated,uml
-PYTHON_SWITCHES_FOR_ISORT = --skip-glob="*/__init__.py" --py 310
+PYTHON_SWITCHES_FOR_ISORT = --skip-glob="*/__init__.py" --py=310
 PYTHON_SWITCHES_FOR_PYLINT = --disable=W,C,R
 PYTHON_SWITCHES_FOR_AUTOFLAKE ?= --in-place --remove-unused-variables --remove-all-unused-imports --recursive --ignore-init-module-imports
 PYTHON_SWITCHES_FOR_DOCFORMATTER ?= -r -i --black --style sphinx --wrap-summaries $(PYTHON_LINE_LENGTH) --wrap-descriptions $(PYTHON_LINE_LENGTH) --pre-summary-newline
 
 PYTHON_VARS_AFTER_PYTEST = --cov-config=$(PWD)/.coveragerc
+
+ifeq ($(findstring notebook, $(MAKECMDGOALS)),notebook)
+	PYTHON_LINT_TARGET=$(NOTEBOOK_LINT_TARGET)
+	PYTHON_SWITCHES_FOR_FLAKE8 := --extend-ignore=BLK,T --enable=DAR104 --ignore=E203,FS003,W503,N802,D100,D103 --max-complexity=10
+endif
 
 # Add this for typehints & static type checking
 mypy:
@@ -32,7 +40,10 @@ python-post-format:
 
 python-post-lint: mypy
 
-.PHONY: python-post-format, notebook-format, notebook-post-format, python-post-lint, mypy, flake8
+notebook-post-format:
+	$(PYTHON_RUNNER) nbqa autoflake $(PYTHON_SWITCHES_FOR_AUTOFLAKE) $(PYTHON_LINT_TARGET)
+
+notebook-format: notebook-pre-format notebook-do-format notebook-post-format
 
 # include OCI support
 include .make/oci.mk
@@ -54,6 +65,11 @@ include .make/python.mk
 
 # include your own private variables for custom deployment configuration
 -include PrivateRules.mak
+
+notebook-post-lint:
+	$(PYTHON_RUNNER) nbqa mypy --config-file=mypy.ini $(PYTHON_LINT_TARGET)
+
+.PHONY: python-post-format, notebook-format, notebook-post-format, python-post-lint, mypy, flake8
 
 DEV_IMAGE	?=registry.gitlab.com/ska-telescope/pst/ska-pst-smrb/ska-pst-smrb-builder
 DEV_TAG		?=0.10.5

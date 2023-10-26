@@ -214,6 +214,22 @@ pyflakes = ">=1.1.0,<3"
 tomli = {version = ">=2.0.1", markers = "python_version < \"3.11\""}
 
 [[package]]
+name = "autopep8"
+version = "1.6.0"
+description = "A tool that automatically formats Python code to conform to the PEP 8 style guide"
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "autopep8-1.6.0-py2.py3-none-any.whl", hash = "sha256:ed77137193bbac52d029a52c59bec1b0629b5a186c495f1eb21b126ac466083f"},
+    {file = "autopep8-1.6.0.tar.gz", hash = "sha256:44f0932855039d2c15c4510d6df665e4730f2b8582704fa48f9c55bd3e17d979"},
+]
+
+[package.dependencies]
+pycodestyle = ">=2.8.0"
+toml = "*"
+
+[[package]]
 name = "babel"
 version = "2.13.0"
 description = "Internationalization utilities"
@@ -2223,6 +2239,27 @@ docs = ["myst-parser", "pydata-sphinx-theme", "sphinx", "sphinxcontrib-github-al
 test = ["pep440", "pre-commit", "pytest", "testpath"]
 
 [[package]]
+name = "nbqa"
+version = "1.7.0"
+description = "Run any standard Python code quality tool on a Jupyter Notebook"
+category = "dev"
+optional = false
+python-versions = ">=3.8.0"
+files = [
+    {file = "nbqa-1.7.0-py3-none-any.whl", hash = "sha256:42a79b0f57c3ef47b8b223dc8c265f499812f529dc5154688449e7bd05d76b7e"},
+    {file = "nbqa-1.7.0.tar.gz", hash = "sha256:117112ad6d618ff13afc5ba41ca0ff21c23f084a6df7875fb04b7f2c01a136c4"},
+]
+
+[package.dependencies]
+autopep8 = ">=1.5"
+ipython = ">=7.8.0"
+tokenize-rt = ">=3.2.0"
+tomli = "*"
+
+[package.extras]
+toolchain = ["black", "blacken-docs", "flake8", "isort", "jupytext", "mypy", "pylint", "pyupgrade", "ruff"]
+
+[[package]]
 name = "nest-asyncio"
 version = "1.5.8"
 description = "Patch asyncio to allow nested event loops"
@@ -3846,6 +3883,18 @@ doc = ["sphinx", "sphinx_rtd_theme"]
 test = ["flake8", "isort", "pytest"]
 
 [[package]]
+name = "tokenize-rt"
+version = "5.2.0"
+description = "A wrapper around the stdlib `tokenize` which roundtrips."
+category = "dev"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "tokenize_rt-5.2.0-py2.py3-none-any.whl", hash = "sha256:b79d41a65cfec71285433511b50271b05da3584a1da144a0752e9c621a285289"},
+    {file = "tokenize_rt-5.2.0.tar.gz", hash = "sha256:9fe80f8a5c1edad2d3ede0f37481cc0cc1538a2f442c9c2f9e4feacd2792d054"},
+]
+
+[[package]]
 name = "toml"
 version = "0.10.2"
 description = "Python Library for Tom's Obvious, Minimal Language"
@@ -4155,4 +4204,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10, < 3.13"
-content-hash = "ad49f6c1fa57f39b33de5c40cee262f277a74fd3b27833b4f33162eac36227eb"
+content-hash = "baf23361ce666afab1f2fe5e796cc0940ea654d1688b10e8c0a177e475ce90aa"
