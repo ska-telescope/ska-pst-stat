@@ -54,6 +54,13 @@ with open('../../.release') as f:
 # Check if we're running on Read the Docs' servers
 read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 
+autodoc_mock_imports = [
+    "h5py",
+    "nptyping",
+    "numpy",
+    "pandas",
+]
+
 breathe_projects = {}
 doxygen_xml = ""
 source_dir = "../../src"
