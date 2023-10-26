@@ -214,6 +214,9 @@ class Hdf5FileGenerator:
         :type beam_id: str
         :param config: the configuration to use to generate the data file
         :type config: StatConfig
+        :param utc_start: an ISO formated string of the UTC time at the start of the scan. Optional, default
+            is the current time.
+        :param utc_start: str | None
         """
         file_path = pathlib.Path(file_path)
         if not file_path.parent.exists():
