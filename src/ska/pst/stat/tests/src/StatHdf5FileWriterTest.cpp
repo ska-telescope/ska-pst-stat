@@ -116,13 +116,22 @@ void StatHdf5FileWriterTest::populate_storage()
 
 void StatHdf5FileWriterTest::validate_hdf5_file(const std::shared_ptr<H5::H5File>& file)
 {
+  std::array<hsize_t, 1> dims = { 1 };
+
+  H5::DataSet dataset = file->openDataSet("FILE_FORMAT_VERSION");
+  H5::DataSpace dataspace(H5S_SCALAR);
+  H5::StrType str_datatype(H5::PredType::C_S1, H5T_VARIABLE);
+  std::string file_format_version;
+  dataset.read(file_format_version, str_datatype, dataspace);
+
+  ASSERT_EQ(file_format_version, "1.0.0");
+
   auto header_datatype = writer->get_hdf5_header_datatype();
 
-  H5::DataSet dataset = file->openDataSet("HEADER");
-  H5::DataSpace dataspace = dataset.getSpace();
+  dataset = file->openDataSet("HEADER");
+  dataspace = dataset.getSpace();
 
   ASSERT_EQ(1, dataspace.getSimpleExtentNdims());
-  std::array<hsize_t, 1> dims = { 1 };
   dataspace.getSimpleExtentDims(dims.data());
   ASSERT_EQ(dims[0], 1);
 

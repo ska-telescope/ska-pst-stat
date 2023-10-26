@@ -354,7 +354,7 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
 TEST_F(StatComputerTest, test_rfi_excised_channels) // NOLINT
 {
   data_config.reset();
-  data_config.load_from_file(test_data_file("stat_computer_4chan_8nsamp_rfi_excised_config.txt"));
+  data_config.load_from_file(test_data_file("stat_computer_4chan_8nsamp_masked_config.txt"));
   weights_config = get_weights_config(data_config);
   configure(false);
 
@@ -714,7 +714,7 @@ TEST_F(StatComputerTest, test_clipped_channels) // NOLINT
 TEST_F(StatComputerTest, test_clipped_rfi_excised_channels) // NOLINT
 {
   data_config.reset();
-  data_config.load_from_file(test_data_file("stat_computer_4chan_8nsamp_rfi_excised_config.txt"));
+  data_config.load_from_file(test_data_file("stat_computer_4chan_8nsamp_masked_config.txt"));
   weights_config = get_weights_config(data_config);
   configure(false);
 

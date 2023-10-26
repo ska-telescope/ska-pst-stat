@@ -61,7 +61,6 @@ auto ska::pst::stat::StatHdf5FileWriter::get_hdf5_header_datatype() -> H5::CompT
   H5::StrType str_datatype(H5::PredType::C_S1, H5T_VARIABLE);
 
   H5::CompType header_datatype(sizeof(stat_hdf5_header_t));
-  // header_datatype.insertMember("FILE_FORMAT_VERSION", HOFFSET(stat_hdf5_header_t, file_format_version), str_datatype);
   header_datatype.insertMember("EB_ID", HOFFSET(stat_hdf5_header_t, eb_id), str_datatype);
   header_datatype.insertMember("TELESCOPE", HOFFSET(stat_hdf5_header_t, telescope), str_datatype);
   header_datatype.insertMember("SCAN_ID", HOFFSET(stat_hdf5_header_t, scan_id), H5::PredType::NATIVE_UINT64);
@@ -184,15 +183,18 @@ void ska::pst::stat::StatHdf5FileWriter::publish(std::shared_ptr<StatStorage> st
     const int rank = 1;
     std::array<hsize_t, rank> dims = {1};
 
-    SPDLOG_TRACE("ska::pst::stat::StatHdf5FileWriter::publish creating HEADER dataset");
     H5::StrType str_datatype(H5::PredType::C_S1, H5T_VARIABLE);
 
-    H5::DataSpace file_format_version_dataspace(rank, &dims[0]);
+    SPDLOG_TRACE("ska::pst::stat::StatHdf5FileWriter::publish creating FILE_FORMAT_VERSION dataset");
+    std::string file_format_version = "1.0.0";
+    H5::DataSpace file_format_version_dataspace(H5S_SCALAR);
     H5::DataSet file_format_version_dataset = file->createDataSet(
       "FILE_FORMAT_VERSION", str_datatype, file_format_version_dataspace
     );
-    file_format_version_dataset.write("1.0.0", header_datatype);
+    file_format_version_dataset.write(file_format_version, str_datatype);
+    SPDLOG_TRACE("ska::pst::stat::StatHdf5FileWriter::publish created FILE_FORMAT_VERSION dataset");
 
+    SPDLOG_TRACE("ska::pst::stat::StatHdf5FileWriter::publish creating HEADER dataset");
     H5::DataSpace header_dataspace(rank, &dims[0]);
     H5::DataSet header_dataset = file->createDataSet("HEADER", header_datatype, header_dataspace);
     header_dataset.write(&header, header_datatype);
