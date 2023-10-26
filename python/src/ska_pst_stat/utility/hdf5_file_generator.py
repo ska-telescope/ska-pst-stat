@@ -267,8 +267,8 @@ class Hdf5FileGenerator:
             dtype=HDF5_HEADER_TYPE,
         )
         with h5py.File(self._file_path, "w") as f:
-            file_format_ds = f.create_dataset(HDF5_FILE_FORMAT_VERSION, 1, dtype=string_dt)
-            file_format_ds[...] = FILE_FORMAT_VERSION_1_0_0
+            file_format_ds = f.create_dataset(HDF5_FILE_FORMAT_VERSION, shape=(), dtype=string_dt)
+            file_format_ds[()] = FILE_FORMAT_VERSION_1_0_0
 
             header_ds = f.create_dataset(HDF5_HEADER, 1, dtype=HDF5_HEADER_TYPE)
             header_ds[...] = header_data

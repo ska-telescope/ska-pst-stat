@@ -106,7 +106,7 @@ class Statistics:
 
         with h5py.File(file_path, "r") as f:
             # we only have a size of 1 for header
-            file_format_version: h5py.Dataset = f[HDF5_FILE_FORMAT_VERSION][0]
+            file_format_version: bytes = f[HDF5_FILE_FORMAT_VERSION][()]  # pylint: disable=E1101
             hdf5_header: h5py.Dataset = f[HDF5_HEADER][0]
 
             metadata = StatisticsMetadata(

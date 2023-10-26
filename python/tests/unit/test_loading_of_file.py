@@ -88,6 +88,3 @@ def test_load_hdf5_file(
     _assert_data_def("SPECTROGRAM", (npol, nfreq_bins, ntime_bins), np.float32)
     _assert_data_def("TIMESERIES", (npol, ntime_bins, 3), np.float32)
     _assert_data_def("TIMESERIES_RFI_EXCISED", (npol, ntime_bins, 3), np.float32)
-
-    # assert header
-    #
