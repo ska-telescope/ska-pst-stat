@@ -152,8 +152,8 @@ class StatConfig:
     @property
     def non_rfi_channel_indexes(self: StatConfig) -> List[int]:
         """Get the index of channels that are not RFI excised."""
-        masked_channels = self.rfi_excised_channel_indexes
-        return [c for c in range(self.nchan) if c not in masked_channels]
+        rfi_excised_channels = self.rfi_excised_channel_indexes
+        return [c for c in range(self.nchan) if c not in rfi_excised_channels]
 
     @property
     def nbin(self: StatConfig) -> int:
@@ -501,7 +501,7 @@ def calc_stats(config: StatConfig) -> StatisticsData:
         timeseries[:, temporal_bin, TimeseriesDimension.MIN] = np.min(timeseries_power_slice, axis=(1, 2))
         timeseries[:, temporal_bin, TimeseriesDimension.MEAN] = np.mean(timeseries_power_slice, axis=(1, 2))
 
-        # get the power for channels that aren't rfi masked
+        # get the power for channels that aren't rfi excised
         timeseries_power_slice_rfi_excised = power[
             :, non_rfi_channel_idx, isamp : isamp + temporal_bin_factor
         ]
