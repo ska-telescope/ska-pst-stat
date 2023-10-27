@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of the SKA PST LMC project
+# This file is part of the SKA PST STAT project
 #
 # Distributed under the terms of the BSD 3-clause new license.
 # See LICENSE for more info.
@@ -190,12 +190,12 @@ class Statistics:
     @property
     def header(self: Statistics) -> pd.DataFrame:
         """
-        Get the scalar header data for the data file.
+        Get the header metadata for the data file.
 
-        This returns a Pandas data frame of the scalar header data from the HDF5 file. This the user of the
+        This returns a Pandas data frame of the header data from the HDF5 file. This the user of the
         API to see what is in the HEADER dataset without the need of using a HDF5 view tool
 
-        The header has the following scalar fields:
+        The header has the following fields:
 
         .. list-table::
             :header-rows: 1
@@ -426,10 +426,10 @@ class Statistics:
     @property
     def frequency_averaged_stats_rfi_excised(self: Statistics) -> pd.DataFrame:
         """
-        Get the frequency averaged statistics for all frequencies expect those flagged for RFI.
+        Get the frequency averaged statistics from all channels not flagged for RFI.
 
         This returns the mean and variance of all the data across
-        all frequencies, expect those flagged for RFI,
+        all channels, expect those flagged for RFI,
         separated for each polarisation and complex value dimension.
         The statistics also includes the number of samples clipped
         (i.e. the digital value was at the min or max value given the
@@ -487,7 +487,7 @@ class Statistics:
         and ``Dimension`` columns.
 
         :return: a data frame with statistics for each channel split by polarisation
-            and complex volatge dimension.
+            and complex voltage dimension.
         :rtype: pd.DataFrame
         """
         shape = self.data.mean_spectrum.shape
@@ -537,7 +537,7 @@ class Statistics:
         """
         Get the polarisation A channel statistics.
 
-        This property incluses both the real and complex dimension
+        This property includes both the real and complex dimension
         of the data. The following utility properties are provided
         to get the statistics of each dimension directly:
 
@@ -559,8 +559,8 @@ class Statistics:
 
         The Pandas frame has a MultiIndex key using the ``Channel``, and ``Dimension`` columns.
 
-        :return: a data frame with statistics for each channel split by polarisation
-            and complex volatge dimension.
+        :return: a data frame of polarisation A with statistics for each channel split complex
+            voltage dimension.
         :rtype: pd.DataFrame
         """
         df = self.get_channel_stats()
@@ -582,8 +582,7 @@ class Statistics:
             * Clipped - number of clipped input samples (maximum level) for each
               polarisation, dimension, averaged over all channels.
 
-        :return: a data frame with statistics for each channel split by polarisation
-            and complex volatge dimension.
+        :return: a data frame of the real component of polarisation A with statistics for each channel.
         :rtype: pd.DataFrame
         """
         df = self.get_channel_stats()
@@ -607,8 +606,7 @@ class Statistics:
             * Clipped - number of clipped input samples (maximum level) for each
               polarisation, dimension, averaged over all channels.
 
-        :return: a data frame with statistics for each channel split for polarisation A
-            and complex volatge dimension.
+        :return: a data frame of the imaginary component of polarisation A with statistics for each channel.
         :rtype: pd.DataFrame
         """
         df = self.get_channel_stats()
@@ -621,7 +619,7 @@ class Statistics:
         """
         Get the polarisation B channel statistics.
 
-        This property incluses both the real and complex dimension
+        This property includes both the real and complex dimension
         of the data. The following utility properties are provided
         to get the statistics of each dimension directly:
 
@@ -641,8 +639,8 @@ class Statistics:
 
         The Pandas frame has a MultiIndex key using the ``Channel``, and ``Dimension`` columns.
 
-        :return: a data frame with statistics for each channel split by polarisation
-            and complex volatge dimension.
+        :return: a data frame of polarisation B with statistics for each channel split complex
+            voltage dimension.
         :rtype: pd.DataFrame
         """
         df = self.get_channel_stats()
@@ -664,8 +662,7 @@ class Statistics:
             * Clipped - number of clipped input samples (maximum level) for each
               polarisation, dimension, averaged over all channels.
 
-        :return: a data frame with statistics for each channel split by polarisation
-            and complex volatge dimension.
+        :return: a data frame of the real component of polarisation B with statistics for each channel.
         :rtype: pd.DataFrame
         """
         df = self.get_channel_stats()
@@ -689,8 +686,7 @@ class Statistics:
             * Clipped - number of clipped input samples (maximum level) for each
               polarisation, dimension, averaged over all channels.
 
-        :return: a data frame with statistics for each channel split by polarisation
-            and complex volatge dimension.
+        :return: a data frame of the imaginary component of polarisation B with statistics for each channel.
         :rtype: pd.DataFrame
         """
         df = self.get_channel_stats()
@@ -702,7 +698,7 @@ class Statistics:
         """
         Get the mean and max spectral power values for each channel.
 
-        This data frame incluses both the mean and max of the spectral
+        This data frame includes both the mean and max of the spectral
         power for each channel for all polarisations.
 
         The following properties are provided for each polarisation:
@@ -815,7 +811,7 @@ class Statistics:
             (True) data
         :type rfi_excised: True
         :return: a data frame for histogram data split polarisation
-            and complex volatge dimension.
+            and complex voltage dimension.
         :rtype: pd.DataFrame
         """
         if rfi_excised:
@@ -937,7 +933,7 @@ class Statistics:
     @property
     def pol_a_real_histogram_rfi_excised(self: Statistics) -> pd.DataFrame:
         """
-        Get the histogram of the real valued, pol A, input data integer states expect those flagged for RFI.
+        Get the histogram of the real valued, pol A, input data from all channels not flagged for RFI.
 
         The number of bins in the histogram is 2^(number of bits). For 8 bit
         data this is 256 bins and for 16 bit data this is 65536 bins.
@@ -948,7 +944,7 @@ class Statistics:
             * Count - the number/count for the bin
 
         :return: a data frame for histogram data for real valued, polarisation A, voltage data
-             expect those flagged for RFI.
+             from all channels not flagged for RFI.
         :rtype: pd.DataFrame
         """
         df = self.get_histogram_data(rfi_excised=True)
@@ -960,7 +956,7 @@ class Statistics:
     @property
     def pol_a_imag_histogram_rfi_excised(self: Statistics) -> pd.DataFrame:
         """
-        Get the histogram of the imag valued, pol A, input data integer states expect those flagged for RFI.
+        Get the histogram of the imag valued, pol A, input data from all channels not flagged for RFI.
 
         The number of bins in the histogram is 2^(number of bits). For 8 bit
         data this is 256 bins and for 16 bit data this is 65536 bins.
@@ -971,7 +967,7 @@ class Statistics:
             * Count - the number/count for the bin
 
         :return: a data frame for histogram data for imaginary valued, polarisation A, voltage data
-             expect those flagged for RFI.
+             from all channels not flagged for RFI.
         :rtype: pd.DataFrame
         """
         df = self.get_histogram_data(rfi_excised=True)
@@ -983,7 +979,7 @@ class Statistics:
     @property
     def pol_b_real_histogram_rfi_excised(self: Statistics) -> pd.DataFrame:
         """
-        Get the histogram of the real valued, pol B, input data integer states expect those flagged for RFI.
+        Get the histogram of the real valued, pol B, input data from all channels not flagged for RFI.
 
         The number of bins in the histogram is 2^(number of bits). For 8 bit
         data this is 256 bins and for 16 bit data this is 65536 bins.
@@ -994,7 +990,7 @@ class Statistics:
             * Count - the number/count for the bin
 
         :return: a data frame for histogram data for real valued, polarisation B, voltage data
-             expect those flagged for RFI.
+             from all channels not flagged for RFI.
         :rtype: pd.DataFrame
         """
         df = self.get_histogram_data(rfi_excised=True)
@@ -1006,7 +1002,7 @@ class Statistics:
     @property
     def pol_b_imag_histogram_rfi_excised(self: Statistics) -> pd.DataFrame:
         """
-        Get the histogram of the imag valued, pol B, input data integer states expect those flagged for RFI.
+        Get the histogram of the imag valued, pol B, input data from all channels not flagged for RFI.
 
         The number of bins in the histogram is 2^(number of bits). For 8 bit
         data this is 256 bins and for 16 bit data this is 65536 bins.
@@ -1017,7 +1013,7 @@ class Statistics:
             * Count - the number/count for the bin
 
         :return: a data frame for histogram data for imaginary valued, polarisation B, voltage data
-             expect those flagged for RFI.
+             from all channels not flagged for RFI.
         :rtype: pd.DataFrame
         """
         df = self.get_histogram_data(rfi_excised=True)
@@ -1060,7 +1056,7 @@ class Statistics:
             (True) data
         :type rfi_excised: True
         :return: a data frame for the rebinned histogram data split polarisation
-            and complex volatge dimension.
+            and complex voltage dimension.
         :rtype: pd.DataFrame
         """
         if rfi_excised:

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of the SKA PST LMC project
+# This file is part of the SKA PST STAT project
 #
 # Distributed under the terms of the BSD 3-clause new license.
 # See LICENSE for more info.
@@ -94,7 +94,7 @@ class StatConfig:
     nfreq_bins: int = 36
     ntime_bins: int = 4
     nrebin: int = 256
-    sigma: float = 3.0
+    sigma: float = 6.0
     freq_mask: str = ""
     frequency_mhz: float = 87.5
     bandwidth_mhz: float = 75.0
@@ -126,7 +126,7 @@ class StatConfig:
 
     @property
     def scale(self: StatConfig) -> float:
-        """Get scale of for the Gaussian distribution."""
+        """Get scale of the Gaussian distribution."""
         return self.sigma / self.nbit_limit
 
     @property
@@ -145,14 +145,14 @@ class StatConfig:
         return self.nbit_limit - 1
 
     @property
-    def masked_channel_indexes(self: StatConfig) -> List[int]:
-        """Get the indexes of the RFI masked channels."""
+    def rfi_excised_channel_indexes(self: StatConfig) -> List[int]:
+        """Get the indexes of the RFI excised channels."""
         return []
 
     @property
     def non_rfi_channel_indexes(self: StatConfig) -> List[int]:
-        """Get the index of channels that are not RFI masked."""
-        masked_channels = self.masked_channel_indexes
+        """Get the index of channels that are not RFI excised."""
+        masked_channels = self.rfi_excised_channel_indexes
         return [c for c in range(self.nchan) if c not in masked_channels]
 
     @property

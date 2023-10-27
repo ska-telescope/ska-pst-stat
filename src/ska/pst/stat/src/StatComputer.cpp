@@ -183,7 +183,7 @@ void ska::pst::stat::StatComputer::initialise()
         (channel_end_freq > rfi_mask_pair.first && channel_end_freq <= rfi_mask_pair.second)
       )
       {
-        SPDLOG_WARN("chan {} frequency band {:.4f} MHz to {:.4f} MHz is between {:.4f} MHz and {:.4f} MHz. Marking as RFI masked",
+        SPDLOG_WARN("chan {} frequency band {:.4f} MHz to {:.4f} MHz is between {:.4f} MHz and {:.4f} MHz. Marking as RFI excised",
           ichan, channel_start_freq, channel_end_freq,
           rfi_mask_pair.first, rfi_mask_pair.second
         );
@@ -466,7 +466,7 @@ auto ska::pst::stat::StatComputer::compute_samples(T* data, char* weights, uint3
               (power - storage->timeseries[ipol][temporal_bin][TS_MEAN_IDX]) / static_cast<float>(timeseries_counts[ipol][temporal_bin])
             );
 
-            // handle RFI masked channel stats
+            // handle RFI excised channel stats
             if (!channel_masked) {
               timeseries_counts_rfi_excised[ipol][temporal_bin] += 1;
 

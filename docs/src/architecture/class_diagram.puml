@@ -74,25 +74,25 @@ class StatStorage {
   + bool is_storage_resized() const
   + bool is_storage_reset() const
   + mean_frequency_avg: std::vector<std::vector<float>>
-  + mean_frequency_avg_rfi_masked: std::vector<std::vector<float>>
+  + mean_frequency_avg_rfi_excised: std::vector<std::vector<float>>
   + variance_frequency_avg: std::vector<std::vector<float>>
-  + variance_frequency_avg_rfi_masked: std::vector<std::vector<float>>
+  + variance_frequency_avg_rfi_excised: std::vector<std::vector<float>>
   + mean_spectrum: std::vector<std::vector<std::vector<float>>>
   + variance_spectrum: std::vector<std::vector<std::vector<float>>>
   + mean_spectral_power: std::vector<std::vector<float>>
   + maximum_spectral_power: std::vector<std::vector<float>>
   + histogram_1d_freq_avg: std::vector<std::vector<std::vector<uint32_t>>>
-  + histogram_1d_freq_avg_rfi_masked: std::vector<std::vector<std::vector<uint32_t>>>
+  + histogram_1d_freq_avg_rfi_excised: std::vector<std::vector<std::vector<uint32_t>>>
   + rebinned_histogram_2d_freq_avg: std::vector<std::vector<std::vector<uint32_t>>>
-  + rebinned_histogram_2d_freq_avg_rfi_masked: std::vector<std::vector<std::vector<uint32_t>>>
+  + rebinned_histogram_2d_freq_avg_rfi_excised: std::vector<std::vector<std::vector<uint32_t>>>
   + rebinned_histogram_1d_freq_avg: std::vector<std::vector<std::vector<uint32_t>>>
-  + rebinned_histogram_1d_freq_avg_rfi_masked: std::vector<std::vector<std::vector<uint32_t>>>
+  + rebinned_histogram_1d_freq_avg_rfi_excised: std::vector<std::vector<std::vector<uint32_t>>>
   + num_clipped_samples_spectrum: std::vector<std::vector<std::vector<uint32_t>>>
   + num_clipped_samples: std::vector<std::vector<uint32_t>>
-  + num_clipped_samples_rfi_masked: std::vector<std::vector<uint32_t>>
+  + num_clipped_samples_rfi_excised: std::vector<std::vector<uint32_t>>
   + spectrogram: std::vector<std::vector<std::vector<float>>>
   + timeseries: std::vector<std::vector<std::vector<float>>>
-  + timeseries_rfi_masked: std::vector<std::vector<std::vector<float>>>
+  + timeseries_rfi_excised: std::vector<std::vector<std::vector<float>>>
   + rfi_mask_lut: std::vector<bool>
   + scalar_stats_t : struct
 }
