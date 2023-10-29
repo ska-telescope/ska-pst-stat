@@ -47,6 +47,9 @@ namespace ska::pst::stat {
     //! the execution block that the data relates to
     char* eb_id;
 
+    //! the name of the telescope that the data are from (i.e. SKALow or SKAMid)
+    char* telescope;
+
     //! the scan that the data relates to
     uint64_t scan_id;
 
@@ -86,7 +89,7 @@ namespace ska::pst::stat {
     //! number of spectral bins in the spectrogram
     uint32_t nfreq_bins;
 
-    //! number of temporal bins in the timeseries, timeseries_masked and spectrogram attributes
+    //! number of temporal bins in the timeseries, timeseries_rfi_excised and spectrogram attributes
     uint32_t ntime_bins;
 
     //! number of rebinned bins represented in storage vectors

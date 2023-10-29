@@ -20,6 +20,7 @@ import sys
 import subprocess
 import shutil
 import textwrap
+sys.path.insert(0, os.path.abspath("../../python/src"))
 
 def setup(app):
     app.add_css_file('css/custom.css')
@@ -53,6 +54,13 @@ with open('../../.release') as f:
 # Check if we're running on Read the Docs' servers
 read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
 
+autodoc_mock_imports = [
+    "h5py",
+    "nptyping",
+    "numpy",
+    "pandas",
+]
+
 breathe_projects = {}
 doxygen_xml = ""
 source_dir = "../../src"
@@ -80,6 +88,16 @@ extensions = [
     'exhale',
     'recommonmark',
     'sphinxcontrib.plantuml',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.doctest',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.todo',
+    'sphinx.ext.coverage',
+    'sphinx.ext.mathjax',
+    'sphinx.ext.ifconfig',
+    'sphinx.ext.viewcode',
+    'sphinx.ext.githubpages',
 ]
 
 source_suffix = [".rst", '.md']

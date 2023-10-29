@@ -68,7 +68,7 @@ namespace ska::pst::stat {
          * First dimension is polarisation (2 dimensions)
          * Second dimension is the real and imaginary components (I and Q).
          */
-        std::vector<std::vector<float>> mean_frequency_avg_masked;
+        std::vector<std::vector<float>> mean_frequency_avg_rfi_excised;
 
         /**
          * @brief the variance of the data for each polarisation and dimension, averaged over all channels.
@@ -85,7 +85,7 @@ namespace ska::pst::stat {
          * First dimension is polarisation (2 dimensions)
          * Second dimension is the real and imaginary components (I and Q).
          */
-        std::vector<std::vector<float>> variance_frequency_avg_masked;
+        std::vector<std::vector<float>> variance_frequency_avg_rfi_excised;
 
         /**
          * @brief number of clipped input samples (maximum level) for each polarisation, dimension, averaged over all channels.
@@ -102,7 +102,7 @@ namespace ska::pst::stat {
          * First dimension is polarisation (2 dimensions)
          * Second dimension is the real and imaginary components (I and Q).
          */
-        std::vector<std::vector<uint32_t>> num_clipped_samples_masked;
+        std::vector<std::vector<uint32_t>> num_clipped_samples_rfi_excised;
 
       } scalar_stats_t;
 
@@ -153,7 +153,7 @@ namespace ska::pst::stat {
        * First dimension is polarisation (2 dimensions)
        * Second dimension is the real and imaginary components (I and Q).
        */
-      std::vector<std::vector<float>> mean_frequency_avg_masked;
+      std::vector<std::vector<float>> mean_frequency_avg_rfi_excised;
 
       /**
        * @brief the variance of the data for each polarisation and dimension, averaged over all channels.
@@ -170,7 +170,7 @@ namespace ska::pst::stat {
        * First dimension is polarisation (2 dimensions)
        * Second dimension is the real and imaginary components (I and Q).
        */
-      std::vector<std::vector<float>> variance_frequency_avg_masked;
+      std::vector<std::vector<float>> variance_frequency_avg_rfi_excised;
 
       /**
        * @brief the mean of the data for each polarisation, dimension and channel.
@@ -226,7 +226,7 @@ namespace ska::pst::stat {
        * Second dimension is the real and imaginary components (I and Q).
        * Third dimension is the binning data (i.e. the number in the bin)
        */
-      std::vector<std::vector<std::vector<uint32_t>>> histogram_1d_freq_avg_masked;
+      std::vector<std::vector<std::vector<uint32_t>>> histogram_1d_freq_avg_rfi_excised;
 
       /**
        * @brief Rebinned 2D histogram of the input data integer states for each polarisation,
@@ -246,7 +246,7 @@ namespace ska::pst::stat {
        * Second dimension is the bining of the real component (I)
        * Third dimension is the bining of the imaginary component (Q)
        */
-      std::vector<std::vector<std::vector<uint32_t>>> rebinned_histogram_2d_freq_avg_masked;
+      std::vector<std::vector<std::vector<uint32_t>>> rebinned_histogram_2d_freq_avg_rfi_excised;
 
       /**
        * @brief rebinned histogram of the input data integer states for each polarisation and dimension,
@@ -266,7 +266,7 @@ namespace ska::pst::stat {
        * Second dimension is the real and imaginary components (I and Q).
        * Third dimension is the binning data (i.e. the number in the bin)
        */
-      std::vector<std::vector<std::vector<uint32_t>>> rebinned_histogram_1d_freq_avg_masked;
+      std::vector<std::vector<std::vector<uint32_t>>> rebinned_histogram_1d_freq_avg_rfi_excised;
 
       /**
        * @brief number of clipped input samples (maximum level) for each polarisation, dimension and channel.
@@ -293,12 +293,12 @@ namespace ska::pst::stat {
        * First dimension is polarisation (2 dimensions)
        * Second dimension is the real and imaginary components (I and Q).
        */
-      std::vector<std::vector<uint32_t>> num_clipped_samples_masked;
+      std::vector<std::vector<uint32_t>> num_clipped_samples_rfi_excised;
 
       /**
        * @brief the timestamp offsets for each temporal bin.
        *
-       * Each temporal bin used in timeseries, timeseries_masked and
+       * Each temporal bin used in timeseries, timeseries_rfi_excised and
        * spectrogram reuse this vector. In MJD
        */
       std::vector<double> timeseries_bins;
@@ -337,10 +337,10 @@ namespace ska::pst::stat {
        * Second dimension is the time dimension binned.
        * Third dimension has 3 values: the max, min and mean.
        */
-      std::vector<std::vector<std::vector<float>>> timeseries_masked;
+      std::vector<std::vector<std::vector<float>>> timeseries_rfi_excised;
 
       /**
-       * @brief Lookup table of RFI masks for each channel, true value indicates channel is masked for RFI
+       * @brief Lookup table of RFI masks for each channel, true value indicates channel has RFI to be excised.
        *
        * First dimension is channel
        */
@@ -607,7 +607,7 @@ namespace ska::pst::stat {
       //! flag to indicate if the storage has been resized, but not reset
       bool storage_reset{false};
 
-      //! number of temporal bins in the timeseries, timeseries_masked and spectrogram attributes
+      //! number of temporal bins in the timeseries, timeseries_rfi_excised and spectrogram attributes
       uint32_t ntime_bins{0};
 
       //! number of spectral bins in the spectrogram

@@ -93,36 +93,45 @@ void StatHdf5FileWriterTest::populate_storage()
 
   // data
   populate_2d_vec<float>(storage->mean_frequency_avg);
-  populate_2d_vec<float>(storage->mean_frequency_avg_masked);
+  populate_2d_vec<float>(storage->mean_frequency_avg_rfi_excised);
   populate_2d_vec<float>(storage->variance_frequency_avg);
-  populate_2d_vec<float>(storage->variance_frequency_avg_masked);
+  populate_2d_vec<float>(storage->variance_frequency_avg_rfi_excised);
   populate_3d_vec<float>(storage->mean_spectrum);
   populate_3d_vec<float>(storage->variance_spectrum);
   populate_2d_vec<float>(storage->mean_spectral_power);
   populate_2d_vec<float>(storage->max_spectral_power);
   populate_3d_vec<uint32_t>(storage->histogram_1d_freq_avg);
-  populate_3d_vec<uint32_t>(storage->histogram_1d_freq_avg_masked);
+  populate_3d_vec<uint32_t>(storage->histogram_1d_freq_avg_rfi_excised);
   populate_3d_vec<uint32_t>(storage->rebinned_histogram_2d_freq_avg);
-  populate_3d_vec<uint32_t>(storage->rebinned_histogram_2d_freq_avg_masked);
+  populate_3d_vec<uint32_t>(storage->rebinned_histogram_2d_freq_avg_rfi_excised);
   populate_3d_vec<uint32_t>(storage->rebinned_histogram_1d_freq_avg);
-  populate_3d_vec<uint32_t>(storage->rebinned_histogram_1d_freq_avg_masked);
+  populate_3d_vec<uint32_t>(storage->rebinned_histogram_1d_freq_avg_rfi_excised);
   populate_3d_vec<uint32_t>(storage->num_clipped_samples_spectrum);
   populate_2d_vec<uint32_t>(storage->num_clipped_samples);
-  populate_2d_vec<uint32_t>(storage->num_clipped_samples_masked);
+  populate_2d_vec<uint32_t>(storage->num_clipped_samples_rfi_excised);
   populate_3d_vec<float>(storage->spectrogram);
   populate_3d_vec<float>(storage->timeseries);
-  populate_3d_vec<float>(storage->timeseries_masked);
+  populate_3d_vec<float>(storage->timeseries_rfi_excised);
 }
 
 void StatHdf5FileWriterTest::validate_hdf5_file(const std::shared_ptr<H5::H5File>& file)
 {
+  std::array<hsize_t, 1> dims = { 1 };
+
+  H5::DataSet dataset = file->openDataSet("FILE_FORMAT_VERSION");
+  H5::DataSpace dataspace(H5S_SCALAR);
+  H5::StrType str_datatype(H5::PredType::C_S1, H5T_VARIABLE);
+  std::string file_format_version;
+  dataset.read(file_format_version, str_datatype, dataspace);
+
+  ASSERT_EQ(file_format_version, "1.0.0");
+
   auto header_datatype = writer->get_hdf5_header_datatype();
 
-  H5::DataSet dataset = file->openDataSet("HEADER");
-  H5::DataSpace dataspace = dataset.getSpace();
+  dataset = file->openDataSet("HEADER");
+  dataspace = dataset.getSpace();
 
   ASSERT_EQ(1, dataspace.getSimpleExtentNdims());
-  std::array<hsize_t, 1> dims = { 1 };
   dataspace.getSimpleExtentDims(dims.data());
   ASSERT_EQ(dims[0], 1);
 
@@ -135,6 +144,7 @@ void StatHdf5FileWriterTest::validate_hdf5_file(const std::shared_ptr<H5::H5File
     static_cast<double>(picoseconds);
 
   ASSERT_EQ(std::string(header.eb_id), config.get_val("EB_ID"));
+  ASSERT_EQ(std::string(header.telescope), config.get_val("TELESCOPE"));
   ASSERT_EQ(header.scan_id, config.get_uint64("SCAN_ID"));
   ASSERT_EQ(std::string(header.beam_id), config.get_val("BEAM_ID"));
   ASSERT_EQ(std::string(header.utc_start), config.get_val("UTC_START"));
@@ -159,25 +169,25 @@ void StatHdf5FileWriterTest::validate_hdf5_file(const std::shared_ptr<H5::H5File
   assert_1d_vec_header(storage->frequency_bins, header.frequency_bins);
 
   assert_2d_vec<float>(storage->mean_frequency_avg, file, "MEAN_FREQUENCY_AVG", H5::PredType::NATIVE_FLOAT);
-  assert_2d_vec<float>(storage->mean_frequency_avg_masked, file, "MEAN_FREQUENCY_AVG_MASKED", H5::PredType::NATIVE_FLOAT);
+  assert_2d_vec<float>(storage->mean_frequency_avg_rfi_excised, file, "MEAN_FREQUENCY_AVG_RFI_EXCISED", H5::PredType::NATIVE_FLOAT);
   assert_2d_vec<float>(storage->variance_frequency_avg, file, "VARIANCE_FREQUENCY_AVG", H5::PredType::NATIVE_FLOAT);
-  assert_2d_vec<float>(storage->variance_frequency_avg_masked, file, "VARIANCE_FREQUENCY_AVG_MASKED", H5::PredType::NATIVE_FLOAT);
+  assert_2d_vec<float>(storage->variance_frequency_avg_rfi_excised, file, "VARIANCE_FREQUENCY_AVG_RFI_EXCISED", H5::PredType::NATIVE_FLOAT);
   assert_3d_vec<float>(storage->mean_spectrum, file, "MEAN_SPECTRUM", H5::PredType::NATIVE_FLOAT);
   assert_3d_vec<float>(storage->variance_spectrum, file, "VARIANCE_SPECTRUM", H5::PredType::NATIVE_FLOAT);
   assert_2d_vec<float>(storage->mean_spectral_power, file, "MEAN_SPECTRAL_POWER", H5::PredType::NATIVE_FLOAT);
   assert_2d_vec<float>(storage->max_spectral_power, file, "MAX_SPECTRAL_POWER", H5::PredType::NATIVE_FLOAT);
   assert_3d_vec<uint32_t>(storage->histogram_1d_freq_avg, file, "HISTOGRAM_1D_FREQ_AVG", H5::PredType::NATIVE_UINT32);
-  assert_3d_vec<uint32_t>(storage->histogram_1d_freq_avg_masked, file, "HISTOGRAM_1D_FREQ_AVG_MASKED", H5::PredType::NATIVE_UINT32);
+  assert_3d_vec<uint32_t>(storage->histogram_1d_freq_avg_rfi_excised, file, "HISTOGRAM_1D_FREQ_AVG_RFI_EXCISED", H5::PredType::NATIVE_UINT32);
   assert_3d_vec<uint32_t>(storage->rebinned_histogram_2d_freq_avg, file, "HISTOGRAM_REBINNED_2D_FREQ_AVG", H5::PredType::NATIVE_UINT32);
-  assert_3d_vec<uint32_t>(storage->rebinned_histogram_2d_freq_avg_masked, file, "HISTOGRAM_REBINNED_2D_FREQ_AVG_MASKED", H5::PredType::NATIVE_UINT32);
+  assert_3d_vec<uint32_t>(storage->rebinned_histogram_2d_freq_avg_rfi_excised, file, "HISTOGRAM_REBINNED_2D_FREQ_AVG_RFI_EXCISED", H5::PredType::NATIVE_UINT32);
   assert_3d_vec<uint32_t>(storage->rebinned_histogram_1d_freq_avg, file, "HISTOGRAM_REBINNED_1D_FREQ_AVG", H5::PredType::NATIVE_UINT32);
-  assert_3d_vec<uint32_t>(storage->rebinned_histogram_1d_freq_avg_masked, file, "HISTOGRAM_REBINNED_1D_FREQ_AVG_MASKED", H5::PredType::NATIVE_UINT32);
+  assert_3d_vec<uint32_t>(storage->rebinned_histogram_1d_freq_avg_rfi_excised, file, "HISTOGRAM_REBINNED_1D_FREQ_AVG_RFI_EXCISED", H5::PredType::NATIVE_UINT32);
   assert_3d_vec<uint32_t>(storage->num_clipped_samples_spectrum, file, "NUM_CLIPPED_SAMPLES_SPECTRUM", H5::PredType::NATIVE_UINT32);
   assert_2d_vec<uint32_t>(storage->num_clipped_samples, file, "NUM_CLIPPED_SAMPLES", H5::PredType::NATIVE_UINT32);
-  assert_2d_vec<uint32_t>(storage->num_clipped_samples_masked, file, "NUM_CLIPPED_SAMPLES_MASKED", H5::PredType::NATIVE_UINT32);
+  assert_2d_vec<uint32_t>(storage->num_clipped_samples_rfi_excised, file, "NUM_CLIPPED_SAMPLES_RFI_EXCISED", H5::PredType::NATIVE_UINT32);
   assert_3d_vec<float>(storage->spectrogram, file, "SPECTROGRAM", H5::PredType::NATIVE_FLOAT);
   assert_3d_vec<float>(storage->timeseries, file, "TIMESERIES", H5::PredType::NATIVE_FLOAT);
-  assert_3d_vec<float>(storage->timeseries_masked, file, "TIMESERIES_MASKED", H5::PredType::NATIVE_FLOAT);
+  assert_3d_vec<float>(storage->timeseries_rfi_excised, file, "TIMESERIES_RFI_EXCISED", H5::PredType::NATIVE_FLOAT);
 }
 
 TEST_F(StatHdf5FileWriterTest, test_generates_correct_data) // NOLINT

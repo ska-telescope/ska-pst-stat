@@ -66,9 +66,9 @@ void ska::pst::stat::StatStorage::resize(uint32_t _ntime_bins, uint32_t _nfreq_b
   resize_1d(channel_centre_frequencies, nchan);
 
   resize_2d(mean_frequency_avg, npol, ndim);
-  resize_2d(mean_frequency_avg_masked, npol, ndim);
+  resize_2d(mean_frequency_avg_rfi_excised, npol, ndim);
   resize_2d(variance_frequency_avg, npol, ndim);
-  resize_2d(variance_frequency_avg_masked, npol, ndim);
+  resize_2d(variance_frequency_avg_rfi_excised, npol, ndim);
 
   resize_3d(mean_spectrum, npol, ndim, nchan);
   resize_3d(variance_spectrum, npol, ndim, nchan);
@@ -77,24 +77,24 @@ void ska::pst::stat::StatStorage::resize(uint32_t _ntime_bins, uint32_t _nfreq_b
   resize_2d(max_spectral_power, npol, nchan);
 
   resize_3d(histogram_1d_freq_avg, npol, ndim, nbin);
-  resize_3d(histogram_1d_freq_avg_masked, npol, ndim, nbin);
+  resize_3d(histogram_1d_freq_avg_rfi_excised, npol, ndim, nbin);
 
   resize_3d(rebinned_histogram_2d_freq_avg, npol, nrebin, nrebin);
-  resize_3d(rebinned_histogram_2d_freq_avg_masked, npol, nrebin, nrebin);
+  resize_3d(rebinned_histogram_2d_freq_avg_rfi_excised, npol, nrebin, nrebin);
 
   resize_3d(rebinned_histogram_1d_freq_avg, npol, ndim, nrebin);
-  resize_3d(rebinned_histogram_1d_freq_avg_masked, npol, ndim, nrebin);
+  resize_3d(rebinned_histogram_1d_freq_avg_rfi_excised, npol, ndim, nrebin);
 
   resize_3d(num_clipped_samples_spectrum, npol, ndim, nchan);
   resize_2d(num_clipped_samples, npol, ndim);
-  resize_2d(num_clipped_samples_masked, npol, ndim);
+  resize_2d(num_clipped_samples_rfi_excised, npol, ndim);
 
   resize_1d(timeseries_bins, ntime_bins);
   resize_1d(frequency_bins, nfreq_bins);
 
   resize_3d(spectrogram, npol, nfreq_bins, ntime_bins);
   resize_3d(timeseries, npol, ntime_bins, ntime_vals);
-  resize_3d(timeseries_masked, npol, ntime_bins, ntime_vals);
+  resize_3d(timeseries_rfi_excised, npol, ntime_bins, ntime_vals);
 
   resize_1d(rfi_mask_lut, nchan);
 
@@ -112,9 +112,9 @@ void ska::pst::stat::StatStorage::reset()
   reset_1d(channel_centre_frequencies);
 
   reset_2d(mean_frequency_avg);
-  reset_2d(mean_frequency_avg_masked);
+  reset_2d(mean_frequency_avg_rfi_excised);
   reset_2d(variance_frequency_avg);
-  reset_2d(variance_frequency_avg_masked);
+  reset_2d(variance_frequency_avg_rfi_excised);
 
   reset_3d(mean_spectrum);
   reset_3d(variance_spectrum);
@@ -123,24 +123,24 @@ void ska::pst::stat::StatStorage::reset()
   reset_2d(max_spectral_power);
 
   reset_3d(histogram_1d_freq_avg);
-  reset_3d(histogram_1d_freq_avg_masked);
+  reset_3d(histogram_1d_freq_avg_rfi_excised);
 
   reset_3d(rebinned_histogram_2d_freq_avg);
-  reset_3d(rebinned_histogram_2d_freq_avg_masked);
+  reset_3d(rebinned_histogram_2d_freq_avg_rfi_excised);
 
   reset_3d(rebinned_histogram_1d_freq_avg);
-  reset_3d(rebinned_histogram_1d_freq_avg_masked);
+  reset_3d(rebinned_histogram_1d_freq_avg_rfi_excised);
 
   reset_3d(num_clipped_samples_spectrum);
   reset_2d(num_clipped_samples);
-  reset_2d(num_clipped_samples_masked);
+  reset_2d(num_clipped_samples_rfi_excised);
 
   reset_1d(timeseries_bins);
   reset_1d(frequency_bins);
 
   reset_3d(spectrogram);
   reset_3d(timeseries);
-  reset_3d(timeseries_masked);
+  reset_3d(timeseries_rfi_excised);
 
   reset_1d(rfi_mask_lut);
 

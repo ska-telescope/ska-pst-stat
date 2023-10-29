@@ -41,6 +41,10 @@ include:
   - project: 'ska-telescope/templates-repository'
     file: 'gitlab-ci/includes/release.gitlab-ci.yml'
 
+  # Python
+  - project: 'ska-telescope/templates-repository'
+    file: 'gitlab-ci/includes/python.gitlab-ci.yml'
+
   # Common CPP jobs
   - local: '.gitlab/ci/cpp.gitlab-ci.yml'
 

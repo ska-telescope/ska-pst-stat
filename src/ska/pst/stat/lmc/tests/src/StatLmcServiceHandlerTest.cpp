@@ -734,11 +734,11 @@ TEST_F(StatLmcServiceHandlerTest, controlled_get_monitor_data) // NOLINT
     for (int i_ndim=0; i_ndim<scalar_stats.mean_frequency_avg[i_npol].size(); i_ndim++)
     {
       EXPECT_EQ(stat_monitor_data.mean_frequency_avg()[index_data_size], scalar_stats.mean_frequency_avg[i_npol][i_ndim]); // NOLINT
-      EXPECT_EQ(stat_monitor_data.mean_frequency_avg_masked()[index_data_size], scalar_stats.mean_frequency_avg_masked[i_npol][i_ndim]); // NOLINT
+      EXPECT_EQ(stat_monitor_data.mean_frequency_avg_masked()[index_data_size], scalar_stats.mean_frequency_avg_rfi_excised[i_npol][i_ndim]); // NOLINT
       EXPECT_EQ(stat_monitor_data.variance_frequency_avg()[index_data_size], scalar_stats.variance_frequency_avg[i_npol][i_ndim]); // NOLINT
-      EXPECT_EQ(stat_monitor_data.variance_frequency_avg_masked()[index_data_size], scalar_stats.variance_frequency_avg_masked[i_npol][i_ndim]); // NOLINT
+      EXPECT_EQ(stat_monitor_data.variance_frequency_avg_masked()[index_data_size], scalar_stats.variance_frequency_avg_rfi_excised[i_npol][i_ndim]); // NOLINT
       EXPECT_EQ(stat_monitor_data.num_clipped_samples()[index_data_size], scalar_stats.num_clipped_samples[i_npol][i_ndim]); // NOLINT
-      EXPECT_EQ(stat_monitor_data.num_clipped_samples_masked()[index_data_size], scalar_stats.num_clipped_samples_masked[i_npol][i_ndim]); // NOLINT
+      EXPECT_EQ(stat_monitor_data.num_clipped_samples_masked()[index_data_size], scalar_stats.num_clipped_samples_rfi_excised[i_npol][i_ndim]); // NOLINT
       index_data_size++;
     }
   }

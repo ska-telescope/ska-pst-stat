@@ -17,6 +17,7 @@ STAT_REQ_FREQ_BINS      4
 FREQ                1000
 BW                  800
 EB_ID               eb-m001-20240804-0123456
+TELESCOPE           SKALow
 SCAN_ID             1138
 BEAM_ID             1
 START_CHANNEL       1

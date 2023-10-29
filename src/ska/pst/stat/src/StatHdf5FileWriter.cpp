@@ -62,6 +62,7 @@ auto ska::pst::stat::StatHdf5FileWriter::get_hdf5_header_datatype() -> H5::CompT
 
   H5::CompType header_datatype(sizeof(stat_hdf5_header_t));
   header_datatype.insertMember("EB_ID", HOFFSET(stat_hdf5_header_t, eb_id), str_datatype);
+  header_datatype.insertMember("TELESCOPE", HOFFSET(stat_hdf5_header_t, telescope), str_datatype);
   header_datatype.insertMember("SCAN_ID", HOFFSET(stat_hdf5_header_t, scan_id), H5::PredType::NATIVE_UINT64);
   header_datatype.insertMember("BEAM_ID", HOFFSET(stat_hdf5_header_t, beam_id), str_datatype);
   header_datatype.insertMember("UTC_START", HOFFSET(stat_hdf5_header_t, utc_start), str_datatype);
@@ -125,10 +126,12 @@ void ska::pst::stat::StatHdf5FileWriter::publish(std::shared_ptr<StatStorage> st
 
   std::string unknown = "unknown";
   std::string eb_id = get_val_if_has(config, "EB_ID", unknown);
+  std::string telescope = get_val_if_has(config, "TELESCOPE", unknown);
   std::string beam_id = get_val_if_has(config, "BEAM_ID", unknown);
   std::string utc_start = get_val_if_has(config, "UTC_START", unknown);
 
   header.eb_id = const_cast<char *>(eb_id.c_str()); // NOLINT
+  header.telescope = const_cast<char *>(telescope.c_str()); // NOLINT
   header.scan_id = get_val_if_has(config, "SCAN_ID", 0);
   header.beam_id = const_cast<char *>(beam_id.c_str()); // NOLINT
   header.utc_start = const_cast<char *>(utc_start.c_str()); // NOLINT
@@ -180,31 +183,42 @@ void ska::pst::stat::StatHdf5FileWriter::publish(std::shared_ptr<StatStorage> st
     const int rank = 1;
     std::array<hsize_t, rank> dims = {1};
 
+    H5::StrType str_datatype(H5::PredType::C_S1, H5T_VARIABLE);
+
+    SPDLOG_TRACE("ska::pst::stat::StatHdf5FileWriter::publish creating FILE_FORMAT_VERSION dataset");
+    std::string file_format_version = "1.0.0";
+    H5::DataSpace file_format_version_dataspace(H5S_SCALAR);
+    H5::DataSet file_format_version_dataset = file->createDataSet(
+      "FILE_FORMAT_VERSION", str_datatype, file_format_version_dataspace
+    );
+    file_format_version_dataset.write(file_format_version, str_datatype);
+    SPDLOG_TRACE("ska::pst::stat::StatHdf5FileWriter::publish created FILE_FORMAT_VERSION dataset");
+
     SPDLOG_TRACE("ska::pst::stat::StatHdf5FileWriter::publish creating HEADER dataset");
     H5::DataSpace header_dataspace(rank, &dims[0]);
     H5::DataSet header_dataset = file->createDataSet("HEADER", header_datatype, header_dataspace);
     header_dataset.write(&header, header_datatype);
 
     write_2d_vec<float>(storage->mean_frequency_avg, "MEAN_FREQUENCY_AVG", H5::PredType::NATIVE_FLOAT, temp_data);
-    write_2d_vec<float>(storage->mean_frequency_avg_masked, "MEAN_FREQUENCY_AVG_MASKED", H5::PredType::NATIVE_FLOAT, temp_data);
+    write_2d_vec<float>(storage->mean_frequency_avg_rfi_excised, "MEAN_FREQUENCY_AVG_RFI_EXCISED", H5::PredType::NATIVE_FLOAT, temp_data);
     write_2d_vec<float>(storage->variance_frequency_avg, "VARIANCE_FREQUENCY_AVG", H5::PredType::NATIVE_FLOAT, temp_data);
-    write_2d_vec<float>(storage->variance_frequency_avg_masked, "VARIANCE_FREQUENCY_AVG_MASKED", H5::PredType::NATIVE_FLOAT, temp_data);
+    write_2d_vec<float>(storage->variance_frequency_avg_rfi_excised, "VARIANCE_FREQUENCY_AVG_RFI_EXCISED", H5::PredType::NATIVE_FLOAT, temp_data);
     write_3d_vec<float>(storage->mean_spectrum, "MEAN_SPECTRUM", H5::PredType::NATIVE_FLOAT, temp_data);
     write_3d_vec<float>(storage->variance_spectrum, "VARIANCE_SPECTRUM", H5::PredType::NATIVE_FLOAT, temp_data);
     write_2d_vec<float>(storage->mean_spectral_power, "MEAN_SPECTRAL_POWER", H5::PredType::NATIVE_FLOAT, temp_data);
     write_2d_vec<float>(storage->max_spectral_power, "MAX_SPECTRAL_POWER", H5::PredType::NATIVE_FLOAT, temp_data);
     write_3d_vec<uint32_t>(storage->histogram_1d_freq_avg, "HISTOGRAM_1D_FREQ_AVG", H5::PredType::NATIVE_UINT32, temp_data);
-    write_3d_vec<uint32_t>(storage->histogram_1d_freq_avg_masked, "HISTOGRAM_1D_FREQ_AVG_MASKED", H5::PredType::NATIVE_UINT32, temp_data);
+    write_3d_vec<uint32_t>(storage->histogram_1d_freq_avg_rfi_excised, "HISTOGRAM_1D_FREQ_AVG_RFI_EXCISED", H5::PredType::NATIVE_UINT32, temp_data);
     write_3d_vec<uint32_t>(storage->rebinned_histogram_2d_freq_avg, "HISTOGRAM_REBINNED_2D_FREQ_AVG", H5::PredType::NATIVE_UINT32, temp_data);
-    write_3d_vec<uint32_t>(storage->rebinned_histogram_2d_freq_avg_masked, "HISTOGRAM_REBINNED_2D_FREQ_AVG_MASKED", H5::PredType::NATIVE_UINT32, temp_data);
+    write_3d_vec<uint32_t>(storage->rebinned_histogram_2d_freq_avg_rfi_excised, "HISTOGRAM_REBINNED_2D_FREQ_AVG_RFI_EXCISED", H5::PredType::NATIVE_UINT32, temp_data);
     write_3d_vec<uint32_t>(storage->rebinned_histogram_1d_freq_avg, "HISTOGRAM_REBINNED_1D_FREQ_AVG", H5::PredType::NATIVE_UINT32, temp_data);
-    write_3d_vec<uint32_t>(storage->rebinned_histogram_1d_freq_avg_masked, "HISTOGRAM_REBINNED_1D_FREQ_AVG_MASKED", H5::PredType::NATIVE_UINT32, temp_data);
+    write_3d_vec<uint32_t>(storage->rebinned_histogram_1d_freq_avg_rfi_excised, "HISTOGRAM_REBINNED_1D_FREQ_AVG_RFI_EXCISED", H5::PredType::NATIVE_UINT32, temp_data);
     write_3d_vec<uint32_t>(storage->num_clipped_samples_spectrum, "NUM_CLIPPED_SAMPLES_SPECTRUM", H5::PredType::NATIVE_UINT32, temp_data);
     write_2d_vec<uint32_t>(storage->num_clipped_samples, "NUM_CLIPPED_SAMPLES", H5::PredType::NATIVE_UINT32, temp_data);
-    write_2d_vec<uint32_t>(storage->num_clipped_samples_masked, "NUM_CLIPPED_SAMPLES_MASKED", H5::PredType::NATIVE_UINT32, temp_data);
+    write_2d_vec<uint32_t>(storage->num_clipped_samples_rfi_excised, "NUM_CLIPPED_SAMPLES_RFI_EXCISED", H5::PredType::NATIVE_UINT32, temp_data);
     write_3d_vec<float>(storage->spectrogram, "SPECTROGRAM", H5::PredType::NATIVE_FLOAT, temp_data);
     write_3d_vec<float>(storage->timeseries, "TIMESERIES", H5::PredType::NATIVE_FLOAT, temp_data);
-    write_3d_vec<float>(storage->timeseries_masked, "TIMESERIES_MASKED", H5::PredType::NATIVE_FLOAT, temp_data);
+    write_3d_vec<float>(storage->timeseries_rfi_excised, "TIMESERIES_RFI_EXCISED", H5::PredType::NATIVE_FLOAT, temp_data);
 
     file->close();
     file_number++;
