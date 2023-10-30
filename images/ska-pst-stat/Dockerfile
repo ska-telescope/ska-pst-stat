@@ -17,6 +17,9 @@ RUN apt update -y \
     && make local-apt-install-dependencies
 
 RUN make local-cpp-clean-buildpath \
+    && make local-cpp-build-debug \
+    && make local-cpp-test-ctest \
+    && make local-cpp-clean-buildpath \
     && make local-cpp-build-release \
     && cd build && make install
 
