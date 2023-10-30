@@ -178,6 +178,11 @@ void ska::pst::stat::StatApplicationManager::perform_configure_scan()
 void ska::pst::stat::StatApplicationManager::perform_start_scan()
 {
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_start_scan");
+}
+
+void ska::pst::stat::StatApplicationManager::perform_scan()
+{
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan");
 
   // calling open on the producer will read the complete header from the SMRBs
   producer->open();
@@ -185,8 +190,8 @@ void ska::pst::stat::StatApplicationManager::perform_start_scan()
   // Acquire the data and weights beam configuration from the SMRB segment producer
   data_header.clone(producer->get_data_header());
   weights_header.clone(producer->get_weights_header());
-  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_start_scan data_header:\n{}", data_header.raw());
-  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_start_scan weights_header:\n{}", weights_header.raw());
+  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_scan data_header:\n{}", data_header.raw());
+  SPDLOG_TRACE("ska::pst::stat::StatApplicationManager::perform_scan weights_header:\n{}", weights_header.raw());
 
   // check that the SCAN_ID and EB_ID in the header's match the scan configuration
   if (data_header.get_val("SCAN_ID") != startscan_config.get_val("SCAN_ID"))
@@ -198,7 +203,7 @@ void ska::pst::stat::StatApplicationManager::perform_start_scan()
     throw std::runtime_error("EB_ID mismatch between data header and startscan_config");
   }
 
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_start_scan SCAN_ID={} EB_ID={}", data_header.get_val("SCAN_ID"), data_header.get_val("EB_ID"));
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan SCAN_ID={} EB_ID={}", data_header.get_val("SCAN_ID"), data_header.get_val("EB_ID"));
 
   // set the base_path and suffix for statistics recording in the beam configuration
   data_header.set_val("STAT_BASE_PATH", stat_base_path);
@@ -223,20 +228,9 @@ void ska::pst::stat::StatApplicationManager::perform_start_scan()
   hdf5_publisher = std::make_shared<StatHdf5FileWriter>(data_header);
   processor->add_publisher(hdf5_publisher);
 
-  // ensure processing will execute
-  {
-    std::unique_lock<std::mutex> lock(processing_mutex);
-    keep_processing = true;
-    processing_cond.notify_one();
-  }
-
+  keep_processing = true;
   processing_state = Processing;
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_start_scan complete");
-}
 
-void ska::pst::stat::StatApplicationManager::perform_scan()
-{
-  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan");
   bool eod = false;
   while (!eod && keep_processing)
   {
