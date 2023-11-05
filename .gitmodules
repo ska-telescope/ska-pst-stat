@@ -4,6 +4,7 @@
 [submodule ".pst"]
 	path = .pst
 	url = https://gitlab.com/ska-telescope/pst/ska-pst-makefiles.git
+	branch = main
 [submodule "resources/cmake-modules"]
 	path = resources/cmake-modules
 	url = https://gitlab.com/ska-telescope/cmake-modules.git
