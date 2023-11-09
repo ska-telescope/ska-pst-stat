@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ska-pst-stat"
-version = "0.3.8"
+version = "0.3.9"
 description = "A Python API to allow reading of HDF5 files produced by STAT.CORE"
 authors = ["Team PST"]
 license = "BSD-3-Clause"
