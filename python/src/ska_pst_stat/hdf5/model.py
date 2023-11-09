@@ -28,6 +28,10 @@ from ska_pst_stat.hdf5.consts import (
     HDF5_EB_ID,
     HDF5_FREQ,
     HDF5_FREQUENCY_BINS,
+    HDF5_HISTOGRAM_REBINNED_1D_FREQ_AVG,
+    HDF5_HISTOGRAM_REBINNED_1D_FREQ_AVG_RFI_EXCISED,
+    HDF5_HISTOGRAM_REBINNED_2D_FREQ_AVG,
+    HDF5_HISTOGRAM_REBINNED_2D_FREQ_AVG_RFI_EXCISED,
     HDF5_NBIN_HIST,
     HDF5_NCHAN,
     HDF5_NCHAN_DS,
@@ -53,6 +57,10 @@ KEY_MAP: Dict[str, str] = {
     HDF5_FREQ: "frequency_mhz",
     HDF5_NBIN_HIST: "histogram_nbin",
     HDF5_CHAN_FREQ: "channel_freq_mhz",
+    HDF5_HISTOGRAM_REBINNED_1D_FREQ_AVG: "rebinned_histogram_1d_freq_avg",
+    HDF5_HISTOGRAM_REBINNED_1D_FREQ_AVG_RFI_EXCISED: "rebinned_histogram_1d_freq_avg_rfi_excised",
+    HDF5_HISTOGRAM_REBINNED_2D_FREQ_AVG: "rebinned_histogram_2d_freq_avg",
+    HDF5_HISTOGRAM_REBINNED_2D_FREQ_AVG_RFI_EXCISED: "rebinned_histogram_2d_freq_avg_rfi_excised",
 }
 
 
@@ -169,8 +177,12 @@ class StatisticsMetadata:
     ndat_ds: int
     histogram_nbin: int
     nrebin: int
+    channel_freq_mhz: npt.NDArray[Literal["NChan"], npt.Float64]
+    timeseries_bins: npt.NDArray[Literal["NTimeBin"], npt.Float64]
+    frequency_bins: npt.NDArray[Literal["NFreqBin"], npt.Float64]
     num_samples: int
     num_samples_rfi_excised: int
+    num_samples_spectrum: npt.NDArray[Literal["NChan"], npt.UInt32]
     num_invalid_packets: int
 
     @property
@@ -183,7 +195,6 @@ class StatisticsMetadata:
 class StatisticsData:
     """A data class used to the calculated statistics from random data."""
 
-    channel_freq_mhz: npt.NDArray[Literal["NChan"], npt.Float64]
     mean_frequency_avg: npt.NDArray[Literal["NPol, NDim"], npt.Float32]
     mean_frequency_avg_rfi_excised: npt.NDArray[Literal["NPol, NDim"], npt.Float32]
     variance_frequency_avg: npt.NDArray[Literal["NPol, NDim"], npt.Float32]
@@ -208,11 +219,6 @@ class StatisticsData:
     num_clipped_samples: npt.NDArray[Literal["NPol, NDim"], npt.UInt32]
     num_clipped_samples_rfi_excised: npt.NDArray[Literal["NPol, NDim"], npt.UInt32]
 
-    timeseries_bins: npt.NDArray[Literal["NTimeBin"], npt.Float64]
-    frequency_bins: npt.NDArray[Literal["NFreqBin"], npt.Float64]
-
     spectrogram: npt.NDArray[Literal["NPol, NFreqBin, NTimeBin"], npt.Float32]
     timeseries: npt.NDArray[Literal["NPol, NTimeBin, 3"], npt.Float32]
     timeseries_rfi_excised: npt.NDArray[Literal["NPol, NTimeBin, 3"], npt.Float32]
-
-    num_samples_spectrum: npt.NDArray[Literal["NChan"], npt.UInt32]

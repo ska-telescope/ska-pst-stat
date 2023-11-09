@@ -132,15 +132,16 @@ class Statistics:
                 ndat_ds=hdf5_header[HDF5_NDAT_DS],
                 histogram_nbin=hdf5_header[HDF5_NBIN_HIST],
                 nrebin=hdf5_header[HDF5_NREBIN],
+                channel_freq_mhz=hdf5_header[HDF5_CHAN_FREQ][...],
+                timeseries_bins=hdf5_header[HDF5_TIMESERIES_BINS][...],
+                frequency_bins=hdf5_header[HDF5_FREQUENCY_BINS][...],
                 num_samples=hdf5_header[HDF5_NUM_SAMPLES],
                 num_samples_rfi_excised=hdf5_header[HDF5_NUM_SAMPLES_RFI_EXCISED],
+                num_samples_spectrum=hdf5_header[HDF5_NUM_SAMPLES_SPECTRUM][...],
                 num_invalid_packets=hdf5_header[HDF5_NUM_INVALID_PACKETS],
             )
 
             data = StatisticsData(
-                channel_freq_mhz=hdf5_header[HDF5_CHAN_FREQ],
-                timeseries_bins=hdf5_header[HDF5_TIMESERIES_BINS],
-                frequency_bins=hdf5_header[HDF5_FREQUENCY_BINS],
                 mean_frequency_avg=f[HDF5_MEAN_FREQUENCY_AVG][...],
                 mean_frequency_avg_rfi_excised=f[HDF5_MEAN_FREQUENCY_AVG_RFI_EXCISED][...],
                 variance_frequency_avg=f[HDF5_VARIANCE_FREQUENCY_AVG][...],
@@ -165,7 +166,6 @@ class Statistics:
                 spectrogram=f[HDF5_SPECTROGRAM][...],
                 timeseries=f[HDF5_TIMESERIES][...],
                 timeseries_rfi_excised=f[HDF5_TIMESERIES_RFI_EXCISED][...],
-                num_samples_spectrum=hdf5_header[HDF5_NUM_SAMPLES_SPECTRUM][...],
             )
 
             return Statistics(metadata=metadata, data=data)
@@ -517,7 +517,7 @@ class Statistics:
 
         channel_number_arange = self.channel_numbers
         channel_number = np.repeat(channel_number_arange, 4)
-        channel_freq_mhz = np.repeat(self.data.channel_freq_mhz, 4)
+        channel_freq_mhz = np.repeat(self.metadata.channel_freq_mhz, 4)
 
         polarisation = np.empty(shape=shape, dtype=object)
         polarisation[0, :, :] = Polarisation.POL_A.text
@@ -548,12 +548,12 @@ class Statistics:
     @property
     def frequency_bins(self: Statistics) -> npt.NDArray[Literal["NFreqBin"], npt.Float64]:
         """Get the frequency bins used in the spectrogram data."""
-        return self.data.frequency_bins
+        return self.metadata.frequency_bins
 
     @property
     def timeseries_bins(self: Statistics) -> npt.NDArray[Literal["NTimeBin"], npt.Float64]:
         """Get the timeseries bins used in the spectrogram and timeseries data."""
-        return self.data.timeseries_bins
+        return self.metadata.timeseries_bins
 
     @property
     def pol_a_channel_stats(self: Statistics) -> pd.DataFrame:
@@ -1422,7 +1422,7 @@ class Statistics:
         polarisation[Polarisation.POL_B] = Polarisation.POL_B.text
 
         # this will be in column major format
-        timeseries_bins = np.repeat(self.data.timeseries_bins, 2)
+        timeseries_bins = np.repeat(self.metadata.timeseries_bins, 2)
 
         max_data = timeseries_data[:, :, TimeseriesDimension.MAX]
         min_data = timeseries_data[:, :, TimeseriesDimension.MIN]

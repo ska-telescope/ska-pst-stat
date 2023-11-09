@@ -9,10 +9,11 @@ from __future__ import annotations
 
 import pathlib
 from dataclasses import dataclass
-from typing import Generator, List
+from typing import Any, Generator, List
 
 import h5py
 import numpy as np
+from ska_pst_stat import Statistics
 from ska_pst_stat.hdf5.consts import (
     FILE_FORMAT_VERSION_1_0_0,
     HDF5_FILE_FORMAT_VERSION,
@@ -39,7 +40,7 @@ from ska_pst_stat.hdf5.consts import (
     HDF5_VARIANCE_SPECTRUM,
     TimeseriesDimension,
 )
-from ska_pst_stat.hdf5.model import HDF5_HEADER_TYPE, StatisticsData, string_dt
+from ska_pst_stat.hdf5.model import HDF5_HEADER_TYPE, StatisticsData, StatisticsMetadata, string_dt
 
 
 @dataclass(kw_only=True)
@@ -197,7 +198,7 @@ class Hdf5FileGenerator:
         scan_id: int,
         beam_id: str,
         config: StatConfig,
-        utc_start: str | None = None,
+        utc_start: str = "2023-10-23-11:00:00",
     ) -> None:
         """
         Initialise the Hdf5FileGenerator.
@@ -214,68 +215,77 @@ class Hdf5FileGenerator:
         :type beam_id: str
         :param config: the configuration to use to generate the data file
         :type config: StatConfig
-        :param utc_start: an ISO formated string of the UTC time at the start of the scan. Optional, default
-            is the current time.
-        :param utc_start: str | None
+        :param utc_start: an ISO formated string of the UTC time at the start of the scan.
+        :param utc_start: str
         """
         file_path = pathlib.Path(file_path)
         if not file_path.parent.exists():
             file_path.parent.mkdir(parents=True, exist_ok=True)
 
         self._file_path = file_path
-        self._eb_id = eb_id
-        self._telescope = telescope
-        self._scan_id = scan_id
-        self._beam_id = beam_id
-        self._config = config
-        self._utc_start = utc_start
-        self._data = calc_stats(config)
+        self._params: dict = {
+            "config": config,
+            "eb_id": eb_id,
+            "telescope": telescope,
+            "scan_id": scan_id,
+            "beam_id": beam_id,
+            "utc_start": utc_start,
+        }
+        self._stats: Statistics | None = None
+
+    @property
+    def stats(self: Hdf5FileGenerator) -> Statistics:
+        """
+        Get generatored statistics.
+
+        This will throw an :py:class:`AssertionError` if :py:meth:`generate`
+        has not been called.
+        """
+        assert self._stats is not None, "Statistics has not been generated."
+        return self._stats
 
     def generate(self: Hdf5FileGenerator) -> None:
         """Generate a HDF5 file to use in a test."""
         if self._file_path.exists():
             self._file_path.unlink()
 
-        utc_start = self._utc_start or "2023-10-23-11:00:00"
-        scan_offset = 0
+        self._stats = _calc_stats(**self._params)
 
-        num_samples = np.sum(self._data.num_samples_spectrum, dtype=np.uint32)
-        num_samples_rfi_excised = np.sum(
-            self._data.num_samples_spectrum[self._config.non_rfi_channel_indexes], dtype=np.uint32
-        )
-        num_invalid_packets = 0
+        metadata = self._stats.metadata
 
         header_data = np.array(
             [
                 (
-                    self._eb_id,
-                    self._telescope,
-                    self._scan_id,
-                    self._beam_id,
-                    utc_start,
-                    scan_offset,
-                    self._config.total_sample_time,
-                    self._config.frequency_mhz,
-                    self._config.bandwidth_mhz,
-                    self._config.start_chan,
-                    self._config.npol,
-                    self._config.ndim,
-                    self._config.nchan,
-                    self._config.nfreq_bins,
-                    self._config.ntime_bins,
-                    self._config.nbin,
-                    self._config.nrebin,
-                    self._data.channel_freq_mhz,
-                    self._data.frequency_bins,
-                    self._data.timeseries_bins,
-                    num_samples,
-                    num_samples_rfi_excised,
-                    self._data.num_samples_spectrum,
-                    num_invalid_packets,
+                    metadata.eb_id,
+                    metadata.telescope,
+                    metadata.scan_id,
+                    metadata.beam_id,
+                    metadata.utc_start,
+                    metadata.t_min,
+                    metadata.t_max,
+                    metadata.frequency_mhz,
+                    metadata.bandwidth_mhz,
+                    metadata.start_chan,
+                    metadata.npol,
+                    metadata.ndim,
+                    metadata.nchan,
+                    metadata.nchan_ds,
+                    metadata.ndat_ds,
+                    metadata.histogram_nbin,
+                    metadata.nrebin,
+                    metadata.channel_freq_mhz,
+                    metadata.frequency_bins,
+                    metadata.timeseries_bins,
+                    metadata.num_samples,
+                    metadata.num_samples_rfi_excised,
+                    metadata.num_samples_spectrum,
+                    metadata.num_invalid_packets,
                 )
             ],
             dtype=HDF5_HEADER_TYPE,
         )
+
+        data = self._stats.data
         with h5py.File(self._file_path, "w") as f:
             file_format_ds = f.create_dataset(HDF5_FILE_FORMAT_VERSION, shape=(), dtype=string_dt)
             file_format_ds[()] = FILE_FORMAT_VERSION_1_0_0
@@ -283,46 +293,40 @@ class Hdf5FileGenerator:
             header_ds = f.create_dataset(HDF5_HEADER, 1, dtype=HDF5_HEADER_TYPE)
             header_ds[...] = header_data
 
-            self._create_data_set(f, HDF5_MEAN_FREQUENCY_AVG, self._data.mean_frequency_avg)
+            self._create_data_set(f, HDF5_MEAN_FREQUENCY_AVG, data.mean_frequency_avg)
+            self._create_data_set(f, HDF5_MEAN_FREQUENCY_AVG_RFI_EXCISED, data.mean_frequency_avg_rfi_excised)
+            self._create_data_set(f, HDF5_VARIANCE_FREQUENCY_AVG, data.variance_frequency_avg)
             self._create_data_set(
-                f, HDF5_MEAN_FREQUENCY_AVG_RFI_EXCISED, self._data.mean_frequency_avg_rfi_excised
+                f, HDF5_VARIANCE_FREQUENCY_AVG_RFI_EXCISED, data.variance_frequency_avg_rfi_excised
             )
-            self._create_data_set(f, HDF5_VARIANCE_FREQUENCY_AVG, self._data.variance_frequency_avg)
+            self._create_data_set(f, HDF5_MEAN_SPECTRUM, data.mean_spectrum)
+            self._create_data_set(f, HDF5_VARIANCE_SPECTRUM, data.variance_spectrum)
+            self._create_data_set(f, HDF5_MEAN_SPECTRAL_POWER, data.mean_spectral_power)
+            self._create_data_set(f, HDF5_MAX_SPECTRAL_POWER, data.max_spectral_power)
+            self._create_data_set(f, HDF5_HISTOGRAM_1D_FREQ_AVG, data.histogram_1d_freq_avg)
             self._create_data_set(
-                f, HDF5_VARIANCE_FREQUENCY_AVG_RFI_EXCISED, self._data.variance_frequency_avg_rfi_excised
+                f, HDF5_HISTOGRAM_1D_FREQ_AVG_RFI_EXCISED, data.histogram_1d_freq_avg_rfi_excised
             )
-            self._create_data_set(f, HDF5_MEAN_SPECTRUM, self._data.mean_spectrum)
-            self._create_data_set(f, HDF5_VARIANCE_SPECTRUM, self._data.variance_spectrum)
-            self._create_data_set(f, HDF5_MEAN_SPECTRAL_POWER, self._data.mean_spectral_power)
-            self._create_data_set(f, HDF5_MAX_SPECTRAL_POWER, self._data.max_spectral_power)
-            self._create_data_set(f, HDF5_HISTOGRAM_1D_FREQ_AVG, self._data.histogram_1d_freq_avg)
-            self._create_data_set(f, HDF5_HISTOGRAM_1D_FREQ_AVG_RFI_EXCISED, self._data.histogram_1d_freq_avg)
-            self._create_data_set(
-                f, HDF5_HISTOGRAM_REBINNED_2D_FREQ_AVG, self._data.rebinned_histogram_2d_freq_avg
-            )
+            self._create_data_set(f, HDF5_HISTOGRAM_REBINNED_2D_FREQ_AVG, data.rebinned_histogram_2d_freq_avg)
             self._create_data_set(
                 f,
                 HDF5_HISTOGRAM_REBINNED_2D_FREQ_AVG_RFI_EXCISED,
-                self._data.rebinned_histogram_2d_freq_avg_rfi_excised,
+                data.rebinned_histogram_2d_freq_avg_rfi_excised,
             )
-            self._create_data_set(
-                f, HDF5_HISTOGRAM_REBINNED_1D_FREQ_AVG, self._data.rebinned_histogram_1d_freq_avg
-            )
+            self._create_data_set(f, HDF5_HISTOGRAM_REBINNED_1D_FREQ_AVG, data.rebinned_histogram_1d_freq_avg)
             self._create_data_set(
                 f,
                 HDF5_HISTOGRAM_REBINNED_1D_FREQ_AVG_RFI_EXCISED,
-                self._data.rebinned_histogram_1d_freq_avg_rfi_excised,
+                data.rebinned_histogram_1d_freq_avg_rfi_excised,
             )
+            self._create_data_set(f, HDF5_NUM_CLIPPED_SAMPLES_SPECTRUM, data.num_clipped_samples_spectrum)
+            self._create_data_set(f, HDF5_NUM_CLIPPED_SAMPLES, data.num_clipped_samples)
             self._create_data_set(
-                f, HDF5_NUM_CLIPPED_SAMPLES_SPECTRUM, self._data.num_clipped_samples_spectrum
+                f, HDF5_NUM_CLIPPED_SAMPLES_RFI_EXCISED, data.num_clipped_samples_rfi_excised
             )
-            self._create_data_set(f, HDF5_NUM_CLIPPED_SAMPLES, self._data.num_clipped_samples)
-            self._create_data_set(
-                f, HDF5_NUM_CLIPPED_SAMPLES_RFI_EXCISED, self._data.num_clipped_samples_rfi_excised
-            )
-            self._create_data_set(f, HDF5_SPECTROGRAM, self._data.spectrogram)
-            self._create_data_set(f, HDF5_TIMESERIES, self._data.timeseries)
-            self._create_data_set(f, HDF5_TIMESERIES_RFI_EXCISED, self._data.timeseries_rfi_excised)
+            self._create_data_set(f, HDF5_SPECTROGRAM, data.spectrogram)
+            self._create_data_set(f, HDF5_TIMESERIES, data.timeseries)
+            self._create_data_set(f, HDF5_TIMESERIES_RFI_EXCISED, data.timeseries_rfi_excised)
 
     def _create_data_set(
         self: Hdf5FileGenerator,
@@ -351,13 +355,26 @@ def simple_gaussian_generator(config: StatConfig) -> Generator[np.ndarray, None,
         yield data.astype(dtype=config.dtype)
 
 
-def calc_stats(config: StatConfig) -> StatisticsData:
+def _calc_stats(
+    *args: Any,
+    config: StatConfig,
+    eb_id: str,
+    telescope: str,
+    scan_id: int,
+    beam_id: str,
+    utc_start: str,
+    **kwargs: Any,
+) -> Statistics:
     """Calculate statistics from random data based on provided config."""
     non_rfi_channel_idx = config.non_rfi_channel_indexes
 
     num_samples_spectrum = (config.total_samples_per_channel * np.ones(shape=config.nchan)).astype(
         dtype=np.uint32
     )
+
+    num_samples = np.sum(num_samples_spectrum, dtype=np.uint32)
+    num_samples_rfi_excised = np.sum(num_samples_spectrum[non_rfi_channel_idx], dtype=np.uint32)
+    num_invalid_packets = 0
 
     # need to calc freq bins
     low_freq = config.frequency_mhz - config.bandwidth_mhz / 2.0
@@ -374,7 +391,7 @@ def calc_stats(config: StatConfig) -> StatisticsData:
     frequency_bins += frequency_bin_bw / 2
 
     # need to calc temporal bins
-    total_sample_time = config.tsamp_secs * config.total_samples_per_channel
+    total_sample_time = config.total_sample_time
     temporal_bin_secs = total_sample_time / config.ntime_bins
     timeseries_bins = (
         np.linspace(0.0, total_sample_time, num=config.ntime_bins, endpoint=False, dtype=np.float64)
@@ -529,8 +546,35 @@ def calc_stats(config: StatConfig) -> StatisticsData:
             timeseries_power_slice_rfi_excised, axis=(1, 2)
         )
 
-    return StatisticsData(
+    metadata = StatisticsMetadata(
+        file_format_version="1.0.0",
+        eb_id=eb_id,
+        telescope=telescope,
+        scan_id=scan_id,
+        beam_id=beam_id,
+        utc_start=utc_start,
+        t_min=0,
+        t_max=config.total_sample_time,
+        frequency_mhz=config.frequency_mhz,
+        bandwidth_mhz=config.bandwidth_mhz,
+        start_chan=config.start_chan,
+        npol=config.npol,
+        ndim=config.ndim,
+        nchan=config.nchan,
+        nchan_ds=config.nfreq_bins,
+        ndat_ds=config.ntime_bins,
+        histogram_nbin=config.nbin,
+        nrebin=config.nrebin,
         channel_freq_mhz=channel_freq_mhz,
+        timeseries_bins=timeseries_bins,
+        frequency_bins=frequency_bins,
+        num_samples=num_samples,
+        num_samples_rfi_excised=num_samples_rfi_excised,
+        num_samples_spectrum=num_samples_spectrum,
+        num_invalid_packets=num_invalid_packets,
+    )
+
+    data = StatisticsData(
         mean_frequency_avg=mean_frequency_avg,
         mean_frequency_avg_rfi_excised=mean_frequency_avg_rfi_excised,
         variance_frequency_avg=variance_frequency_avg,
@@ -548,10 +592,9 @@ def calc_stats(config: StatConfig) -> StatisticsData:
         num_clipped_samples_spectrum=num_clipped_samples_spectrum,
         num_clipped_samples=num_clipped_samples,
         num_clipped_samples_rfi_excised=num_clipped_samples_rfi_excised,
-        timeseries_bins=timeseries_bins,
-        frequency_bins=frequency_bins,
         spectrogram=spectrogram,
         timeseries=timeseries,
         timeseries_rfi_excised=timeseries_rfi_excised,
-        num_samples_spectrum=num_samples_spectrum,
     )
+
+    return Statistics(metadata=metadata, data=data)
