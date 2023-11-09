@@ -83,6 +83,10 @@ The header of the HDF5 file includes the following fields:
   * CHAN_FREQ - an array of centre frequency for each of the channels.
   * FREQUENCY_BINS - the centre frequency, in MHz, for each frequency bin used in the spectrogram.
   * TIMESERIES_BINS - the observation offset, measured in seconds, for each of the tempral bins used in timeseries and spectrograms
+  * NUM_SAMPLES - number of samples used for calculating statistics
+  * NUM_SAMPLES_RFI_EXCISED - number of samples used for calculating RFI excised statistics
+  * NUM_SAMPLES_SPECTRUM - number of samples per channel for calculating channel statistics
+  * NUM_INVALID_PACKETS - number of invalid packets received while calculating statistics
 
 The output data of the HDF5 includes the following datasets:
 
