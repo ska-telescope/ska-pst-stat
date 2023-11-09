@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import pathlib
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, Generator, List
 
 import h5py
@@ -198,7 +199,7 @@ class Hdf5FileGenerator:
         scan_id: int,
         beam_id: str,
         config: StatConfig,
-        utc_start: str = "2023-10-23-11:00:00",
+        utc_start: str | None = None,
     ) -> None:
         """
         Initialise the Hdf5FileGenerator.
@@ -236,7 +237,7 @@ class Hdf5FileGenerator:
     @property
     def stats(self: Hdf5FileGenerator) -> Statistics:
         """
-        Get generatored statistics.
+        Get generated statistics.
 
         This will throw an :py:class:`AssertionError` if :py:meth:`generate`
         has not been called.
@@ -362,10 +363,13 @@ def _calc_stats(
     telescope: str,
     scan_id: int,
     beam_id: str,
-    utc_start: str,
+    utc_start: str | None = None,
     **kwargs: Any,
 ) -> Statistics:
     """Calculate statistics from random data based on provided config."""
+    if utc_start is None:
+        utc_start = datetime.now().strftime("%Y-%m-%d-%H:%M:%S")
+
     non_rfi_channel_idx = config.non_rfi_channel_indexes
 
     num_samples_spectrum = (config.total_samples_per_channel * np.ones(shape=config.nchan)).astype(
