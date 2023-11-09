@@ -63,6 +63,7 @@ void ska::pst::stat::StatStorage::resize(uint32_t _ntime_bins, uint32_t _nfreq_b
   ntime_bins = _ntime_bins;
   nfreq_bins = _nfreq_bins;
 
+  resize_1d(num_samples_spectrum, nchan);
   resize_1d(channel_centre_frequencies, nchan);
 
   resize_2d(mean_frequency_avg, npol, ndim);
@@ -109,6 +110,10 @@ void ska::pst::stat::StatStorage::reset()
 {
   SPDLOG_DEBUG("ska::pst::stat::StatStorage::reset()");
 
+  num_samples = 0;
+  num_samples_rfi_excised = 0;
+  num_invalid_packets = 0;
+  reset_1d(num_samples_spectrum);
   reset_1d(channel_centre_frequencies);
 
   reset_2d(mean_frequency_avg);

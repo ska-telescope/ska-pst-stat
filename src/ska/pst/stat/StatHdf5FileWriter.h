@@ -104,6 +104,18 @@ namespace ska::pst::stat {
     //! frequency bins
     hvl_t timeseries_bins;
 
+    //! number of samples used for calculating statistics
+    uint32_t num_samples;
+
+    //! number of samples used for calculating statistics, for RFI excised
+    uint32_t num_samples_rfi_excised;
+
+    //! number of samples per channel for calculating channel statistics
+    hvl_t num_samples_spectrum;
+
+    //! number of invalid packets received while calculating statistics
+    uint32_t num_invalid_packets;
+
   } stat_hdf5_header_t;
 
   /**

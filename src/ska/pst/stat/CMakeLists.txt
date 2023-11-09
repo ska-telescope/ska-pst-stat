@@ -23,6 +23,7 @@ set(sources
 )
 
 set(private_headers
+  finite.h
   FileProcessor.h
   StatApplicationManager.h
   StatComputer.h

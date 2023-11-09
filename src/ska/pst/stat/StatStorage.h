@@ -347,6 +347,55 @@ namespace ska::pst::stat {
       std::vector<bool> rfi_mask_lut;
 
       /**
+       * @brief the total number of samples used to calculate the sample statistics.
+       *
+       * If there are no dropped/invalid packets, this value should be the total number of
+       * samples within the time sample: NHEAP * NCHAN * UDP_NSAMP.  If a packet was marked as dropped/
+       * invalid then no statistics are updated.
+       *
+       * This is not split by polarisation and dimension due to the fact that within a UDP packet
+       * it includes all polarisations and dimensions.
+       */
+      uint32_t num_samples{0};
+
+      /**
+       * @brief the total number of samples used to calculate the sample statistics, expect those flagged for RFI.
+       *
+       * If a channel is marked as having RFI then this value is not updated.
+       *
+       * If there are no dropped/invalid packets, this value should be the total number of
+       * samples within the time sample: NHEAP * (non-RFI NCHAN) * UDP_NSAMP.  If a packet was marked as dropped/
+       * invalid then no statistics are updated.
+       *
+       * This is not split by polarisation and dimension due to the fact that within a UDP packet
+       * it includes all polarisations and dimensions.
+       */
+      uint32_t num_samples_rfi_excised{0};
+
+      /**
+       * @brief the number of samples, per channel, to calculate the sample statistics.
+       *
+       * If there are no dropped/invalid packets, this value should be the total number of
+       * samples for the channel within the time sample: NHEAP * UDP_NSAMP.  If a packet was
+       * marked as dropped/invalid then no statistics are updated.
+       *
+       * This is not split by polarisation and dimension due to the fact that within a UDP packet
+       * it includes all polarisations and dimensions.
+       *
+       * First dimension the number of samples for the channel.
+       */
+      std::vector<uint32_t> num_samples_spectrum;
+
+      /**
+       * @brief the number invalid packets received while calculating the statisitcs.
+       *
+       * Any packet that has a NaN for the scale is marked as being an invalid packet. This
+       * comes from the RECV.CORE that marks ignored, malformed, misdirected, misordered packets
+       * as invalid.
+       */
+      uint32_t num_invalid_packets{0};
+
+      /**
        * @brief Get the number of polarisations used in the storage
        *
        * @return uint32_t number of polarisations
