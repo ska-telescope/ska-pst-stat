@@ -26,7 +26,6 @@ def test_load_hdf5_file(
 
     h5_file = h5py.File(file_path, "r")
     keys = {*h5_file.keys()}
-    print(keys)
 
     # Note not using the constants to ensure these values match coming from C++ code
     expected_keys = {

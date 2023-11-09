@@ -47,6 +47,10 @@ from ska_pst_stat.hdf5.consts import (
     HDF5_NUM_CLIPPED_SAMPLES,
     HDF5_NUM_CLIPPED_SAMPLES_RFI_EXCISED,
     HDF5_NUM_CLIPPED_SAMPLES_SPECTRUM,
+    HDF5_NUM_INVALID_PACKETS,
+    HDF5_NUM_SAMPLES,
+    HDF5_NUM_SAMPLES_RFI_EXCISED,
+    HDF5_NUM_SAMPLES_SPECTRUM,
     HDF5_SCAN_ID,
     HDF5_SPECTROGRAM,
     HDF5_START_CHAN,
@@ -128,6 +132,9 @@ class Statistics:
                 ndat_ds=hdf5_header[HDF5_NDAT_DS],
                 histogram_nbin=hdf5_header[HDF5_NBIN_HIST],
                 nrebin=hdf5_header[HDF5_NREBIN],
+                num_samples=hdf5_header[HDF5_NUM_SAMPLES],
+                num_samples_rfi_excised=hdf5_header[HDF5_NUM_SAMPLES_RFI_EXCISED],
+                num_invalid_packets=hdf5_header[HDF5_NUM_INVALID_PACKETS],
             )
 
             data = StatisticsData(
@@ -158,6 +165,7 @@ class Statistics:
                 spectrogram=f[HDF5_SPECTROGRAM][...],
                 timeseries=f[HDF5_TIMESERIES][...],
                 timeseries_rfi_excised=f[HDF5_TIMESERIES_RFI_EXCISED][...],
+                num_samples_spectrum=hdf5_header[HDF5_NUM_SAMPLES_SPECTRUM][...],
             )
 
             return Statistics(metadata=metadata, data=data)
@@ -262,6 +270,15 @@ class Statistics:
             * - Num. Histogram Bins (Rebinned)
               - 256
               - number of bins to used in the rebinned histograms
+            * - Num. Samples
+              - 21012480
+              - total number of samples used to calculate statistics
+            * - Num. Samples (RFI Excised)
+              - 19456000
+              - total number of samples used to calculate statistics, excluding RFI excised data
+            * - Num. Invalid Packets
+              - 0
+              - total number invalid/dropped packets in the data used to calculate statistics.
 
         :return: a human readable version of the header scalar fields.
         :rtype: pd.DataFrame
@@ -287,6 +304,9 @@ class Statistics:
                 "Num. Temporal Bins",
                 "Num. Histogram Bins",
                 "Num. Histogram Bins (Rebinned)",
+                "Num. Samples",
+                "Num. Samples (RFI Excised)",
+                "Num. Invalid Packets",
             ],
             "Value": [
                 self.metadata.file_format_version,
@@ -308,6 +328,9 @@ class Statistics:
                 self.metadata.ndat_ds,
                 self.metadata.histogram_nbin,
                 self.metadata.nrebin,
+                self.metadata.num_samples,
+                self.metadata.num_samples_rfi_excised,
+                self.metadata.num_invalid_packets,
             ],
         }
 

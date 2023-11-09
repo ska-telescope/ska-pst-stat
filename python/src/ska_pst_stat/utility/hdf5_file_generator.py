@@ -239,6 +239,12 @@ class Hdf5FileGenerator:
         utc_start = self._utc_start or "2023-10-23-11:00:00"
         scan_offset = 0
 
+        num_samples = np.sum(self._data.num_samples_spectrum, dtype=np.uint32)
+        num_samples_rfi_excised = np.sum(
+            self._data.num_samples_spectrum[self._config.non_rfi_channel_indexes], dtype=np.uint32
+        )
+        num_invalid_packets = 0
+
         header_data = np.array(
             [
                 (
@@ -262,6 +268,10 @@ class Hdf5FileGenerator:
                     self._data.channel_freq_mhz,
                     self._data.frequency_bins,
                     self._data.timeseries_bins,
+                    num_samples,
+                    num_samples_rfi_excised,
+                    self._data.num_samples_spectrum,
+                    num_invalid_packets,
                 )
             ],
             dtype=HDF5_HEADER_TYPE,
@@ -344,6 +354,10 @@ def simple_gaussian_generator(config: StatConfig) -> Generator[np.ndarray, None,
 def calc_stats(config: StatConfig) -> StatisticsData:
     """Calculate statistics from random data based on provided config."""
     non_rfi_channel_idx = config.non_rfi_channel_indexes
+
+    num_samples_spectrum = (config.total_samples_per_channel * np.ones(shape=config.nchan)).astype(
+        dtype=np.uint32
+    )
 
     # need to calc freq bins
     low_freq = config.frequency_mhz - config.bandwidth_mhz / 2.0
@@ -539,4 +553,5 @@ def calc_stats(config: StatConfig) -> StatisticsData:
         spectrogram=spectrogram,
         timeseries=timeseries,
         timeseries_rfi_excised=timeseries_rfi_excised,
+        num_samples_spectrum=num_samples_spectrum,
     )

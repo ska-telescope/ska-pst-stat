@@ -35,6 +35,10 @@ from ska_pst_stat.hdf5.consts import (
     HDF5_NDIM,
     HDF5_NPOL,
     HDF5_NREBIN,
+    HDF5_NUM_INVALID_PACKETS,
+    HDF5_NUM_SAMPLES,
+    HDF5_NUM_SAMPLES_RFI_EXCISED,
+    HDF5_NUM_SAMPLES_SPECTRUM,
     HDF5_SCAN_ID,
     HDF5_START_CHAN,
     HDF5_T_MAX,
@@ -62,6 +66,7 @@ def map_hdf5_key(hdf5_key: str) -> str:
 
 string_dt = h5py.string_dtype(encoding="utf-8")
 uint32_dt = np.uint32
+uint32_array_dt = h5py.vlen_dtype(uint32_dt)
 uint64_dt = np.uint64
 float_dt = np.float32
 double_dt = np.float64
@@ -90,6 +95,10 @@ HDF5_HEADER_TYPE = np.dtype(
         (HDF5_CHAN_FREQ, double_array_dt),
         (HDF5_FREQUENCY_BINS, double_array_dt),
         (HDF5_TIMESERIES_BINS, double_array_dt),
+        (HDF5_NUM_SAMPLES, uint32_dt),
+        (HDF5_NUM_SAMPLES_RFI_EXCISED, uint32_dt),
+        (HDF5_NUM_SAMPLES_SPECTRUM, uint32_array_dt),
+        (HDF5_NUM_INVALID_PACKETS, uint32_dt),
     ]
 )
 
@@ -160,6 +169,9 @@ class StatisticsMetadata:
     ndat_ds: int
     histogram_nbin: int
     nrebin: int
+    num_samples: int
+    num_samples_rfi_excised: int
+    num_invalid_packets: int
 
     @property
     def end_chan(self: StatisticsMetadata) -> int:
@@ -202,3 +214,5 @@ class StatisticsData:
     spectrogram: npt.NDArray[Literal["NPol, NFreqBin, NTimeBin"], npt.Float32]
     timeseries: npt.NDArray[Literal["NPol, NTimeBin, 3"], npt.Float32]
     timeseries_rfi_excised: npt.NDArray[Literal["NPol, NTimeBin, 3"], npt.Float32]
+
+    num_samples_spectrum: npt.NDArray[Literal["NChan"], npt.UInt32]
