@@ -43,6 +43,7 @@
 #include <vector>
 #include <array>
 #include <H5Cpp.h>
+#include <numeric>
 
 auto main(int argc, char* argv[]) -> int
 {
@@ -90,6 +91,12 @@ void StatHdf5FileWriterTest::populate_storage()
   populate_1d_vec<double>(storage->channel_centre_frequencies);
   populate_1d_vec<double>(storage->timeseries_bins);
   populate_1d_vec<double>(storage->frequency_bins);
+  populate_1d_vec<uint32_t>(storage->num_samples_spectrum);
+
+  storage->num_samples = std::accumulate(storage->num_samples_spectrum.begin(), storage->num_samples_spectrum.end(), 0);
+  storage->num_samples_rfi_excised = storage->num_samples - 1;
+
+  storage->num_invalid_packets = 42; // NOLINT
 
   // data
   populate_2d_vec<float>(storage->mean_frequency_avg);
@@ -167,6 +174,14 @@ void StatHdf5FileWriterTest::validate_hdf5_file(const std::shared_ptr<H5::H5File
   assert_1d_vec_header(storage->channel_centre_frequencies, header.chan_freq);
   assert_1d_vec_header(storage->timeseries_bins, header.timeseries_bins);
   assert_1d_vec_header(storage->frequency_bins, header.frequency_bins);
+
+  // assert num samples
+  ASSERT_EQ(header.num_samples, storage->num_samples);
+  ASSERT_EQ(header.num_samples_rfi_excised, storage->num_samples_rfi_excised);
+  assert_1d_vec_header(storage->num_samples_spectrum, header.num_samples_spectrum);
+
+  // assert num invalid packets
+  ASSERT_EQ(header.num_invalid_packets, storage->num_invalid_packets);
 
   assert_2d_vec<float>(storage->mean_frequency_avg, file, "MEAN_FREQUENCY_AVG", H5::PredType::NATIVE_FLOAT);
   assert_2d_vec<float>(storage->mean_frequency_avg_rfi_excised, file, "MEAN_FREQUENCY_AVG_RFI_EXCISED", H5::PredType::NATIVE_FLOAT);

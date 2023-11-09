@@ -28,6 +28,10 @@ from ska_pst_stat.hdf5.consts import (
     HDF5_EB_ID,
     HDF5_FREQ,
     HDF5_FREQUENCY_BINS,
+    HDF5_HISTOGRAM_REBINNED_1D_FREQ_AVG,
+    HDF5_HISTOGRAM_REBINNED_1D_FREQ_AVG_RFI_EXCISED,
+    HDF5_HISTOGRAM_REBINNED_2D_FREQ_AVG,
+    HDF5_HISTOGRAM_REBINNED_2D_FREQ_AVG_RFI_EXCISED,
     HDF5_NBIN_HIST,
     HDF5_NCHAN,
     HDF5_NCHAN_DS,
@@ -35,6 +39,10 @@ from ska_pst_stat.hdf5.consts import (
     HDF5_NDIM,
     HDF5_NPOL,
     HDF5_NREBIN,
+    HDF5_NUM_INVALID_PACKETS,
+    HDF5_NUM_SAMPLES,
+    HDF5_NUM_SAMPLES_RFI_EXCISED,
+    HDF5_NUM_SAMPLES_SPECTRUM,
     HDF5_SCAN_ID,
     HDF5_START_CHAN,
     HDF5_T_MAX,
@@ -49,6 +57,10 @@ KEY_MAP: Dict[str, str] = {
     HDF5_FREQ: "frequency_mhz",
     HDF5_NBIN_HIST: "histogram_nbin",
     HDF5_CHAN_FREQ: "channel_freq_mhz",
+    HDF5_HISTOGRAM_REBINNED_1D_FREQ_AVG: "rebinned_histogram_1d_freq_avg",
+    HDF5_HISTOGRAM_REBINNED_1D_FREQ_AVG_RFI_EXCISED: "rebinned_histogram_1d_freq_avg_rfi_excised",
+    HDF5_HISTOGRAM_REBINNED_2D_FREQ_AVG: "rebinned_histogram_2d_freq_avg",
+    HDF5_HISTOGRAM_REBINNED_2D_FREQ_AVG_RFI_EXCISED: "rebinned_histogram_2d_freq_avg_rfi_excised",
 }
 
 
@@ -62,6 +74,7 @@ def map_hdf5_key(hdf5_key: str) -> str:
 
 string_dt = h5py.string_dtype(encoding="utf-8")
 uint32_dt = np.uint32
+uint32_array_dt = h5py.vlen_dtype(uint32_dt)
 uint64_dt = np.uint64
 float_dt = np.float32
 double_dt = np.float64
@@ -90,6 +103,10 @@ HDF5_HEADER_TYPE = np.dtype(
         (HDF5_CHAN_FREQ, double_array_dt),
         (HDF5_FREQUENCY_BINS, double_array_dt),
         (HDF5_TIMESERIES_BINS, double_array_dt),
+        (HDF5_NUM_SAMPLES, uint32_dt),
+        (HDF5_NUM_SAMPLES_RFI_EXCISED, uint32_dt),
+        (HDF5_NUM_SAMPLES_SPECTRUM, uint32_array_dt),
+        (HDF5_NUM_INVALID_PACKETS, uint32_dt),
     ]
 )
 
@@ -140,6 +157,21 @@ class StatisticsMetadata:
     :vartype histogram_nbin: int
     :ivar nrebin: number of bins to use for rebinned histograms
     :vartype nrebin: int
+    :ivar channel_freq_mhz: the centre frequencies of each channel (MHz).
+    :vartype channel_freq_mhz: numpy.ndarray
+    :ivar timeseries_bins: the timestamp offsets for each temporal bin.
+    :vartype timeseries_bins: numpy.ndarray
+    :ivar frequency_bins: the frequency bins used for the spectrogram attribute (MHz).
+    :vartype frequency_bins: numpy.ndarray
+    :ivar num_samples: the total number of samples used to calculate the sample statistics.
+    :vartype num_samples: int
+    :ivar num_samples_rfi_excised: the total number of samples used to calculate the sample
+        statistics, expect those flagged for RFI.
+    :vartype num_samples_rfi_excised: int
+    :ivar num_samples_spectrum: the number of samples, per channel, to calculate the sample statistics.
+    :vartype num_samples_spectrum: numpy.ndarray
+    :ivar num_invalid_packets: the number invalid packets received while calculating the statisitcs.
+    :vartype num_invalid_packets: int
     """
 
     file_format_version: str = "1.0.0"
@@ -160,6 +192,13 @@ class StatisticsMetadata:
     ndat_ds: int
     histogram_nbin: int
     nrebin: int
+    channel_freq_mhz: npt.NDArray[Literal["NChan"], npt.Float64]
+    timeseries_bins: npt.NDArray[Literal["NTimeBin"], npt.Float64]
+    frequency_bins: npt.NDArray[Literal["NFreqBin"], npt.Float64]
+    num_samples: int
+    num_samples_rfi_excised: int
+    num_samples_spectrum: npt.NDArray[Literal["NChan"], npt.UInt32]
+    num_invalid_packets: int
 
     @property
     def end_chan(self: StatisticsMetadata) -> int:
@@ -169,9 +208,68 @@ class StatisticsMetadata:
 
 @dataclass(kw_only=True, frozen=True)
 class StatisticsData:
-    """A data class used to the calculated statistics from random data."""
+    """
+    A data class used to the calculated statistics from random data.
 
-    channel_freq_mhz: npt.NDArray[Literal["NChan"], npt.Float64]
+    :ivar mean_frequency_avg: the mean of the data for each polarisation and dimension,
+        averaged over all channels.
+    :vartype mean_frequency_avg: numpy.ndarray
+    :ivar mean_frequency_avg_rfi_excised: the mean of the data for each polarisation and
+        dimension, averaged over all channels, expect those flagged for RFI.
+    :vartype mean_frequency_avg_rfi_excised: numpy.ndarray
+    :ivar variance_frequency_avg: the variance of the data for each polarisation and dimension,
+        averaged over all channels.
+    :vartype variance_frequency_avg: numpy.ndarray
+    :ivar variance_frequency_avg_rfi_excised: the variance of the data for each polarisation and
+        dimension, averaged over all channels, expect those flagged for RFI.
+    :vartype variance_frequency_avg_rfi_excised: numpy.ndarray
+    :ivar mean_spectrum: the mean of the data for each polarisation, dimension and channel.
+    :vartype mean_spectrum: numpy.ndarray
+    :ivar variance_spectrum: the variance of the data for each polarisation, dimension and channel.
+    :vartype variance_spectrum: numpy.ndarray
+    :ivar mean_spectral_power: mean power spectra of the data for each polarisation and channel.
+    :vartype mean_spectral_power: numpy.ndarray
+    :ivar max_spectral_power: maximum power spectra of the data for each polarisation and channel.
+    :vartype max_spectral_power: numpy.ndarray
+    :ivar histogram_1d_freq_avg: histogram of the input data integer states for each polarisation
+        and dimension, averaged over all channels.
+    :vartype histogram_1d_freq_avg: numpy.ndarray
+    :ivar histogram_1d_freq_avg_rfi_excised: histogram of the input data integer states for each
+        polarisation and dimension, averaged over all channels, expect those flagged for RFI.
+    :vartype histogram_1d_freq_avg_rfi_excised: numpy.ndarray
+    :ivar rebinned_histogram_2d_freq_avg: Rebinned 2D histogram of the input data integer states
+        for each polarisation, averaged over all channels.
+    :vartype rebinned_histogram_2d_freq_avg: numpy.ndarray
+    :ivar rebinned_histogram_2d_freq_avg_rfi_excised: Rebinned 2D histogram of the input data
+        integer states for each polarisation, averaged over all channels, expect those flagged for RFI.
+    :vartype rebinned_histogram_2d_freq_avg_rfi_excised: numpy.ndarray
+    :ivar rebinned_histogram_1d_freq_avg: rebinned histogram of the input data integer states for each
+        polarisation and dimension, averaged over all channels.
+    :vartype rebinned_histogram_1d_freq_avg: numpy.ndarray
+    :ivar rebinned_histogram_1d_freq_avg_rfi_excised: rebinned histogram of the input data integer
+        states for each polarisation and dimension, averaged over all channels, expect those flagged
+        for RFI.
+    :vartype rebinned_histogram_1d_freq_avg_rfi_excised: numpy.ndarray
+    :ivar num_clipped_samples_spectrum: number of clipped input samples (maximum level) for each
+        polarisation, dimension and channel.
+    :vartype num_clipped_samples_spectrum: numpy.ndarray
+    :ivar num_clipped_samples: number of clipped input samples (maximum level) for each polarisation,
+        dimension, averaged over all channels.
+    :vartype num_clipped_samples: numpy.ndarray
+    :ivar num_clipped_samples_rfi_excised: number of clipped input samples (maximum level) for each
+        polarisation, dimension, avereaged over all channels, except those flagged for RFI.
+    :vartype num_clipped_samples_rfi_excised: numpy.ndarray
+    :ivar spectrogram: spectrogram of the data for each polarisation, averaged a configurable number
+        of temporal and spectral bins (default ~1000).
+    :vartype spectrogram: numpy.ndarray
+    :ivar timeseries: time series of the data for each polarisation, rebinned in time
+       to ntime_bins, averaged over all frequency channels.
+    :vartype timeseries: numpy.ndarray
+    :ivar timeseries_rfi_excised: time series of the data for each polarisation, re-binned in time
+       to ntime_bins, averaged over all frequency channels, expect those flagged by RFI.
+    :vartype timeseries_rfi_excised: numpy.ndarray
+    """
+
     mean_frequency_avg: npt.NDArray[Literal["NPol, NDim"], npt.Float32]
     mean_frequency_avg_rfi_excised: npt.NDArray[Literal["NPol, NDim"], npt.Float32]
     variance_frequency_avg: npt.NDArray[Literal["NPol, NDim"], npt.Float32]
@@ -195,9 +293,6 @@ class StatisticsData:
     num_clipped_samples_spectrum: npt.NDArray[Literal["NPol, NDim, NChan"], npt.UInt32]
     num_clipped_samples: npt.NDArray[Literal["NPol, NDim"], npt.UInt32]
     num_clipped_samples_rfi_excised: npt.NDArray[Literal["NPol, NDim"], npt.UInt32]
-
-    timeseries_bins: npt.NDArray[Literal["NTimeBin"], npt.Float64]
-    frequency_bins: npt.NDArray[Literal["NFreqBin"], npt.Float64]
 
     spectrogram: npt.NDArray[Literal["NPol, NFreqBin, NTimeBin"], npt.Float32]
     timeseries: npt.NDArray[Literal["NPol, NTimeBin, 3"], npt.Float32]

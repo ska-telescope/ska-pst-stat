@@ -112,6 +112,7 @@ void StatComputerTest::configure(bool use_generator)
   packet_resolution = nsamp_per_packet * nchan_per_packet * npol * ndim * nbit / ska::pst::common::bits_per_byte;
   heap_resolution = nsamp_per_packet * nchan * npol * ndim * nbit / ska::pst::common::bits_per_byte;
   packets_per_heap = heap_resolution / packet_resolution;
+  weights_resolution = weights_packet_stride * nchan / nchan_per_packet;
 
   SPDLOG_DEBUG("data_packet_stride={}", data_packet_stride); //NOLINT
   SPDLOG_DEBUG("weights_packet_stride={}", weights_packet_stride); //NOLINT
@@ -234,7 +235,7 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
     -11,   9,  -3,   5,  -4, -13,  12,  -1,   5,  10,  21,   0,  25,  -2,   0,  12, // NOLINT
     // Pol A - sample 17 - 24
       8,  -6,  -8,  23, -11,  -6,  28,   3,  32,  -2,  17,   6,  -8,   4,  -9,   0, // NOLINT
-    // Pol A - sample 25 - 23
+    // Pol A - sample 25 - 32
      12,   6,  -9, -18,  -5,   0, -12,   1,  12,   9, -18,   8,   9,   2,   0,  -8, // NOLINT
     // Pol B - sample 1 - 8
       4,   9,   0,  14,  24,   0,  17,   2,  -5,   0,   7,  11,   8,  -3,   2,  12, // NOLINT
@@ -242,7 +243,7 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
       8,   8,  19,   3,  13,  22,  -2, -10, -13,  19,  -1,  16,  -2,   2,   0,  -3, // NOLINT
     // Pol B - sample 17 - 24
       1, -23,  -1,  32,   1,  15,   5,  10,  -1,  20,  -1,   6,  15, -13,  -4,   5, // NOLINT
-    // Pol B - sample 25 - 23
+    // Pol B - sample 25 - 32
      -1,   5,  -1,   1,  12,  -3,  -6,  -6,   0,  -5,  15,  12,  20,  13,  -2,  21  // NOLINT
   };
 
@@ -262,6 +263,10 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
   segment.weights.block = weights.data();
   segment.weights.size = weights_length;
   computer->compute(segment);
+
+  ASSERT_EQ(storage->num_samples, 32);
+  ASSERT_EQ(storage->num_samples_rfi_excised, 32);
+  ASSERT_EQ(storage->num_samples_spectrum[0], 32);
 
   // [0,1][0,1] are [pol][dim]
   ASSERT_FLOAT_EQ(storage->mean_frequency_avg[0][0], 2.96875);
@@ -351,6 +356,196 @@ TEST_F(StatComputerTest, test_expected_values) // NOLINT
   }
 }
 
+TEST_F(StatComputerTest, test_invalid_packets) // NOLINT
+{
+  // This test checks that if StatComputer skips a packet that the rest of the statistics
+  // are calculated correctly. This uses 2 chans, with NSAMP=4 for a total of
+
+  data_config.reset();
+  data_config.load_from_file(test_data_file("stat_computer_2chan_4nsamp_config.txt"));
+  weights_config = get_weights_config(data_config);
+  configure(false);
+
+  // This is gausian data with mean of 3.14, stddev of 10, rounded to nearest int
+  // There is only 4 packets, 1 channel, 2 pol, 2 dims, of 8 samples each (128 values)
+  std::vector<int16_t> data = {
+    // Packet 1 (sample 1 - 4)
+    // Pol A - chan 0
+     -4,  19,  17,   6,  -2,   2,   0,  15, // NOLINT
+    // Pol A - chan 1
+     15,   3,  15,   8, -11, -21, -18,   2, // NOLINT
+    // Pol B - chan 0
+      4,   9,   0,  14,  24,   0,  17,   2, // NOLINT
+    // Pol B - chan 1
+     -5,   0,   7,  11,   8,  -3,   2,  12, // NOLINT
+
+    // Packet 2 (sample 5 - 8)
+    // Pol A - chan 0
+    -11,   9,  -3,   5,  -4, -13,  12,  -1, // NOLINT
+    // Pol A - chan 1
+      5,  10,  21,   0,  25,  -2,   0,  12, // NOLINT
+    // Pol B - chan 0
+      8,   8,  19,   3,  13,  22,  -2, -10, // NOLINT
+    // Pol B - chan 1
+    -13,  19,  -1,  16,  -2,   2,   0,  -3, // NOLINT
+
+    // Packet 3 - (sample 9 - 12)
+    // Pol A - chan 0
+      8,  -6,  -8,  23, -11,  -6,  28,   3, // NOLINT
+    // Pol A - chan 1
+     32,  -2,  17,   6,  -8,   4,  -9,   0, // NOLINT
+    // Pol B - chan 0
+      1, -23,  -1,  32,   1,  15,   5,  10, // NOLINT
+    // Pol B - chan 1
+     -1,  20,  -1,   6,  15, -13,  -4,   5, // NOLINT
+
+    // Packet 4 - (sample 13 - 16)
+    // Pol A - chan 0
+     12,   6,  -9, -18,  -5,   0, -12,   1, // NOLINT
+    // Pol A - chan 1
+     12,   9, -18,   8,   9,   2,   0,  -8, // NOLINT
+    // Pol B - chan 0
+     -1,   5,  -1,   1,  12,  -3,  -6,  -6, // NOLINT
+    // Pol B - chan 1
+      0,  -5,  15,  12,  20,  13,  -2,  21  // NOLINT
+  };
+
+  auto data_length = data.size() * sizeof(int16_t);
+  auto data_block = reinterpret_cast<char*>(data.data());
+
+  // we will have 4 packets
+  auto nheap = data_length / heap_resolution;
+
+  unsigned weights_length = nheap * weights_resolution;
+  std::vector<char> weights(weights_length);
+
+  for (auto iheap=0; iheap<nheap; iheap++)
+  {
+    auto offset = iheap * weights_resolution;
+    auto scale = reinterpret_cast<float*>(weights.data() + offset);
+    if (iheap == 0) {
+      SPDLOG_DEBUG("Setting scale for heap {} to being NaN", iheap);
+      *scale = NAN; // NOLINT
+    } else {
+      *scale = 1.0;
+    }
+    auto wt = reinterpret_cast<uint16_t*>(weights.data() + sizeof(float) + offset); // NOLINT
+    *wt = 1;
+  }
+
+  ska::pst::common::SegmentProducer::Segment segment;
+  segment.data.block = data_block;
+  segment.data.size = data_length;
+  segment.weights.block = weights.data();
+  segment.weights.size = weights_length;
+  computer->compute(segment);
+
+  ASSERT_EQ(storage->num_samples, 24);
+  ASSERT_EQ(storage->num_samples_rfi_excised, 24);
+  ASSERT_EQ(storage->num_samples_spectrum[0], 12);
+  ASSERT_EQ(storage->num_samples_spectrum[1], 12);
+
+  // [0,1][0,1] are [pol][dim]
+  ASSERT_FLOAT_EQ(storage->mean_frequency_avg[0][0], 3.458333333);
+  ASSERT_FLOAT_EQ(storage->variance_frequency_avg[0][0], 196.8677536);
+  ASSERT_FLOAT_EQ(storage->mean_frequency_avg_rfi_excised[0][0], 3.458333333);
+  ASSERT_FLOAT_EQ(storage->variance_frequency_avg_rfi_excised[0][0], 196.8677536);
+
+  ASSERT_FLOAT_EQ(storage->mean_frequency_avg[0][1], 1.75);
+  ASSERT_FLOAT_EQ(storage->variance_frequency_avg[0][1], 73.5);
+  ASSERT_FLOAT_EQ(storage->mean_frequency_avg_rfi_excised[0][1], 1.75);
+  ASSERT_FLOAT_EQ(storage->variance_frequency_avg_rfi_excised[0][1], 73.5);
+
+  ASSERT_FLOAT_EQ(storage->mean_frequency_avg[1][0], 3.083333333);
+  ASSERT_FLOAT_EQ(storage->variance_frequency_avg[1][0], 70.6884058);
+  ASSERT_FLOAT_EQ(storage->mean_frequency_avg_rfi_excised[1][0], 3.083333333);
+  ASSERT_FLOAT_EQ(storage->variance_frequency_avg_rfi_excised[1][0], 70.6884058);
+
+  ASSERT_FLOAT_EQ(storage->mean_frequency_avg[1][1], 6.125);
+  ASSERT_FLOAT_EQ(storage->variance_frequency_avg[1][1], 162.8097826);
+  ASSERT_FLOAT_EQ(storage->mean_frequency_avg_rfi_excised[1][1], 6.125);
+  ASSERT_FLOAT_EQ(storage->variance_frequency_avg_rfi_excised[1][1], 162.8097826);
+
+  // assert no clipping
+  for (auto ipol = 0; ipol < npol; ipol++)
+  {
+    for (auto idim = 0; idim < ndim; idim++)
+    {
+      ASSERT_EQ(storage->num_clipped_samples[ipol][idim], 0);
+      ASSERT_EQ(storage->num_clipped_samples_rfi_excised[ipol][idim], 0);
+      for (auto ichan = 0; ichan < nchan; ichan++)
+      {
+        ASSERT_EQ(storage->num_clipped_samples_spectrum[ipol][idim][ichan], 0);
+      }
+    }
+  }
+
+  // [0,1][0,1][x] are [pol][dim][chan]
+  ASSERT_FLOAT_EQ(storage->mean_spectrum[0][0][0], -0.25);
+  ASSERT_FLOAT_EQ(storage->variance_spectrum[0][0][0], 156.0227273);
+  // assert float has a rounding issue for this value, using assert_near
+  ASSERT_NEAR(storage->mean_spectrum[0][1][0], 0.25, 0.00001);
+  ASSERT_FLOAT_EQ(storage->variance_spectrum[0][1][0], 113.2954545);
+  ASSERT_FLOAT_EQ(storage->mean_spectrum[1][0][0], 4);
+  ASSERT_FLOAT_EQ(storage->variance_spectrum[1][0][0], 56);
+  ASSERT_FLOAT_EQ(storage->mean_spectrum[1][1][0], 4.5);
+  ASSERT_FLOAT_EQ(storage->variance_spectrum[1][1][0], 214.8181818);
+  ASSERT_FLOAT_EQ(storage->mean_spectrum[0][0][1], 7.166666667);
+  ASSERT_FLOAT_EQ(storage->variance_spectrum[0][0][1], 225.6060606);
+  ASSERT_FLOAT_EQ(storage->mean_spectrum[0][1][1], 3.25);
+  ASSERT_FLOAT_EQ(storage->variance_spectrum[0][1][1], 35.47727273);
+  ASSERT_FLOAT_EQ(storage->mean_spectrum[1][0][1], 2.166666667);
+  ASSERT_FLOAT_EQ(storage->variance_spectrum[1][0][1], 89.96969697);
+  ASSERT_FLOAT_EQ(storage->mean_spectrum[1][1][1], 7.75);
+  ASSERT_FLOAT_EQ(storage->variance_spectrum[1][1][1], 119.8409091);
+
+  // [0,1][x] are [pol][chan]
+  ASSERT_FLOAT_EQ(storage->mean_spectral_power[0][0], 247);
+  ASSERT_FLOAT_EQ(storage->max_spectral_power[0][0], 793);
+  ASSERT_FLOAT_EQ(storage->mean_spectral_power[1][0], 284.5);
+  ASSERT_FLOAT_EQ(storage->max_spectral_power[1][0], 1025);
+  ASSERT_FLOAT_EQ(storage->mean_spectral_power[0][1], 301.25);
+  ASSERT_FLOAT_EQ(storage->max_spectral_power[0][1], 1028);
+  ASSERT_FLOAT_EQ(storage->mean_spectral_power[1][1], 257.0833333);
+  ASSERT_FLOAT_EQ(storage->max_spectral_power[1][1], 569);
+
+  for (auto ipol = 0; ipol < storage->get_npol(); ipol++) {
+    for (auto idim = 0; idim < storage->get_ndim(); idim++) {
+      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->mean_frequency_avg[{}][{}]={}",
+        ipol, idim, storage->mean_frequency_avg[ipol][idim]
+      );
+      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->variance_frequency_avg[{}][{}]={}",
+        ipol, idim, storage->variance_frequency_avg[ipol][idim]
+      );
+      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->mean_frequency_avg_rfi_excised[{}][{}]={}",
+        ipol, idim, storage->mean_frequency_avg_rfi_excised[ipol][idim]
+      );
+      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->variance_frequency_avg_rfi_excised[{}][{}]={}",
+        ipol, idim, storage->variance_frequency_avg_rfi_excised[ipol][idim]
+      );
+      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->num_clipped_samples[{}][{}]={}",
+        ipol, idim, storage->num_clipped_samples[ipol][idim]
+      );
+      for (auto ichan = 0; ichan < storage->get_nchan(); ichan++) {
+        SPDLOG_DEBUG("StatComputerTest::test_compute - storage->mean_spectrum[{}][{}][{}]={}",
+          ipol, idim, ichan, storage->mean_spectrum[ipol][idim][ichan]
+        );
+        SPDLOG_DEBUG("StatComputerTest::test_compute - storage->variance_spectrum[{}][{}][{}]={}",
+          ipol, idim, ichan, storage->variance_spectrum[ipol][idim][ichan]
+        );
+      }
+    }
+    for (auto ichan = 0; ichan < storage->get_nchan(); ichan++) {
+      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->mean_spectral_power[{}][{}]={}",
+        ipol, ichan, storage->mean_spectral_power[ipol][ichan]
+      );
+      SPDLOG_DEBUG("StatComputerTest::test_compute - storage->max_spectral_power[{}][{}]={}",
+        ipol, ichan, storage->max_spectral_power[ipol][ichan]
+      );
+    }
+  }
+}
+
 TEST_F(StatComputerTest, test_rfi_excised_channels) // NOLINT
 {
   data_config.reset();
@@ -399,6 +594,13 @@ TEST_F(StatComputerTest, test_rfi_excised_channels) // NOLINT
   segment.weights.block = weights.data();
   segment.weights.size = weights_length;
   computer->compute(segment);
+
+  ASSERT_EQ(storage->num_samples, 32);
+  ASSERT_EQ(storage->num_samples_rfi_excised, 16);
+  ASSERT_EQ(storage->num_samples_spectrum[0], 8);
+  ASSERT_EQ(storage->num_samples_spectrum[1], 8);
+  ASSERT_EQ(storage->num_samples_spectrum[2], 8);
+  ASSERT_EQ(storage->num_samples_spectrum[3], 8);
 
   ASSERT_FLOAT_EQ(storage->mean_frequency_avg[0][0], 2.96875);
   ASSERT_FLOAT_EQ(storage->variance_frequency_avg[0][0], 185.0635081);

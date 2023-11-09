@@ -100,6 +100,9 @@ class StatComputerTest : public ::testing::Test
     //! Size of a complete heap of data in the data stream, in bytes
     uint32_t heap_resolution{0};
 
+    //! Size of a complete heap of scales and weights in the weights stream, in bytes
+    uint32_t weights_resolution{0};
+
     //! Size of the complex packet of data in the data stream, in bytes
     uint32_t packet_resolution{0};
 

@@ -89,6 +89,7 @@ TEST_F(StatStorageTest, test_resize) // NOLINT
   uint32_t nrebin = config.get_uint32("STAT_NREBIN");
 
   // check the vectors have been resized correctly
+  ASSERT_TRUE(check_storage_1d_dims(storage.num_samples_spectrum, nchan)); // NOLINT
   ASSERT_TRUE(check_storage_1d_dims(storage.channel_centre_frequencies, nchan)); // NOLINT
 
   ASSERT_TRUE(check_storage_2d_dims(storage.mean_frequency_avg, npol, ndim)); // NOLINT
@@ -144,6 +145,11 @@ TEST_F(StatStorageTest, test_reset) // NOLINT
   float float_val = 1.0;
   uint32_t u32_val = 1;
 
+  storage.num_samples = u32_val;
+  storage.num_samples_rfi_excised = u32_val;
+  storage.num_invalid_packets = u32_val;
+  fill_storage_1d(storage.num_samples_spectrum, u32_val);
+
   fill_storage_2d(storage.mean_frequency_avg, float_val);
   fill_storage_2d(storage.mean_frequency_avg_rfi_excised, float_val);
   fill_storage_2d(storage.variance_frequency_avg, float_val);
@@ -183,6 +189,10 @@ TEST_F(StatStorageTest, test_reset) // NOLINT
   u32_val = 0;
 
   // check the vectors have all been zeroed
+  ASSERT_EQ(storage.num_samples, u32_val); // NOLINT
+  ASSERT_EQ(storage.num_samples_rfi_excised, u32_val); // NOLINT
+  ASSERT_EQ(storage.num_invalid_packets, u32_val); // NOLINT
+  ASSERT_TRUE(check_storage_1d_vals(storage.num_samples_spectrum, u32_val)); // NOLINT
   ASSERT_TRUE(check_storage_1d_vals(storage.channel_centre_frequencies, static_cast<double>(float_val))); // NOLINT
 
   ASSERT_TRUE(check_storage_2d_vals(storage.mean_frequency_avg, float_val)); // NOLINT

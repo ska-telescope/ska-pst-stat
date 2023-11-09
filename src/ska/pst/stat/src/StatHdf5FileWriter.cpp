@@ -84,6 +84,14 @@ auto ska::pst::stat::StatHdf5FileWriter::get_hdf5_header_datatype() -> H5::CompT
   header_datatype.insertMember("FREQUENCY_BINS", HOFFSET(stat_hdf5_header_t, frequency_bins), H5::VarLenType(H5::PredType::NATIVE_DOUBLE));
   header_datatype.insertMember("TIMESERIES_BINS", HOFFSET(stat_hdf5_header_t, timeseries_bins), H5::VarLenType(H5::PredType::NATIVE_DOUBLE));
 
+  // num of samples data
+  header_datatype.insertMember("NUM_SAMPLES", HOFFSET(stat_hdf5_header_t, num_samples), H5::PredType::NATIVE_UINT32);
+  header_datatype.insertMember("NUM_SAMPLES_RFI_EXCISED", HOFFSET(stat_hdf5_header_t, num_samples_rfi_excised), H5::PredType::NATIVE_UINT32);
+  header_datatype.insertMember("NUM_SAMPLES_SPECTRUM", HOFFSET(stat_hdf5_header_t, num_samples_spectrum), H5::VarLenType(H5::PredType::NATIVE_UINT32));
+
+  // num of invalid packets
+  header_datatype.insertMember("NUM_INVALID_PACKETS", HOFFSET(stat_hdf5_header_t, num_invalid_packets), H5::PredType::NATIVE_UINT32);
+
   return header_datatype;
 }
 
@@ -151,6 +159,14 @@ void ska::pst::stat::StatHdf5FileWriter::publish(std::shared_ptr<StatStorage> st
   write_1d_vec_header(storage->channel_centre_frequencies, header.chan_freq);
   write_1d_vec_header(storage->frequency_bins, header.frequency_bins);
   write_1d_vec_header(storage->timeseries_bins, header.timeseries_bins);
+
+  // num samples
+  header.num_samples = storage->num_samples;
+  header.num_samples_rfi_excised = storage->num_samples_rfi_excised;
+  write_1d_vec_header(storage->num_samples_spectrum, header.num_samples_spectrum);
+
+  // num invalid packets
+  header.num_invalid_packets = storage->num_invalid_packets;
 
   std::vector<char> temp_data;
   std::string stat_filename;

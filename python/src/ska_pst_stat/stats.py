@@ -47,6 +47,10 @@ from ska_pst_stat.hdf5.consts import (
     HDF5_NUM_CLIPPED_SAMPLES,
     HDF5_NUM_CLIPPED_SAMPLES_RFI_EXCISED,
     HDF5_NUM_CLIPPED_SAMPLES_SPECTRUM,
+    HDF5_NUM_INVALID_PACKETS,
+    HDF5_NUM_SAMPLES,
+    HDF5_NUM_SAMPLES_RFI_EXCISED,
+    HDF5_NUM_SAMPLES_SPECTRUM,
     HDF5_SCAN_ID,
     HDF5_SPECTROGRAM,
     HDF5_START_CHAN,
@@ -128,12 +132,16 @@ class Statistics:
                 ndat_ds=hdf5_header[HDF5_NDAT_DS],
                 histogram_nbin=hdf5_header[HDF5_NBIN_HIST],
                 nrebin=hdf5_header[HDF5_NREBIN],
+                channel_freq_mhz=hdf5_header[HDF5_CHAN_FREQ][...],
+                timeseries_bins=hdf5_header[HDF5_TIMESERIES_BINS][...],
+                frequency_bins=hdf5_header[HDF5_FREQUENCY_BINS][...],
+                num_samples=hdf5_header[HDF5_NUM_SAMPLES],
+                num_samples_rfi_excised=hdf5_header[HDF5_NUM_SAMPLES_RFI_EXCISED],
+                num_samples_spectrum=hdf5_header[HDF5_NUM_SAMPLES_SPECTRUM][...],
+                num_invalid_packets=hdf5_header[HDF5_NUM_INVALID_PACKETS],
             )
 
             data = StatisticsData(
-                channel_freq_mhz=hdf5_header[HDF5_CHAN_FREQ],
-                timeseries_bins=hdf5_header[HDF5_TIMESERIES_BINS],
-                frequency_bins=hdf5_header[HDF5_FREQUENCY_BINS],
                 mean_frequency_avg=f[HDF5_MEAN_FREQUENCY_AVG][...],
                 mean_frequency_avg_rfi_excised=f[HDF5_MEAN_FREQUENCY_AVG_RFI_EXCISED][...],
                 variance_frequency_avg=f[HDF5_VARIANCE_FREQUENCY_AVG][...],
@@ -221,7 +229,7 @@ class Statistics:
             * - UTC Start Time
               - 2023-10-23-11:00:00
               - an ISO formated string of the UTC time at the start of the scan
-            * - Scan Scan Offset
+            * - Start Scan Offset
               - 0.0
               - the time offset, in seconds, from the UTC start time to represent the time at the start of
                 the data in the file.
@@ -262,6 +270,15 @@ class Statistics:
             * - Num. Histogram Bins (Rebinned)
               - 256
               - number of bins to used in the rebinned histograms
+            * - Num. Samples
+              - 21012480
+              - total number of samples used to calculate statistics
+            * - Num. Samples (RFI Excised)
+              - 19456000
+              - total number of samples used to calculate statistics, excluding RFI excised data
+            * - Num. Invalid Packets
+              - 0
+              - total number invalid/dropped packets in the data used to calculate statistics.
 
         :return: a human readable version of the header scalar fields.
         :rtype: pd.DataFrame
@@ -274,7 +291,7 @@ class Statistics:
                 "Scan ID",
                 "Beam ID",
                 "UTC Start Time",
-                "Scan Scan Offset",
+                "Start Scan Offset",
                 "End Scan Offset",
                 "Frequency (MHz)",
                 "Bandwidth (MHz)",
@@ -287,6 +304,9 @@ class Statistics:
                 "Num. Temporal Bins",
                 "Num. Histogram Bins",
                 "Num. Histogram Bins (Rebinned)",
+                "Num. Samples",
+                "Num. Samples (RFI Excised)",
+                "Num. Invalid Packets",
             ],
             "Value": [
                 self.metadata.file_format_version,
@@ -308,6 +328,9 @@ class Statistics:
                 self.metadata.ndat_ds,
                 self.metadata.histogram_nbin,
                 self.metadata.nrebin,
+                self.metadata.num_samples,
+                self.metadata.num_samples_rfi_excised,
+                self.metadata.num_invalid_packets,
             ],
         }
 
@@ -494,7 +517,7 @@ class Statistics:
 
         channel_number_arange = self.channel_numbers
         channel_number = np.repeat(channel_number_arange, 4)
-        channel_freq_mhz = np.repeat(self.data.channel_freq_mhz, 4)
+        channel_freq_mhz = np.repeat(self.metadata.channel_freq_mhz, 4)
 
         polarisation = np.empty(shape=shape, dtype=object)
         polarisation[0, :, :] = Polarisation.POL_A.text
@@ -525,12 +548,12 @@ class Statistics:
     @property
     def frequency_bins(self: Statistics) -> npt.NDArray[Literal["NFreqBin"], npt.Float64]:
         """Get the frequency bins used in the spectrogram data."""
-        return self.data.frequency_bins
+        return self.metadata.frequency_bins
 
     @property
     def timeseries_bins(self: Statistics) -> npt.NDArray[Literal["NTimeBin"], npt.Float64]:
         """Get the timeseries bins used in the spectrogram and timeseries data."""
-        return self.data.timeseries_bins
+        return self.metadata.timeseries_bins
 
     @property
     def pol_a_channel_stats(self: Statistics) -> pd.DataFrame:
@@ -1399,7 +1422,7 @@ class Statistics:
         polarisation[Polarisation.POL_B] = Polarisation.POL_B.text
 
         # this will be in column major format
-        timeseries_bins = np.repeat(self.data.timeseries_bins, 2)
+        timeseries_bins = np.repeat(self.metadata.timeseries_bins, 2)
 
         max_data = timeseries_data[:, :, TimeseriesDimension.MAX]
         min_data = timeseries_data[:, :, TimeseriesDimension.MIN]

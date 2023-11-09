@@ -8,8 +8,7 @@
 
 __all__ = [
     "Hdf5FileGenerator",
-    "calc_stats",
     "StatConfig",
 ]
 
-from .hdf5_file_generator import Hdf5FileGenerator, calc_stats, StatConfig
+from .hdf5_file_generator import Hdf5FileGenerator, StatConfig
