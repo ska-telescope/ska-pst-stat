@@ -229,7 +229,7 @@ class Statistics:
             * - UTC Start Time
               - 2023-10-23-11:00:00
               - an ISO formated string of the UTC time at the start of the scan
-            * - Scan Scan Offset
+            * - Start Scan Offset
               - 0.0
               - the time offset, in seconds, from the UTC start time to represent the time at the start of
                 the data in the file.
@@ -291,7 +291,7 @@ class Statistics:
                 "Scan ID",
                 "Beam ID",
                 "UTC Start Time",
-                "Scan Scan Offset",
+                "Start Scan Offset",
                 "End Scan Offset",
                 "Frequency (MHz)",
                 "Bandwidth (MHz)",
