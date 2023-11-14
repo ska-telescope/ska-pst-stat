@@ -23,7 +23,7 @@ class StatApplicationManager {
   + perform_deconfigure_scan()
   + perform_deconfigure_beam()
   + set_timeout()
-  - processor: std::shared_ptr<StatProcessor>
+  - processor: std::unique_ptr<StatProcessor>
   - producer: std::shared_ptr<SmrbSegmentProducer>
 }
 
@@ -39,6 +39,7 @@ class StatProcessor {
   + StatProcessor(data_config: AsciiHeader, weights_config: AsciiHeader)
   + ~StatProcessor()
   + add_publisher(std::unique_ptr<StatPublisher>)
+  + bool validate_segment(segment: SegmentProducer::Segment)
   + bool process(segment: SegmentProducer::Segment)
   + interrupt()
   - storage: std::shared_ptr<StatStorage>
