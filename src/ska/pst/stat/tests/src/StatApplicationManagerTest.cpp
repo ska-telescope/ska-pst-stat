@@ -323,4 +323,45 @@ TEST_F(StatApplicationManagerTest, test_configure_from_file) // NOLINT
   ASSERT_EQ(ska::pst::common::Unknown, sm->get_state());
 }
 
+TEST_F(StatApplicationManagerTest, test_force_runtime_error) // NOLINT
+{
+  SPDLOG_TRACE("test_force_runtime_error create StatApplicationManager");
+  sm = std::make_unique<ska::pst::stat::StatApplicationManager>(stat_base_path);
+  ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
+
+  SPDLOG_TRACE("test_force_runtime_error sm->configure_beam");
+  sm->configure_beam(beam_config);
+  ASSERT_EQ(ska::pst::common::BeamConfigured, sm->get_state());
+  SPDLOG_TRACE("test_force_runtime_error sm->configure_beam complete");
+
+  SPDLOG_TRACE("test_force_runtime_error sm->configure_scan");
+  sm->configure_scan(scan_config);
+  ASSERT_EQ(ska::pst::common::ScanConfigured, sm->get_state());
+  SPDLOG_TRACE("test_force_runtime_error sm->configure_scan complete");
+
+  // set the SCAN_ID to something different
+  start_scan_config.set("SCAN_ID", data_header.get_uint64("SCAN_ID") + 1);
+
+  SPDLOG_TRACE("test_force_runtime_error sm->start_scan");
+  sm->start_scan(start_scan_config);
+  ASSERT_EQ(ska::pst::common::Scanning, sm->get_state());
+  SPDLOG_TRACE("test_force_runtime_error sm->start_scan complete");
+
+  static constexpr float delay_ms = 1000;
+  size_t constexpr test_nblocks = 4;
+  std::thread data_thread = std::thread(&DataBlockTestHelper::write_and_close, data_helper.get(), test_nblocks, delay_ms);
+  std::thread weights_thread = std::thread(&DataBlockTestHelper::write_and_close, weights_helper.get(), test_nblocks, delay_ms);
+  data_thread.join();
+  weights_thread.join();
+
+  SPDLOG_TRACE("test_force_runtime_error asserting state is RuntimeError");
+  ASSERT_EQ(ska::pst::common::RuntimeError, sm->get_state());
+
+  SPDLOG_TRACE("test_force_runtime_error sm->reset()");
+  sm->reset();
+
+  ASSERT_EQ(ska::pst::common::Idle, sm->get_state());
+  SPDLOG_TRACE("test_force_runtime_error sm->reset complete");
+}
+
 } // namespace ska::pst::stat::test

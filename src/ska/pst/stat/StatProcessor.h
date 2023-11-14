@@ -73,6 +73,15 @@ namespace ska::pst::stat {
       void add_publisher(std::shared_ptr<StatPublisher> publisher);
 
       /**
+       * @brief check the segement properties to determine if it can be successfully proessed.
+       *
+       * @param segment the data segment to be inspected
+       * @return true the data segement can be processed
+       * @return false the data segement cannot be processed
+       */
+      bool validate_segment(const ska::pst::common::SegmentProducer::Segment& segment);
+
+      /**
        * @brief process the current block of data and weights.
        *
        * This method will ensure that the statistics are computed and then published.

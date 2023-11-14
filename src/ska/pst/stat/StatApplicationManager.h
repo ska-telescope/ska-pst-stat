@@ -240,8 +240,8 @@ namespace ska::pst::stat {
       ska::pst::common::AsciiHeader data_header;
       ska::pst::common::AsciiHeader weights_header;
 
-      //! shared pointer a statistics processor
-      std::shared_ptr<StatProcessor> processor;
+      //! unique pointer a statistics processor
+      std::unique_ptr<StatProcessor> processor;
 
       //! shared pointer to a statistics publisher
       std::shared_ptr<ScalarStatPublisher> scalar_publisher;

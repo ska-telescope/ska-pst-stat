@@ -180,7 +180,7 @@ void ska::pst::stat::StatApplicationManager::perform_start_scan()
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_start_scan");
 }
 
-void ska::pst::stat::StatApplicationManager::perform_scan()
+void ska::pst::stat::StatApplicationManager::perform_scan() try
 {
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan");
 
@@ -244,6 +244,11 @@ void ska::pst::stat::StatApplicationManager::perform_scan()
       SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan encountered end of data");
       eod = true;
     }
+    else if (!processor->validate_segment(segment))
+    {
+      SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan segment could not be processed");
+      eod = true;
+    }
     else
     {
       processing_state = Processing;
@@ -277,7 +282,17 @@ void ska::pst::stat::StatApplicationManager::perform_scan()
   weights_header.reset();
   processing_state = Idle;
 
+  SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan processor.reset()");
+  processor.reset(nullptr);
+
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_scan complete");
+}
+catch (std::exception& exc)
+{
+  SPDLOG_WARN("ska::pst::stat::StatApplicationManager::perform_scan exception during perform_scan: {}", exc.what());
+  producer->close();
+  processor.reset(nullptr);
+  go_to_runtime_error(std::current_exception());
 }
 
 void ska::pst::stat::StatApplicationManager::perform_stop_scan()
@@ -285,7 +300,11 @@ void ska::pst::stat::StatApplicationManager::perform_stop_scan()
   SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_stop_scan");
 
   // interrupt any of the statistics computation in the the StatProcessor.
-  processor->interrupt();
+  if (processor)
+  {
+    SPDLOG_DEBUG("ska::pst::stat::StatApplicationManager::perform_stop_scan processor->interrupt()");
+    processor->interrupt();
+  }
 
   // signal the thread running perform_scan via the processing_cond
   {
