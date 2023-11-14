@@ -72,7 +72,7 @@ notebook-post-lint:
 .PHONY: python-post-format, notebook-format, notebook-post-format, python-post-lint, mypy, flake8
 
 DEV_IMAGE	?=registry.gitlab.com/ska-telescope/pst/ska-pst-smrb/ska-pst-smrb-builder
-DEV_TAG		?=0.10.5
+DEV_TAG		?=0.10.6
 PROCESSOR_COUNT=${nproc}
 OCI_IMAGE_BUILD_CONTEXT=$(PWD)
 

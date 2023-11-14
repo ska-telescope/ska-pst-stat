@@ -98,7 +98,7 @@ void ska::pst::stat::FileProcessor::process()
   SPDLOG_DEBUG("ska::pst::stat::FileProcessor::process");
 
   auto segment = segment_producer->next_segment();
-  processor->process (segment);
+  processor->process(segment);
 }
 
 auto ska::pst::stat::FileProcessor::get_output_filename(const std::string& data_filename) const -> std::string
